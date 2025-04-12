@@ -1,0 +1,48 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "Rendbit is a blockchain-powered platform built on Stellar, enabling seamless cross-border payments and an easy-to-use token launchpad for users across Africa—join the backend to be among the first to explore the future of decentralized finance.",
+  "main": "server.js",
+  "scripts": {
+    "test": "npx jest",
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js"
+  },
+  "keywords": [
+    "Rendbit",
+    "Waitlist",
+    "Africa",
+    "Stellar",
+    "Cross-border",
+    "Payments",
+    "Token",
+    "Launchpad",
+    "Blockchain"
+  ],
+  "author": "Mbaogu Charles Chiakpaoke (devcharlezen)",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^5.1.0",
+    "express-rate-limit": "^7.5.0",
+    "mongodb": "^6.15.0",
+    "mongoose": "^8.13.2",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.1",
+    "@types/jest": "^29.5.14",
+    "@types/morgan": "^1.9.9",
+    "@types/node": "^22.14.0",
+    "@types/supertest": "^6.0.3",
+    "jest": "^29.7.0",
+    "supertest": "^7.1.0",
+    "ts-jest": "^29.3.1",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.8.3"
+  }
+}
