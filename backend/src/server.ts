@@ -8,6 +8,7 @@ import { connectToRabbitMQ } from "./microservices/rabbitmq";
 import { internalCacheService } from "./microservices/redis";
 import authRoute from "./routes/auth";
 import userRoute from "./routes/user";
+import mfaRoute from "./routes/mfa";
 import sep24Route from "./routes/sep24";
 import horizonQueryRoute from "./routes/horizonQueries";
 import transactionRoute from "./routes/transaction";
@@ -43,6 +44,7 @@ async function bootstrap() {
     // Routes
     app.use("/api/auth", authRoute);
     app.use("/api/user", userRoute);
+    app.use("/api/mfa", mfaRoute);
     app.use("/api/sep24", sep24Route);
     app.use("/api/horizonQuery", horizonQueryRoute);
     app.use("/api/transaction", transactionRoute);
