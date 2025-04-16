@@ -12,7 +12,9 @@ const options = {
     },
     servers: [
       {
-        url: `${process.env.BASE_URL}`,
+        url: process.env.NODE_ENV === "production"
+        ? `${process.env.BASE_URL}`
+        : `${process.env.PROD_BASE_URL}`
       },
     ],
     components: {
