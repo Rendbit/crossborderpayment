@@ -51,7 +51,7 @@ async function bootstrap() {
 
     // Swagger Docs
     app.use(
-      "/crossborderpayment/api/docs",
+      "/docs",
       swaggerUi.serve,
       swaggerUi.setup(swaggerSpec, {
         explorer: true,
@@ -80,9 +80,9 @@ async function bootstrap() {
     });
 
     // 404 handler
-    // app.use((req, res) => {
-    //   res.status(404).json({ message: "Route not found" });
-    // });
+    app.use((req, res) => {
+      res.status(404).json({ message: "Route not found" });
+    });
 
     // Start server
     const PORT = process.env.PORT || 8005;
