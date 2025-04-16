@@ -11,7 +11,7 @@ export const apiKeyValidator = (req: any, res: any, next: any) => {
   const clientKey = req.headers["x-api-key"];
   if (
     req.path.startsWith("/crossborderpayment/api/docs") ||
-    req.path.startsWith("/docs")
+    req.path.includes("/docs")
   ) {
     return next();
   }
