@@ -20,6 +20,73 @@
 import StellarSdk from "@stellar/stellar-sdk";
 import StellarBase from "stellar-base";
 
+const reasonMap: Record<string, Record<string, string>> = {
+  // Common Operations
+  common: {
+    op_underfunded: "Insufficient funds to complete the transaction.",
+    op_low_reserve: "Account doesn’t meet the minimum XLM reserve requirement.",
+    op_no_trust: "Recipient has not trusted the asset you’re sending.",
+    op_not_authorized: "Recipient is not authorized to hold this asset.",
+    op_no_destination: "Recipient address does not exist on the network.",
+    op_line_full: "Recipient account cannot hold more of this asset.",
+    op_malformed:
+      "Transaction details are malformed. Please check and try again.",
+    op_duplicate: "This operation has already been applied.",
+    op_invalid_limit: "The specified limit is invalid.",
+  },
+
+  // Specific Operation Failures
+  changeTrust: {
+    op_no_trust:
+      "You have not established trust with the asset you’re trying to accept.",
+    op_invalid_limit: "The trust line limit is invalid or cannot be set.",
+    op_asset_not_found:
+      "The asset you're trying to set trust for is not found on the network.",
+  },
+
+  strictSend: {
+    op_no_authorized: "You are not authorized to send this asset.",
+    op_underfunded:
+      "Insufficient funds in your account to send the specified amount.",
+    op_insufficient_balance:
+      "Your account doesn't have enough balance to complete the transaction.",
+  },
+
+  strictReceive: {
+    op_no_trust: "You do not trust the asset you are trying to receive.",
+    op_no_authorized: "You are not authorized to receive this asset.",
+    op_underfunded:
+      "Your account doesn't have enough balance to fulfill this request.",
+    op_invalid_amount:
+      "The amount you're trying to receive is invalid or malformed.",
+    pathPaymentStrictReceive:
+      "The path payment strict receive failed. Please check the payment path and amounts.",
+  },
+
+  payment: {
+    op_no_trust: "Recipient does not trust the asset you are sending.",
+    op_no_destination: "Recipient's account address does not exist.",
+    op_low_balance: "Your balance is too low to send the asset.",
+    op_line_full: "Recipient cannot accept more of the asset.",
+  },
+
+  manageOffer: {
+    op_offer_not_found: "The offer you’re trying to manage does not exist.",
+    op_invalid_offer:
+      "The offer you’re trying to manage is invalid or malformed.",
+    op_sell_not_authorized: "You are not authorized to sell the asset.",
+    op_buy_not_authorized: "You are not authorized to buy the asset.",
+  },
+
+  swap: {
+    op_invalid_swap: "The swap operation failed due to invalid parameters.",
+    op_swap_not_possible: "The requested swap cannot be completed.",
+    op_underfunded: "Insufficient funds to execute the swap operation.",
+    op_trustline_not_found:
+      "One of the assets involved in the swap is not trusted.",
+  },
+};
+
 export class WalletHelper {
   /**
    * Executes a Stellar transaction using the provided transaction object and keypair.
@@ -28,63 +95,112 @@ export class WalletHelper {
    *
    * @param transaction - The Stellar transaction object to be executed. Must not be an empty string.
    * @param keypair - The Stellar keypair used to sign the transaction.
-   * 
+   *
    * @returns A promise that resolves to an object containing the transaction status:
    * - `status: true` if the transaction is successful, along with the `value` (if available) and `hash`.
    * - `status: false` if the transaction fails, along with an error `msg`.
-   * 
+   *
    * @throws Will catch and log any errors encountered during the transaction execution process.
    */
-  static async execTranst(transaction: any, keypair: any) {
+  static async execTranst(transaction: any, keypair: any, type: string) {
     // Check if the transaction is not an empty string
     if (transaction !== "") {
       // Initialize the Stellar Soroban RPC server based on the network environment
       const server = await new StellarSdk.SorobanRpc.Server(
-      process.env.STELLAR_NETWORK === "public"
-        ? process.env.STELLAR_PUBLIC_SERVER
-        : process.env.STELLAR_TESTNET_SERVER
+        process.env.STELLAR_NETWORK === "public"
+          ? process.env.STELLAR_PUBLIC_SERVER
+          : process.env.STELLAR_TESTNET_SERVER
       );
       try {
-      // Sign the transaction with the provided keypair
-      transaction.sign(keypair);
+        // Sign the transaction with the provided keypair
+        transaction.sign(keypair);
 
-      // Send the transaction to the Stellar network
-      const sendResponse = await server.sendTransaction(transaction);
+        // Send the transaction to the Stellar network
+        const sendResponse = await server.sendTransaction(transaction);
 
-      // Extract the transaction hash from the response
-      const hsh = sendResponse.hash;
+        // Extract the transaction hash from the response
+        const hsh = sendResponse.hash;
+        // Check if the transaction status is "PENDING"
+        if (sendResponse.status === "PENDING") {
+          // Poll the transaction status until it is no longer "NOT_FOUND"
+          let getResponse = await server.getTransaction(sendResponse.hash);
+          while (getResponse.status === "NOT_FOUND") {
+            getResponse = await server.getTransaction(sendResponse.hash);
+            await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for 1 second before retrying
+          }
 
-      // Check if the transaction status is "PENDING"
-      if (sendResponse.status === "PENDING") {
-        // Poll the transaction status until it is no longer "NOT_FOUND"
-        let getResponse = await server.getTransaction(sendResponse.hash);
+          // If the transaction is successful, return the result
+          if (getResponse.status === "SUCCESS") {
+            if (!getResponse.resultMetaXdr) {
+              return { status: true, msg: "" }; // No additional metadata available
+            }
+            const returnValue = getResponse.returnValue; // Extract the return value
+            return { status: true, value: returnValue, hash: hsh }; // Return success with value and hash
+          } else {
+            console.log({ getResponse });
 
-        while (getResponse.status === "NOT_FOUND") {
-        getResponse = await server.getTransaction(sendResponse.hash);
-        await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for 1 second before retrying
-        }
+            const result = StellarSdk.xdr.TransactionResult.fromXDR(
+              getResponse.resultXdr.toXDR(),
+              "base64"
+            );
+            const opResult = result.result().results()[0].value();
+            console.log({ opResult });
+            const code = opResult.switch().name;
 
-        // If the transaction is successful, return the result
-        if (getResponse.status === "SUCCESS") {
-        if (!getResponse.resultMetaXdr) {
-          return { status: true, msg: "" }; // No additional metadata available
-        }
-        const returnValue = getResponse.returnValue; // Extract the return value
-        return { status: true, value: returnValue, hash: hsh }; // Return success with value and hash
+            console.log({ code });
+
+            const error = this.decodeError(opResult, code);
+            return error;
+          }
         } else {
-        // Transaction failed
-        return { status: false, msg: "Transaction failed" };
+          // Unable to submit the transaction
+          return { status: false, msg: "Unable to submit transaction" };
         }
-      } else {
-        // Unable to submit the transaction
-        return { status: false, msg: "Unable to submit transaction" };
-      }
       } catch (err: any) {
-      // Log and return the error message in case of an exception
-      console.log("execTranst error.", err);
-      return { status: false, msg: err.message };
+        // Log and return the error message in case of an exception
+        console.log("execTranst error.", err);
+        return { status: false, msg: err.message };
       }
     }
+  }
+
+  static decodeError(opResult: any, code: string) {
+    const switchType = opResult._switch;
+    console.log({switchType});
+    if (switchType === code) {
+      const errorCondition = opResult._value._arm;
+
+      // If errorCondition exists, format the message dynamically
+      if (errorCondition) {
+        // Remove "pathPaymentStrictReceive" prefix for user-friendly error
+        const userFriendlyError = errorCondition.replace(code, "");
+        const errorMessage = `Error with transaction: ${userFriendlyError
+          .replace(/([A-Z])/g, " $1")
+          .trim()}.`;
+
+        console.log({ errorMessage });
+
+        return { status: false, msg: errorMessage };
+      }
+    }
+
+    return { status: false, msg: "Transaction failed." };
+  }
+
+  static handleTransactionError(operationType: string, code: string) {
+    const friendlyMsg = this.getFriendlyMessage(operationType, code);
+    return { status: false, msg: friendlyMsg };
+  }
+
+  static getFriendlyMessage(operationType: string, code: string) {
+    const typeMap = reasonMap[operationType] || reasonMap.common;
+
+    if (typeMap) {
+      return (
+        typeMap[code] || `Transaction failed due to: ${code.replace(/_/g, " ")}`
+      );
+    }
+    return `Transaction failed due to: ${code.replace(/_/g, " ")}`;
   }
 
   /**
@@ -130,47 +246,47 @@ export class WalletHelper {
   static async receivePaymentPath(params: any) {
     try {
       const {
-      sourceAssetCode,
-      sourceAssetIssuer,
-      desAssetCode,
-      desAssetIssuer,
-      amount,
+        sourceAssetCode,
+        sourceAssetIssuer,
+        desAssetCode,
+        desAssetIssuer,
+        amount,
       } = params;
 
       // Construct the base URL for the Stellar Horizon API based on the network environment
       let url = `${
-      process.env.STELLAR_NETWORK === "public"
-        ? process.env.HORIZON_MAINNET_URL
-        : process.env.HORIZON_TESTNET_URL
+        process.env.STELLAR_NETWORK === "public"
+          ? process.env.HORIZON_MAINNET_URL
+          : process.env.HORIZON_TESTNET_URL
       }/paths/strict-receive`;
 
       // Append query parameters for source and destination assets
       url += `?source_assets=${
-      sourceAssetIssuer === "native"
-        ? "native"
-        : sourceAssetCode + ":" + sourceAssetIssuer
+        sourceAssetIssuer === "native"
+          ? "native"
+          : sourceAssetCode + ":" + sourceAssetIssuer
       }&destination_asset_type=${
-      desAssetIssuer === "native"
-        ? "native"
-        : desAssetCode.length <= 4
-        ? "credit_alphanum4"
-        : "credit_alphanum12"
+        desAssetIssuer === "native"
+          ? "native"
+          : desAssetCode.length <= 4
+          ? "credit_alphanum4"
+          : "credit_alphanum12"
       }&destination_amount=${amount}`;
 
       // Include destination asset issuer and code if not "native"
       if (desAssetIssuer !== "native")
-      url += `&destination_asset_issuer=${desAssetIssuer}&destination_asset_code=${desAssetCode}`;
+        url += `&destination_asset_issuer=${desAssetIssuer}&destination_asset_code=${desAssetCode}`;
 
       // Make the API request to fetch the payment path
       const resp = await fetch(url);
       if (!resp.ok) {
-      throw new Error("Error receiving payment path."); // Handle non-OK responses
+        throw new Error("Error receiving payment path."); // Handle non-OK responses
       }
 
       // Parse the response JSON and extract the payment path records
       const resps = await resp.json();
       return {
-      data: { receivePaymentPath: (resps._embedded || {}).records || [] },
+        data: { receivePaymentPath: (resps._embedded || {}).records || [] },
       };
     } catch (e) {
       // Log and rethrow the error for further handling
@@ -205,47 +321,47 @@ export class WalletHelper {
   static async sendPaymentPath(params: any) {
     try {
       const {
-      sourceAssetCode,
-      sourceAssetIssuer,
-      desAssetCode,
-      desAssetIssuer,
-      amount,
+        sourceAssetCode,
+        sourceAssetIssuer,
+        desAssetCode,
+        desAssetIssuer,
+        amount,
       } = params;
 
       // Construct the base URL for the Stellar Horizon API based on the network environment
       let url = `${
-      process.env.STELLAR_NETWORK === "public"
-        ? process.env.HORIZON_MAINNET_URL
-        : process.env.HORIZON_TESTNET_URL
+        process.env.STELLAR_NETWORK === "public"
+          ? process.env.HORIZON_MAINNET_URL
+          : process.env.HORIZON_TESTNET_URL
       }/paths/strict-send`;
 
       // Append query parameters for destination and source assets
       url += `?destination_assets=${
-      desAssetIssuer === "native"
-        ? "native"
-        : desAssetCode + "%3A" + desAssetIssuer
+        desAssetIssuer === "native"
+          ? "native"
+          : desAssetCode + "%3A" + desAssetIssuer
       }&source_asset_type=${
-      sourceAssetIssuer === "native"
-        ? "native"
-        : sourceAssetCode.length <= 4
-        ? "credit_alphanum4"
-        : "credit_alphanum12"
-      }&source_source_amount=${amount}`;
+        sourceAssetIssuer === "native"
+          ? "native"
+          : sourceAssetCode.length <= 4
+          ? "credit_alphanum4"
+          : "credit_alphanum12"
+      }&source_amount=${amount}`;
 
       // Include source asset issuer and code if not "native"
       if (sourceAssetIssuer !== "native")
-      url += `&source_asset_issuer=${sourceAssetIssuer}&source_asset_code=${sourceAssetCode}`;
+        url += `&source_asset_issuer=${sourceAssetIssuer}&source_asset_code=${sourceAssetCode}`;
 
       // Make the API request to fetch the payment path
       const resp = await fetch(url);
+      const resps = await resp.json();
       if (!resp.ok) {
-      throw new Error("Error sending payment path."); // Handle non-OK responses
+        throw new Error("Error sending payment path."); // Handle non-OK responses
       }
 
       // Parse the response JSON and extract the payment path records
-      const resps = await resp.json();
       return {
-      data: { sendPaymentPath: (resps._embedded || {}).records || [] },
+        data: { sendPaymentPath: (resps._embedded || {}).records || [] },
       };
     } catch (e) {
       // Log and rethrow the error for further handling

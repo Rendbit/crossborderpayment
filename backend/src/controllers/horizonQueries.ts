@@ -6,7 +6,6 @@
  * necessary calculations for the application's functionality.
  */
 
-import { Request, Response } from "express";
 import httpStatus from "http-status";
 import {
   AllWalletAssetsQuerySchema,
@@ -32,10 +31,7 @@ import { User } from "../models/User";
  * 3. Returns the conversion rates in the response or an appropriate error message if any step fails.
  */
 
-export const getConversionRates = async (
-  req: Request,
-  res: Response
-): Promise<any> => {
+export const getConversionRates = async (req: any, res: any): Promise<any> => {
   try {
     // Parse the input amount and symbol from the request body
     const { inputAmount, symbol }: ConversionRequest =
@@ -53,9 +49,10 @@ export const getConversionRates = async (
 
     // Check if the XLM data is available in the API response
     if (!xlmData.data || !xlmData.data.XLM) {
-      return res.error({
+      return res.status(httpStatus.EXPECTATION_FAILED).json({
         message: "Failed to fetch XLM rates",
         status: httpStatus.EXPECTATION_FAILED,
+        success: false,
       });
     }
 
@@ -71,9 +68,10 @@ export const getConversionRates = async (
 
     // Check if the fiat currency data request was successful
     if (!fiatMapResponse.ok) {
-      return res.error({
+      return res.status(httpStatus.EXPECTATION_FAILED).json({
         message: "Error fetching currency data",
         status: httpStatus.EXPECTATION_FAILED,
+        success: false,
       });
     }
 
@@ -85,9 +83,10 @@ export const getConversionRates = async (
 
     // Check if the target currency is found in the CoinMarketCap data
     if (!currencyData) {
-      return res.error({
+      return res.status(httpStatus.NOT_FOUND).json({
         message: `${symbol} not found in CoinMarketCap data`,
-        status: httpStatus.EXPECTATION_FAILED,
+        status: httpStatus.NOT_FOUND,
+        success: false,
       });
     }
 
@@ -99,9 +98,10 @@ export const getConversionRates = async (
 
     // Check if the conversion rate request was successful
     if (!conversionResponse.ok) {
-      return res.error({
+      return res.status(httpStatus.EXPECTATION_FAILED).json({
         message: "Error fetching conversion data",
         status: httpStatus.EXPECTATION_FAILED,
+        success: false,
       });
     }
 
@@ -109,7 +109,7 @@ export const getConversionRates = async (
     const conversionData = await conversionResponse.json();
     const usdToCurrencyRate = conversionData?.data?.quote?.USD?.price || 0;
 
-    return res.success({
+    return res.status(httpStatus.OK).json({
       data: {
         xlmToCurrency,
         currencyToXlm,
@@ -117,12 +117,14 @@ export const getConversionRates = async (
         currencyToUsd: 1 / usdToCurrencyRate,
       },
       status: httpStatus.OK,
+      success: true,
     });
   } catch (error: any) {
     console.error("Error fetching conversion rates:", error);
-    return res.error({
+    return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
       message: error.message || "Error fetching conversion rates",
       status: httpStatus.INTERNAL_SERVER_ERROR,
+      success: false,
     });
   }
 };
@@ -216,7 +218,7 @@ export const getConversionRate = async (
       ngnResponse.json(),
       currencyRespose.json(),
     ]);
-  
+
     // Iterate through each token in the token list to calculate equivalent balances
     param.tokenList.forEach((token) => {
       let assetCode = token.asset_code;
@@ -288,7 +290,6 @@ export const getConversionRate = async (
       // Filter out non-yield assets (assets whose code does not start with "y")
       param.tokenList.filter((asset) => !asset.asset_code.startsWith("y")),
     ]);
-
 
     // Calculate total balances for yield and non-yield assets in selected currency, USD, and NGN
     const [
@@ -366,7 +367,7 @@ export const getConversionRate = async (
  * 4. Categorizes assets into yield and non-yield assets and sorts them based on balance and asset type.
  * 5. Returns the processed data, including total balances and sorted asset lists, in the response.
  */
-export const getAllWalletAssets = async (req: any, res: Response) => {
+export const getAllWalletAssets = async (req: any, res: any) => {
   try {
     const user = req.user;
     const { currencyType }: GetAllWalletAssets =
@@ -381,9 +382,10 @@ export const getAllWalletAssets = async (req: any, res: Response) => {
     // Fetch wallet assets data from the Horizon API
     const resp = await fetch(url);
     if (!resp.ok) {
-      return res.error({
+      return res.status(httpStatus.EXPECTATION_FAILED).json({
         message: "Failed to get all assets",
         status: httpStatus.EXPECTATION_FAILED,
+        success: false,
       });
     }
     const walletAssets = await resp.json();
@@ -538,7 +540,7 @@ export const getAllWalletAssets = async (req: any, res: Response) => {
       }
     );
 
-    return res.success({
+    return res.status(httpStatus.OK).json({
       data: {
         currencyType: currencyType.trim().toUpperCase(),
         allWalletTotalBalanceInSelectedCurrency:
@@ -562,12 +564,14 @@ export const getAllWalletAssets = async (req: any, res: Response) => {
         nonYieldWalletAssets: sortedNonYieldAssets,
       },
       status: httpStatus.OK,
+      success: true,
     });
   } catch (error: any) {
     console.log("Error fetching all wallet assets. ", error);
-    return res.error({
+    return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
       message: error.message || "Error fetching all wallet assets.",
       status: httpStatus.INTERNAL_SERVER_ERROR,
+      success: false,
     });
   }
 };
@@ -581,12 +585,11 @@ export const getAllWalletAssets = async (req: any, res: Response) => {
  *
  * The function simply returns the predefined list of public assets as trust lines.
  */
-export const getAllTrustLines = async (
-  req: Request,
-  res: Response
-): Promise<any> => {
-  return res.success({
+export const getAllTrustLines = async (req: any, res: any): Promise<any> => {
+  return res.status(httpStatus.OK).json({
     data: { trustLines: PUBLIC_ASSETS },
+    status: httpStatus.OK,
+    success: true,
   });
 };
 
@@ -603,7 +606,7 @@ export const getAllTrustLines = async (
  * 3. Fetches the payment path based on the transaction type (send or receive).
  * 4. Returns the payment paths in the response or an appropriate error message if any step fails.
  */
-export const getPath = async (req: Request, res: Response): Promise<any> => {
+export const getPath = async (req: any, res: any): Promise<any> => {
   try {
     const { txType, sourceAssetCode, desAssetCode, amount }: GetPathRequest =
       GetPathSchema.parse(req.body);
@@ -612,6 +615,8 @@ export const getPath = async (req: Request, res: Response): Promise<any> => {
       process.env.STELLAR_NETWORK === "public"
         ? PUBLIC_ASSETS[sourceAssetCode as keyof typeof PUBLIC_ASSETS].issuer
         : TESTNET_ASSETS[sourceAssetCode as keyof typeof TESTNET_ASSETS].issuer;
+
+  
     const desAssetIssuer =
       process.env.STELLAR_NETWORK === "public"
         ? PUBLIC_ASSETS[desAssetCode as keyof typeof PUBLIC_ASSETS].issuer
@@ -635,14 +640,17 @@ export const getPath = async (req: Request, res: Response): Promise<any> => {
             amount: amount,
           });
 
-    return res.success({
-      data: { paths },
+    return res.status(httpStatus.OK).json({
+      data: paths.data,
+      status: httpStatus.OK,
+      success: true,
     });
   } catch (error: any) {
     console.log("Error getting path.", error);
-    return res.error({
+    return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
       message: error.message || "Error getting path.",
       status: httpStatus.INTERNAL_SERVER_ERROR,
+      success: false,
     });
   }
 };
@@ -660,46 +668,47 @@ export const getPath = async (req: Request, res: Response): Promise<any> => {
  * 3. Extracts the asset records from the API response and returns them in the response.
  * 4. Handles errors and returns appropriate error messages if any step fails.
  */
-export const fetchAssets = async (
-    req: Request,
-    res: Response
-): Promise<any> => {
-    try {
-        const { assetCode } = FetchAssetsSchema.parse(req.body);
-        const parsedQuery = PaginationQuerySchema.parse(req.query);
-        const limit: number = parsedQuery.limit ?? 10;
-        const page: number = parsedQuery.page ?? 0;
+export const fetchAssets = async (req: any, res: any): Promise<any> => {
+  try {
+    const { assetCode } = FetchAssetsSchema.parse(req.body);
+    const parsedQuery = PaginationQuerySchema.parse(req.query);
+    const limit = parsedQuery.limit ?? 10;
+    const page = parsedQuery.page ?? 0;
 
-        // Fetch assets from the Stellar Expert API based on the search criteria
-        const resp = await fetch(
-            `https://api.stellar.expert/explorer/${
-                process.env.STELLAR_NETWORK
-            }/asset?${new URLSearchParams({
-                search: assetCode,
-                sort: "rating",
-                order: "desc",
-                limit: String(limit),
-                cursor: String(page),
-            })}`
-        );
-        if (!resp.ok) {
-            return res.error({
-                message: "Failed to fetch assets",
-                status: httpStatus.EXPECTATION_FAILED,
-            });
-        }
-        const json = await resp.json();
-
-        // Extract and return the asset records from the API response
-        const records = json._embedded?.records;
-        return res.success({ data: { records } });
-    } catch (error: any) {
-        console.log("Error fetching assets. ", error);
-        return res.error({
-            message: error.message || "Error fetching assets",
-            status: httpStatus.INTERNAL_SERVER_ERROR,
-        });
+    // Fetch assets from the Stellar Expert API based on the search criteria
+    const resp = await fetch(
+      `https://api.stellar.expert/explorer/${
+        process.env.STELLAR_NETWORK
+      }/asset?${new URLSearchParams({
+        search: assetCode,
+        sort: "rating",
+        order: "desc",
+        limit: String(limit),
+        cursor: String(page),
+      })}`
+    );
+    if (!resp.ok) {
+      return res.status(httpStatus.EXPECTATION_FAILED).json({
+        message: "Failed to fetch assets",
+        status: httpStatus.EXPECTATION_FAILED,
+        success: false,
+      });
     }
+    const json = await resp.json();
+
+    // Extract and return the asset records from the API response
+    const records = json._embedded?.records;
+    return res
+      .status(httpStatus.OK)
+      .json({ data: { records }, status: httpStatus.OK, success: true });
+  } catch (error: any) {
+    console.log("Error fetching assets. ", error);
+    return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+      message: error.message || "Error fetching assets",
+      status: httpStatus.INTERNAL_SERVER_ERROR,
+      success: false,
+    });
+  }
 };
 
 /**
@@ -716,8 +725,8 @@ export const fetchAssets = async (
  * If no user is found, a 404 error response is sent. In case of any other error, a 500 error response is sent.
  */
 export const fetchUserDetailsWithInput = async (
-  req: Request,
-  res: Response
+  req: any,
+  res: any
 ): Promise<any> => {
   try {
     // Extract the search type and input value from the request body
@@ -736,18 +745,22 @@ export const fetchUserDetailsWithInput = async (
 
     // If no user is found, return a 404 error response
     if (!user) {
-      return res.error({
+      return res.status(httpStatus.NOT_FOUND).json({
         message: "User not found",
         status: httpStatus.NOT_FOUND,
+        success: false,
       });
     }
 
-    return res.success({ data: { user } });
+    return res
+      .status(httpStatus.OK)
+      .json({ data: { user }, status: httpStatus.OK });
   } catch (error: any) {
     console.log("Error fetching user details with input. ", error);
-    return res.error({
+    return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
       message: error.message || "Error fetching user details",
       status: httpStatus.INTERNAL_SERVER_ERROR,
+      success: false,
     });
   }
 };

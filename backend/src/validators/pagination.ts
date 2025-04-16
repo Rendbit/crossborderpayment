@@ -12,8 +12,8 @@ import { z } from "zod";
  */
 const PaginationQuerySchema = z
   .object({
-    limit: z.number().positive().optional(),
-    page: z.number().positive().optional(),
+    limit: z.any().optional(),
+    page: z.any().optional(),
   })
   .strict();
 

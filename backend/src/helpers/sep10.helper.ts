@@ -1,31 +1,31 @@
 /**
  * A helper class for handling Stellar SEP-10 authentication processes.
- * 
+ *
  * This class provides methods to:
  * - Retrieve and process a Stellar challenge transaction for authentication.
  * - Validate a Stellar SEP-10 challenge transaction to ensure it adheres to the protocol.
  * - Submit a signed challenge transaction to a web authentication endpoint to obtain an authentication token.
- * 
+ *
  * The helper interacts with Stellar's blockchain and utilizes the Stellar SDK to perform operations such as
  * signing, validating, and submitting transactions. It also integrates with encryption utilities to securely
  * handle private keys.
- * 
+ *
  * Key Features:
  * - Fetches challenge transactions from a server.
  * - Validates challenge transactions against expected criteria, including home domain and client account ID.
  * - Signs and submits challenge transactions to obtain authentication tokens.
- * 
+ *
  * Environment Variables:
  * - `SIGNING_KEY`: The Stellar signing key used for validating challenge transactions.
  * - `WEB_AUTH_ENDPOINT`: The endpoint for web authentication.
  * - `TRANSFER_SERVER_SEP0024`: The transfer server endpoint for SEP-0024.
  * - `HOME_DOMAIN_SHORT`: The short version of the home domain (without protocol).
  * - `HOME_DOMAIN`: The full home domain (with protocol).
- * 
+ *
  * Dependencies:
  * - Stellar SDK for blockchain operations.
  * - Encryption utilities for secure private key handling.
- * 
+ *
  * Usage:
  * - Instantiate the `Sep10Helper` class.
  * - Use `getChallengeTransaction` to retrieve and process a challenge transaction.
@@ -74,9 +74,14 @@ export class Sep10Helper {
     // const { WEB_AUTH_ENDPOINT, TRANSFER_SERVER_SEP0024, SIGNING_KEY } =
     //   await this.sep1Service.fetchStellarToml();
     // Retrieve necessary environment variables
-    const SIGNING_KEY = `${process.env.SIGNING_KEY}`;
-    const WEB_AUTH_ENDPOINT = `${process.env.WEB_AUTH_ENDPOINT}`;
-    const TRANSFER_SERVER_SEP0024 = `${process.env.TRANSFER_SERVER_SEP0024}`;
+    // const SIGNING_KEY = `${process.env.SIGNING_KEY}`;
+    // const WEB_AUTH_ENDPOINT = `${process.env.WEB_AUTH_ENDPOINT}`;
+    // const TRANSFER_SERVER_SEP0024 = `${process.env.TRANSFER_SERVER_SEP0024}`;
+
+    const SIGNING_KEY =
+      "GCQLPBWOQ5PAJYEEQBE7GDSY7X3LCYKFEBKOCNF3OUA6F74ORK74HVSQ";
+    const WEB_AUTH_ENDPOINT = "https://anchor.ngnc.online/auth";
+    const TRANSFER_SERVER_SEP0024 = "https://anchor.ngnc.online/sep24";
 
     // Validate the presence of required environment variables
     if (!(WEB_AUTH_ENDPOINT || TRANSFER_SERVER_SEP0024) || !SIGNING_KEY) {
@@ -226,7 +231,7 @@ export class Sep10Helper {
    * @param params.webAuthEndpoint - The URL of the web authentication endpoint to which the transaction will be submitted.
    * @param params.network - The Stellar network passphrase (e.g., "Test SDF Network ; September 2015" or "Public Global Stellar Network ; September 2015").
    * @param params.signingKey - The secret key used to sign the challenge transaction.
-   * 
+   *
    * @returns An object containing the authentication token returned by the server.
    * @throws Will throw an error if the `webAuthEndpoint` is missing, the server response is not OK, or the server returns an error message.
    */
@@ -239,7 +244,7 @@ export class Sep10Helper {
     // Ensure the web authentication endpoint is provided
     if (!webAuthEndpoint)
       throw new Error(
-      "Could not authenticate with server (missing toml entry)"
+        "Could not authenticate with server (missing toml entry)"
       );
 
     // Create a keypair from the provided signing key

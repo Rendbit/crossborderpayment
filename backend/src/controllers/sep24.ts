@@ -1,13 +1,11 @@
 import { Sep10Helper } from "../helpers/sep10.helper";
-import { Response } from "express";
 import httpStatus from "http-status";
 import {
   InitiateTransfer24ParamsSchema,
   InitiateTransfer24Schema,
   QueryTransfers24Schema,
 } from "../validators/sep24";
-
-const TRANSFER_SERVER_SEP0024 = `${process.env.TRANSFER_SERVER_SEP0024}`;
+import { Sep1Helper } from "../helpers/sep1.helper";
 
 /**
  * Handles the initiation of a SEP-24 transfer.
@@ -28,7 +26,7 @@ const TRANSFER_SERVER_SEP0024 = `${process.env.TRANSFER_SERVER_SEP0024}`;
  * @returns A success response containing the JSON response from the transfer server
  *          and the generated authentication token if the operation is successful.
  */
-export const initiateTransfer24 = async (req: any, res: Response) => {
+export const initiateTransfer24 = async (req: any, res: any) => {
   try {
     // Extract user information from the request
     const user = req.user;
@@ -40,12 +38,9 @@ export const initiateTransfer24 = async (req: any, res: Response) => {
       InitiateTransfer24Schema.parse(req.body);
 
     // Generate the authentication token and fetch the transfer server URL
-    const [
-      authToken,
-      // { TRANSFER_SERVER_SEP0024 }
-    ] = await Promise.all([
+    const [authToken, { TRANSFER_SERVER_SEP0024 }] = await Promise.all([
       Sep10Helper.getChallengeTransaction(user),
-      // this.sep1Service.fetchStellarToml(),
+      Sep1Helper.fetchStellarToml(),
     ]);
 
     // Make a POST request to the SEP-24 transfer server's interactive endpoint
@@ -70,23 +65,26 @@ export const initiateTransfer24 = async (req: any, res: Response) => {
 
     // Handle non-OK responses from the transfer server
     if (!resp.ok) {
-      return res.error({
+      return res.status(httpStatus.EXPECTATION_FAILED).json({
         message: `${json.error}`,
         status: httpStatus.EXPECTATION_FAILED,
+        success: false,
       });
     }
 
     // Return a success response with the server's JSON response and the auth token
-    return res.success({
+    return res.status(httpStatus.OK).json({
       data: { json, authToken },
       status: httpStatus.OK,
+      sucess: true,
     });
   } catch (error: any) {
     // Log the error and return an error response
     console.error("Error initiating transfer:", error);
-    return res.error({
+    return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
       message: error.message || "Error initiating transfer",
       status: httpStatus.INTERNAL_SERVER_ERROR,
+      success: false,
     });
   }
 };
@@ -110,7 +108,7 @@ export const initiateTransfer24 = async (req: any, res: Response) => {
  * @returns A success response containing the transaction data if the operation is successful.
  * Otherwise, an error response with the appropriate status and message.
  */
-export const queryTransfers24 = async (req: any, res: Response) => {
+export const queryTransfers24 = async (req: any, res: any) => {
   try {
     // Extract user information from the request
     const user = req.user;
@@ -120,12 +118,9 @@ export const queryTransfers24 = async (req: any, res: Response) => {
       QueryTransfers24Schema.parse(req.query);
 
     // Generate the authentication token and fetch the transfer server URL
-    const [
-      authToken,
-      //  { TRANSFER_SERVER_SEP0024 }
-    ] = await Promise.all([
+    const [authToken, { TRANSFER_SERVER_SEP0024 }] = await Promise.all([
       Sep10Helper.getChallengeTransaction(user),
-      // this.sep1Service.fetchStellarToml(),
+      Sep1Helper.fetchStellarToml(),
     ]);
 
     // Make a GET request to the SEP-24 transfer server to fetch transaction details
@@ -143,27 +138,30 @@ export const queryTransfers24 = async (req: any, res: Response) => {
     );
 
     // Parse the response JSON
-    const json = await resp.json();
+    const json: any = await resp.json();
 
     // Handle non-OK responses from the transfer server
     if (!resp.ok) {
-      return res.error({
+      return res.status(httpStatus.EXPECTATION_FAILED).json({
         message: `${json.error}`,
         status: httpStatus.EXPECTATION_FAILED,
+        success: false,
       });
     }
 
     // Return a success response with the transaction data
-    return res.success({
-      data: { json },
+    return res.status(httpStatus.OK).json({
+      data: json.transactions,
       status: httpStatus.OK,
+      success: true,
     });
   } catch (error: any) {
     // Log the error and return an error response
     console.error("Error querying transaction:", error);
-    return res.error({
+    return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
       message: error.message || "Error querying transaction",
       status: httpStatus.INTERNAL_SERVER_ERROR,
+      success: false,
     });
   }
 };
