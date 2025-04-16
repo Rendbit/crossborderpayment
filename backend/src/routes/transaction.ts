@@ -20,7 +20,7 @@ router.use(moderateLimiter);
  * @swagger
  * tags:
  *   - name: Transaction
- *     description: Endpoints for managing SEP-24 transactions, including initiating and querying transfers.
+ *     description: API endpoints for handling various transaction operations on the Stellar network.
  */
 
 /**
