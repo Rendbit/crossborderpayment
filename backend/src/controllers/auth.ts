@@ -442,7 +442,6 @@ export const register = async (req: any, res: any) => {
 
     // Generate OTP for email verification and set it in the internal cache service
     const otp = Helpers.generateOTP(4);
-    console.log(account._id);
     await internalCacheService.set(String(otp), account._id, 1000);
 
     // Sign JWT token and refresh token for the user

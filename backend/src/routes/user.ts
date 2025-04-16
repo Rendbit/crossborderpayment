@@ -76,10 +76,12 @@ router.post("/create-password", authenticate, createPassword);
  *         name: page
  *         schema:
  *           type: integer
+ *           default: 1
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
+ *           default: 10
  *     responses:
  *       200:
  *         description: Referrals fetched successfully
@@ -100,10 +102,12 @@ router.get("/referrals", authenticate, getUserReferrals);
  *         name: page
  *         schema:
  *           type: integer
+ *           default: 1
  *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
+ *           default: 10
  *     responses:
  *       200:
  *         description: Leaderboard fetched successfully

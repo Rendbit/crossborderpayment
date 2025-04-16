@@ -10,6 +10,7 @@ import {
   WalletDecryption,
   WalletEncryption,
 } from "../helpers/encryption-decryption.helper";
+import { Helpers } from "../helpers";
 
 export const getUserProfile = async (req: any, res: any) => {
   try {
@@ -65,8 +66,8 @@ export const getUserReferrals = async (req: any, res: any) => {
   try {
     const user = req.user;
     const parsedQuery = PaginationQuerySchema.parse(req.query);
-    const limit = parsedQuery.limit ?? 10;
-    const page = parsedQuery.page ?? 0;
+    const limit = Number(parsedQuery.limit) || 10;
+    const page = Number(parsedQuery.page) || 1;
     const skip = (page - 1) * limit;
 
     const [referrals, count] = await Promise.all([
@@ -98,8 +99,8 @@ export const getUserReferrals = async (req: any, res: any) => {
 export const getReferralLeaderBoard = async (req: any, res: any) => {
   try {
     const parsedQuery = PaginationQuerySchema.parse(req.query);
-    const limit = parsedQuery.limit ?? 10;
-    const page = parsedQuery.page ?? 0;
+    const limit = Number(parsedQuery.limit) || 10;
+    const page = Number(parsedQuery.page) || 1;
     const skip = (page - 1) * limit;
 
     const leaderboard = await User.aggregate([
@@ -149,7 +150,7 @@ export const updateProfile = async (req: any, res: any) => {
     const user = req.user;
     const { username, country } = req.body;
 
-    await User.findByIdAndUpdate(
+    const updatedProfile = await User.findByIdAndUpdate(
       user._id,
       {
         $set: {
@@ -163,24 +164,25 @@ export const updateProfile = async (req: any, res: any) => {
       .lean();
 
     const task = await Task.findOne({ name: TaskEnum.CompleteProfileSetup });
-    if (!task) throw new Error("Task not found");
 
-    await UserTask.create({
-      user: user._id,
-      task: task._id,
-      completed: true,
-    });
+    if (task) {
+      await UserTask.create({
+        user: user._id,
+        task: task._id,
+        completed: true,
+      });
 
-    const account = await User.findById(user._id).select(
-      "-password -encryptedPrivateKey"
-    );
-    if (!account) throw new Error("Account not found.");
+      const account = await User.findById(user._id).select(
+        "-password -encryptedPrivateKey"
+      );
+      if (!account) throw new Error("Account not found.");
 
-    user.xp += task.xp;
-    await account.save();
+      user.xp += task.xp;
+      await account.save();
+    }
 
     return res.status(httpStatus.OK).json({
-      data: null,
+      data: updatedProfile,
       status: httpStatus.OK,
       message: "Profile updated successfully",
       success: true,
@@ -199,7 +201,7 @@ export const updateProfileImage = async (req: any, res: any) => {
     const user = req.user;
     const { userProfileUrl } = req.body;
 
-    await User.findByIdAndUpdate(
+    const updatedProfile = await User.findByIdAndUpdate(
       user._id,
       {
         $set: {
@@ -212,9 +214,9 @@ export const updateProfileImage = async (req: any, res: any) => {
       .lean();
 
     return res.status(httpStatus.OK).json({
-      data: null,
+      data: updatedProfile,
       status: httpStatus.OK,
-      message:"Profile image updated successfully",
+      message: "Profile image updated successfully",
       success: true,
     });
   } catch (error: any) {
@@ -230,23 +232,67 @@ export const changePassword = async (req: any, res: any) => {
   try {
     const { oldPassword, password } = req.body;
     const user = req.user;
+    const strongRegexHigherCase = new RegExp("^(?=.*[A-Z])");
+    const strongRegexLowerCase = new RegExp("^(?=.*[a-z])");
+    const strongRegexNumber = new RegExp("^(?=.*[0-9])");
+    const strongRegexSpecialCharacter = /^(.*\W).*$/;
 
     if (!bcrypt.compareSync(oldPassword, user.password))
       throw new Error("Invalid old password");
 
-    const updatedPassword = await User.findByIdAndUpdate(
-      user._id,
-      {
-        $set: {
-          password: bcrypt.hashSync(password, 8),
-        },
-      },
-      { new: true }
-    )
-      .select("-password -encryptedPrivateKey")
-      .lean();
+    if (!password) {
+      return res.status(httpStatus.UNAUTHORIZED).json({
+        message: "Provide a password.",
+        status: httpStatus.UNAUTHORIZED,
+        success: false,
+        data: null,
+      });
+    }
 
-    if (!updatedPassword) throw new Error("Failed to change password.");
+    if (!Helpers.validateLength(password, 8, 40)) {
+      return res.status(httpStatus.UNAUTHORIZED).json({
+        message: "Password must be atleast 8 characters.",
+        status: httpStatus.UNAUTHORIZED,
+        success: false,
+        data: null,
+      });
+    }
+
+    if (!strongRegexHigherCase.test(password)) {
+      return res.status(httpStatus.UNAUTHORIZED).json({
+        message: "Password must contain an uppercase.",
+        status: httpStatus.UNAUTHORIZED,
+        success: false,
+        data: null,
+      });
+    }
+
+    if (!strongRegexLowerCase.test(password)) {
+      return res.status(httpStatus.UNAUTHORIZED).json({
+        message: "Password must contain a lowercase.",
+        status: httpStatus.UNAUTHORIZED,
+        success: false,
+        data: null,
+      });
+    }
+
+    if (!strongRegexNumber.test(password)) {
+      return res.status(httpStatus.UNAUTHORIZED).json({
+        message: "Password must contain a number.",
+        status: httpStatus.UNAUTHORIZED,
+        success: false,
+        data: null,
+      });
+    }
+
+    if (!strongRegexSpecialCharacter.test(password)) {
+      return res.status(httpStatus.UNAUTHORIZED).json({
+        message: "Password must contain a special character.",
+        status: httpStatus.UNAUTHORIZED,
+        success: false,
+        data: null,
+      });
+    }
 
     if (user.encryptedPrivateKey) {
       const decryptedPrivateKey = WalletDecryption.decryptPrivateKey(
@@ -254,14 +300,28 @@ export const changePassword = async (req: any, res: any) => {
         `${user.primaryEmail}${user.password}${user.pinCode}`
       );
 
-      await User.findByIdAndUpdate(
+      const updatedPassword = await User.findByIdAndUpdate(
         user._id,
         {
           $set: {
             password: bcrypt.hashSync(password, 8),
+          },
+        },
+        { new: true }
+      )
+        .select("-encryptedPrivateKey")
+        .lean();
+      if (!updatedPassword) throw new Error("Failed to change password.");
+      const hashedPasword = bcrypt.hashSync(password, 8);
+
+      await User.findByIdAndUpdate(
+        user._id,
+        {
+          $set: {
+            password: hashedPasword,
             encryptedPrivateKey: WalletEncryption.encryptPrivateKey(
               decryptedPrivateKey,
-              `${user.primaryEmail}${password}${user.pinCode}`
+              `${user.primaryEmail}${hashedPasword}${user.pinCode}`
             ),
           },
         },
@@ -274,7 +334,7 @@ export const changePassword = async (req: any, res: any) => {
     return res.status(httpStatus.OK).json({
       data: null,
       status: httpStatus.OK,
-      message:"Password changed successfully",
+      message: "Password changed successfully",
       success: true,
     });
   } catch (error: any) {
@@ -293,7 +353,7 @@ export const exportPrivateKey = async (req: any, res: any) => {
 
     if (!user.pinCode) throw new Error("Please create a pin code");
     if (pinCode !== user.pinCode) throw new Error("Invalid pin code");
-
+    console.log(user.encryptedPrivateKey);
     const decryptedPrivateKey = WalletDecryption.decryptPrivateKey(
       user.encryptedPrivateKey,
       `${user.primaryEmail}${user.password}${pinCode}`

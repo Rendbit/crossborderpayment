@@ -673,7 +673,7 @@ export const fetchAssets = async (req: any, res: any): Promise<any> => {
     const { assetCode } = FetchAssetsSchema.parse(req.body);
     const parsedQuery = PaginationQuerySchema.parse(req.query);
     const limit = parsedQuery.limit ?? 10;
-    const page = parsedQuery.page ?? 0;
+    const page = parsedQuery.page ?? 1;
 
     // Fetch assets from the Stellar Expert API based on the search criteria
     const resp = await fetch(

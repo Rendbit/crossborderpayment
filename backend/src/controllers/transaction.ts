@@ -747,7 +747,7 @@ export const getFiatTransactions = async (req: any, res: any) => {
     const user = req.user;
     const parsedQuery = PaginationQuerySchema.parse(req.query);
     const limit = parsedQuery.limit ?? 10;
-    const page = parsedQuery.page ?? 0;
+    const page = parsedQuery.page ?? 1;
     const skip = (page - 1) * limit;
     const fiatTransactions = await TransactionHistory.find({
       user: new Types.ObjectId(user._id),
