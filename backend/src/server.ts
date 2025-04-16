@@ -51,7 +51,7 @@ async function bootstrap() {
 
     // Swagger Docs
     app.use(
-      "/docs",
+      "/crossborderpayment/api/docs",
       swaggerUi.serve,
       swaggerUi.setup(swaggerSpec, {
         explorer: true,
