@@ -9,7 +9,10 @@ const { API_KEY } = process.env;
 
 export const apiKeyValidator = (req: any, res: any, next: any) => {
   const clientKey = req.headers["x-api-key"];
-  if (req.path.startsWith("/docs")) {
+  if (
+    req.path.startsWith("/crossborderpayment/api/docs") ||
+    req.path.startsWith("/docs")
+  ) {
     return next();
   }
   if (!clientKey) {
