@@ -25,7 +25,7 @@ router.use(moderateLimiter);
 
 /**
  * @swagger
- * /crossborderpayment/api/transaction/add-trustline:
+ * /api/transaction/add-trustline:
  *   post:
  *     tags: [Transaction]
  *     summary: Add a trustline for a given asset
@@ -54,7 +54,7 @@ router.post("/add-trustline", authenticate, addTrustline);
 
 /**
  * @swagger
- * /crossborderpayment/api/transaction/remove-trustline:
+ * /api/transaction/remove-trustline:
  *   post:
  *     tags: [Transaction]
  *     summary: Remove a trustline for a given asset
@@ -83,7 +83,7 @@ router.post("/remove-trustline", authenticate, removeTrustline);
 
 /**
  * @swagger
- * /crossborderpayment/api/transaction/payment:
+ * /api/transaction/payment:
  *   post:
  *     tags: [Transaction]
  *     summary: Send payment to a Stellar address
@@ -133,7 +133,7 @@ router.post("/payment", authenticate, payment);
 
 /**
  * @swagger
- * /crossborderpayment/api/transaction/swap:
+ * /api/transaction/swap:
  *   post:
  *     summary: Swap assets on Stellar network
  *     description: Swaps assets (e.g., USDT to BTC) on the Stellar network with a defined slippage.
@@ -184,7 +184,7 @@ router.post("/swap", authenticate, swap);
 
 /**
  * @swagger
- * /crossborderpayment/api/transaction/strictSend:
+ * /api/transaction/strictSend:
  *   post:
  *     summary: Strictly send asset to a specific address
  *     description: Sends assets from one account to another with strict validation.
@@ -227,7 +227,7 @@ router.post("/strictSend", authenticate, strictSend);
 
 /**
  * @swagger
- * /crossborderpayment/api/transaction/strictReceive:
+ * /api/transaction/strictReceive:
  *   post:
  *     summary: Receive assets with strict path payment on the Stellar network
  *     description: Handles a strict receive operation from the source asset to the destination asset on the Stellar network with slippage tolerance.
@@ -286,7 +286,7 @@ router.post("/strictReceive", authenticate, strictReceive);
 
 /**
  * @swagger
- * /crossborderpayment/api/transaction/fiat-all:
+ * /api/transaction/fiat-all:
  *   get:
  *     summary: Get fiat transaction history
  *     description: Retrieves paginated fiat transaction history for the authenticated user.

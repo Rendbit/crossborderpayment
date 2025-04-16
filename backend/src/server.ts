@@ -42,12 +42,12 @@ async function bootstrap() {
     app.use(apiKeyValidator);
 
     // Routes
-    app.use("/crossborderpayment/api/auth", authRoute);
-    app.use("/crossborderpayment/api/user", userRoute);
-    app.use("/crossborderpayment/api/mfa", mfaRoute);
-    app.use("/crossborderpayment/api/sep24", sep24Route);
-    app.use("/crossborderpayment/api/horizonQuery", horizonQueryRoute);
-    app.use("/crossborderpayment/api/transaction", transactionRoute);
+    app.use("/api/auth", authRoute);
+    app.use("/api/user", userRoute);
+    app.use("/api/mfa", mfaRoute);
+    app.use("/api/sep24", sep24Route);
+    app.use("/api/horizonQuery", horizonQueryRoute);
+    app.use("/api/transaction", transactionRoute);
 
     // Swagger Docs
     app.use(
@@ -75,7 +75,7 @@ async function bootstrap() {
     );
 
     // Default route
-    app.get("/crossborderpayment/api", (req, res) => {
+    app.get("/api", (req, res) => {
       res.send("Welcome to the RendBit Waitlist API");
     });
 
@@ -88,7 +88,7 @@ async function bootstrap() {
     const PORT = process.env.PORT || 8005;
     app.listen(PORT, () => {
       console.log(`🚀 Server is running on http://localhost:${PORT}`);
-      console.log(`🚀 View docs on http://localhost:${PORT}/crossborderpayment/api/docs`);
+      console.log(`🚀 View docs on ${process.env.BASE_URL}/docs`);
     });
   } catch (err: any) {
     console.error("❌ Failed to start app:", err);

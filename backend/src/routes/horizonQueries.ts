@@ -24,7 +24,7 @@ router.use(moderateLimiter);
 
 /**
  * @swagger
- * /crossborderpayment/api/horizonQuery/conversion:
+ * /api/horizonQuery/conversion:
  *   post:
  *     summary: Get conversion rates between XLM and a fiat currency
  *     description: Fetches conversion rates for XLM to a given currency and vice versa using CoinMarketCap API.
@@ -83,7 +83,7 @@ router.post("/conversion", getConversionRates);
 
 /**
  * @swagger
- * /crossborderpayment/api/horizonQuery/assets:
+ * /api/horizonQuery/assets:
  *   get:
  *     summary: Get all wallet assets for a user from Stellar Horizon
  *     tags:
@@ -111,7 +111,7 @@ router.get("/assets", authenticate, getAllWalletAssets);
 
 /**
  * @swagger
- * /crossborderpayment/api/horizonQuery/trustlines:
+ * /api/horizonQuery/trustlines:
  *   get:
  *     summary: Get all available trust lines (public assets)
  *     tags:
@@ -129,7 +129,7 @@ router.get("/trustlines", getAllTrustLines);
 
 /**
  * @swagger
- * /crossborderpayment/api/horizonQuery/path:
+ * /api/horizonQuery/path:
  *   post:
  *     summary: Get payment path on Stellar network
  *     tags:
@@ -174,7 +174,7 @@ router.post("/path", getPath);
 
 /**
  * @swagger
- * /crossborderpayment/api/horizonQuery/fetch-assets:
+ * /api/horizonQuery/fetch-assets:
  *   post:
  *     summary: Fetch assets from Stellar Expert API
  *     tags:
@@ -221,7 +221,7 @@ router.post("/fetch-assets", fetchAssets);
 
 /**
  * @swagger
- * /crossborderpayment/api/horizonQuery/fetch-user-details:
+ * /api/horizonQuery/fetch-user-details:
  *   post:
  *     summary: Fetch user details using input and search type
  *     tags:

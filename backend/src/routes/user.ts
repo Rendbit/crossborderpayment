@@ -24,7 +24,7 @@ router.use(moderateLimiter);
 
 /**
  * @swagger
- * /crossborderpayment/api/user/profile:
+ * /api/user/profile:
  *   get:
  *     summary: Get current user's profile
  *     tags: [User]
@@ -39,7 +39,7 @@ router.get("/profile", authenticate, getUserProfile);
 
 /**
  * @swagger
- * /crossborderpayment/api/user/create-password:
+ * /api/user/create-password:
  *   post:
  *     summary: Create password for user
  *     tags: [User]
@@ -64,7 +64,7 @@ router.post("/create-password", authenticate, createPassword);
 
 /**
  * @swagger
- * /crossborderpayment/api/user/referrals:
+ * /api/user/referrals:
  *   get:
  *     summary: Get user referrals
  *     tags: [User]
@@ -90,7 +90,7 @@ router.get("/referrals", authenticate, getUserReferrals);
 
 /**
  * @swagger
- * /crossborderpayment/api/user/referral-leaderboard:
+ * /api/user/referral-leaderboard:
  *   get:
  *     summary: Get referral leaderboard
  *     tags: [User]
@@ -116,7 +116,7 @@ router.get("/referral-leaderboard", authenticate, getReferralLeaderBoard);
 
 /**
  * @swagger
- * /crossborderpayment/api/user/update-profile:
+ * /api/user/update-profile:
  *   put:
  *     summary: Update user profile
  *     tags: [User]
@@ -142,7 +142,7 @@ router.put("/update-profile", authenticate, updateProfile);
 
 /**
  * @swagger
- * /crossborderpayment/api/user/update-profile-image:
+ * /api/user/update-profile-image:
  *   put:
  *     summary: Update user profile image
  *     tags: [User]
@@ -166,7 +166,7 @@ router.put("/update-profile-image", authenticate, updateProfileImage);
 
 /**
  * @swagger
- * /crossborderpayment/api/user/change-password:
+ * /api/user/change-password:
  *   put:
  *     summary: Change user password
  *     tags: [User]
@@ -193,7 +193,7 @@ router.put("/change-password", authenticate, changePassword);
 
 /**
  * @swagger
- * /crossborderpayment/api/user/export-private-key:
+ * /api/user/export-private-key:
  *   post:
  *     summary: Export user's private key
  *     tags: [User]
