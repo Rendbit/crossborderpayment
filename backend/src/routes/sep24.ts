@@ -17,7 +17,7 @@ router.use(moderateLimiter);
 
 /**
  * @swagger
- * /rendbit/crossborderpayment/api/sep24/initiate/{txType}:
+ * /crossborderpayment/api/sep24/initiate/{txType}:
  *   post:
  *     summary: Initiates a SEP-24 transfer
  *     tags: [SEP-24]
@@ -54,7 +54,7 @@ router.post("/initiate/:txType", authenticate, initiateTransfer24);
 
 /**
  * @swagger
- * /rendbit/crossborderpayment/api/sep24/query:
+ * /crossborderpayment/api/sep24/query:
  *   get:
  *     summary: Query SEP-24 transfer history
  *     tags: [SEP-24]

@@ -24,7 +24,7 @@ router.use(moderateLimiter);
 
 /**
  * @swagger
- * /rendbit/crossborderpayment/api/user/profile:
+ * /crossborderpayment/api/user/profile:
  *   get:
  *     summary: Get current user's profile
  *     tags: [User]
@@ -39,7 +39,7 @@ router.get("/profile", authenticate, getUserProfile);
 
 /**
  * @swagger
- * /rendbit/crossborderpayment/api/user/create-password:
+ * /crossborderpayment/api/user/create-password:
  *   post:
  *     summary: Create password for user
  *     tags: [User]
@@ -64,7 +64,7 @@ router.post("/create-password", authenticate, createPassword);
 
 /**
  * @swagger
- * /rendbit/crossborderpayment/api/user/referrals:
+ * /crossborderpayment/api/user/referrals:
  *   get:
  *     summary: Get user referrals
  *     tags: [User]
@@ -90,7 +90,7 @@ router.get("/referrals", authenticate, getUserReferrals);
 
 /**
  * @swagger
- * /rendbit/crossborderpayment/api/user/referral-leaderboard:
+ * /crossborderpayment/api/user/referral-leaderboard:
  *   get:
  *     summary: Get referral leaderboard
  *     tags: [User]
@@ -116,7 +116,7 @@ router.get("/referral-leaderboard", authenticate, getReferralLeaderBoard);
 
 /**
  * @swagger
- * /rendbit/crossborderpayment/api/user/update-profile:
+ * /crossborderpayment/api/user/update-profile:
  *   put:
  *     summary: Update user profile
  *     tags: [User]
@@ -142,7 +142,7 @@ router.put("/update-profile", authenticate, updateProfile);
 
 /**
  * @swagger
- * /rendbit/crossborderpayment/api/user/update-profile-image:
+ * /crossborderpayment/api/user/update-profile-image:
  *   put:
  *     summary: Update user profile image
  *     tags: [User]
@@ -166,7 +166,7 @@ router.put("/update-profile-image", authenticate, updateProfileImage);
 
 /**
  * @swagger
- * /rendbit/crossborderpayment/api/user/change-password:
+ * /crossborderpayment/api/user/change-password:
  *   put:
  *     summary: Change user password
  *     tags: [User]
@@ -193,7 +193,7 @@ router.put("/change-password", authenticate, changePassword);
 
 /**
  * @swagger
- * /rendbit/crossborderpayment/api/user/export-private-key:
+ * /crossborderpayment/api/user/export-private-key:
  *   post:
  *     summary: Export user's private key
  *     tags: [User]

@@ -42,16 +42,16 @@ async function bootstrap() {
     app.use(apiKeyValidator);
 
     // Routes
-    app.use("/rendbit/crossborderpayment/api/auth", authRoute);
-    app.use("/rendbit/crossborderpayment/api/user", userRoute);
-    app.use("/rendbit/crossborderpayment/api/mfa", mfaRoute);
-    app.use("/rendbit/crossborderpayment/api/sep24", sep24Route);
-    app.use("/rendbit/crossborderpayment/api/horizonQuery", horizonQueryRoute);
-    app.use("/rendbit/crossborderpayment/api/transaction", transactionRoute);
+    app.use("/crossborderpayment/api/auth", authRoute);
+    app.use("/crossborderpayment/api/user", userRoute);
+    app.use("/crossborderpayment/api/mfa", mfaRoute);
+    app.use("/crossborderpayment/api/sep24", sep24Route);
+    app.use("/crossborderpayment/api/horizonQuery", horizonQueryRoute);
+    app.use("/crossborderpayment/api/transaction", transactionRoute);
 
     // Swagger Docs
     app.use(
-      "/api-docs",
+      "/crossborderpayment/api/docs",
       swaggerUi.serve,
       swaggerUi.setup(swaggerSpec, {
         explorer: true,
@@ -75,19 +75,20 @@ async function bootstrap() {
     );
 
     // Default route
-    app.get("/rendbit/crossborderpayment/api", (req, res) => {
+    app.get("/crossborderpayment/api", (req, res) => {
       res.send("Welcome to the RendBit Waitlist API");
     });
 
     // 404 handler
-    app.use((req, res) => {
-      res.status(404).json({ message: "Route not found" });
-    });
+    // app.use((req, res) => {
+    //   res.status(404).json({ message: "Route not found" });
+    // });
 
     // Start server
     const PORT = process.env.PORT || 8005;
     app.listen(PORT, () => {
       console.log(`🚀 Server is running on http://localhost:${PORT}`);
+      console.log(`🚀 View docs on http://localhost:${PORT}/crossborderpayment/api/docs`);
     });
   } catch (err: any) {
     console.error("❌ Failed to start app:", err);

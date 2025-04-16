@@ -21,7 +21,7 @@ router.use(moderateLimiter);
 
 /**
  * @swagger
- * /rendbit/crossborderpayment/api/mfa/generate-secret:
+ * /crossborderpayment/api/mfa/generate-secret:
  *   get:
  *     summary: Generate or fetch user's MFA secret and QR code URL
  *     tags: [MFA]
@@ -36,7 +36,7 @@ router.get("/generate-secret", authenticate, generateSecret);
 
 /**
  * @swagger
- * /rendbit/crossborderpayment/api/mfa/setup:
+ * /crossborderpayment/api/mfa/setup:
  *   post:
  *     summary: Setup MFA with a verification code
  *     tags: [MFA]
@@ -62,7 +62,7 @@ router.post("/setup", authenticate, setupMFA);
 
 /**
  * @swagger
- * /rendbit/crossborderpayment/api/mfa/verify:
+ * /crossborderpayment/api/mfa/verify:
  *   post:
  *     summary: Verify MFA code
  *     tags: [MFA]
@@ -88,7 +88,7 @@ router.post("/verify", authenticate, verifyOTP);
 
 /**
  * @swagger
- * /rendbit/crossborderpayment/api/mfa/settings:
+ * /crossborderpayment/api/mfa/settings:
  *   get:
  *     summary: Get MFA status and settings
  *     tags: [MFA]
@@ -103,7 +103,7 @@ router.get("/settings", authenticate, getMFASetting);
 
 /**
  * @swagger
- * /rendbit/crossborderpayment/api/mfa/toggle:
+ * /crossborderpayment/api/mfa/toggle:
  *   put:
  *     summary: Enable or disable MFA
  *     tags: [MFA]

@@ -28,7 +28,7 @@ router.use(moderateLimiter);
 
 /**
  * @swagger
- * /rendbit/crossborderpayment/api/auth/login:
+ * /crossborderpayment/api/auth/login:
  *   post:
  *     summary: Login user
  *     description: Authenticates a user with email and password and returns JWT tokens.
@@ -69,7 +69,7 @@ router.post("/login", loginLimiter, login);
 
 /**
  * @swagger
- * /rendbit/crossborderpayment/api/auth/refresh-token:
+ * /crossborderpayment/api/auth/refresh-token:
  *   get:
  *     summary: Refresh user authentication tokens
  *     description: Reissues JWT and refresh tokens using a valid refresh token.
@@ -90,7 +90,7 @@ router.get("/refresh-token", authorizeRefreshToken);
 
 /**
  * @swagger
- * /rendbit/crossborderpayment/api/auth/request-email-validation:
+ * /crossborderpayment/api/auth/request-email-validation:
  *   post:
  *     summary: Validate and check if email is available
  *     description: Verifies if a given work email is valid and not already taken.
@@ -125,7 +125,7 @@ router.post("/request-email-validation", requestEmailValidation);
 
 /**
  * @swagger
- * /rendbit/crossborderpayment/api/auth/register:
+ * /crossborderpayment/api/auth/register:
  *   post:
  *     summary: Register a new user
  *     description: Registers a new user using email and password. Password must meet strong criteria.
@@ -186,7 +186,7 @@ router.post("/register", register);
 
 /**
  * @swagger
- * /rendbit/crossborderpayment/api/auth/wallet/create:
+ * /crossborderpayment/api/auth/wallet/create:
  *   post:
  *     summary: Create Stellar wallet for user
  *     description: Generates a Stellar wallet (public/private keypair) for the authenticated user. Encrypts private key using email, password, and pin code. Only one wallet per user is allowed.
@@ -239,7 +239,7 @@ router.post("/wallet/create", authenticate, createWallet);
 
 /**
  * @swagger
- * /rendbit/crossborderpayment/api/auth/forgot-password:
+ * /crossborderpayment/api/auth/forgot-password:
  *   post:
  *     summary: Request OTP to reset password
  *     description: Sends an OTP to the user's email for password reset if the email is valid and registered.
@@ -273,7 +273,7 @@ router.post("/forgot-password", forgotPassword);
 
 /**
  * @swagger
- * /rendbit/crossborderpayment/api/auth/forgot-password/resend:
+ * /crossborderpayment/api/auth/forgot-password/resend:
  *   post:
  *     summary: Resend OTP for password reset
  *     description: Resends the OTP to the user's registered email for resetting password.
@@ -307,7 +307,7 @@ router.post("/forgot-password/resend", resendForgotPasswordOTP);
 
 /**
  * @swagger
- * /rendbit/crossborderpayment/api/auth/verify-email:
+ * /crossborderpayment/api/auth/verify-email:
  *   post:
  *     summary: Verify user email using OTP
  *     description: Verifies a user's email by checking the OTP sent to their email.
@@ -343,7 +343,7 @@ router.post("/verify-email", verifyEmail);
 
 /**
  * @swagger
- * /rendbit/crossborderpayment/api/auth/resend-verification-otp:
+ * /crossborderpayment/api/auth/resend-verification-otp:
  *   post:
  *     summary: Resend OTP for email verification
  *     description: Resends a one-time password (OTP) to the user's email address for verification purposes.
@@ -377,7 +377,7 @@ router.post("/resend-verification-otp", resendEmailVerificationOTP);
 
 /**
  * @swagger
- * /rendbit/crossborderpayment/api/auth/reset-password:
+ * /crossborderpayment/api/auth/reset-password:
  *   post:
  *     summary: Reset password using OTP
  *     description: Allows the user to reset their password by providing their email, OTP, and new password.
