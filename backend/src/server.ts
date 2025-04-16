@@ -79,10 +79,10 @@ async function bootstrap() {
       res.send("Welcome to the RendBit Waitlist API");
     });
 
-    // 404 handler
-    app.use((req, res) => {
-      res.status(404).json({ message: "Route not found" });
-    });
+    // // 404 handler
+    // app.use((req, res) => {
+    //   res.status(404).json({ message: "Route not found" });
+    // });
 
     // Start server
     const PORT = process.env.PORT || 8005;
