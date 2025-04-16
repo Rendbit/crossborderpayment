@@ -51,9 +51,7 @@ async function bootstrap() {
 
     // Swagger Docs
     app.use(
-      process.env.NODE_ENV === "production"
-        ? "/docs"
-        : "crossborderpayment/api/docs",
+      "/docs",
       swaggerUi.serve,
       swaggerUi.setup(swaggerSpec, {
         explorer: true,
@@ -90,9 +88,7 @@ async function bootstrap() {
     const PORT = process.env.PORT || 8005;
     app.listen(PORT, () => {
       console.log(`🚀 Server is running on http://localhost:${PORT}`);
-      console.log(
-        `🚀 View docs on http://localhost:${PORT}/crossborderpayment/api/docs`
-      );
+      console.log(`🚀 View docs on http://localhost:${PORT}/crossborderpayment/api/docs`);
     });
   } catch (err: any) {
     console.error("❌ Failed to start app:", err);
