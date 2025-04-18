@@ -6,7 +6,8 @@
 }
 
 body {
-  background: rgb(1, 1, 1);
+  background: #02001C;
+  font-family: 'Red Hat Display', sans-serif;
 }
 
 input[type="number"]::-webkit-inner-spin-button, 

@@ -1,7 +1,30 @@
 import React from "react";
+import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
+import Dashboard from "./pages/Dashboard";
+import Login from "./pages/Login";
+import Deposit from "./pages/Deposit";
+import DepositCrypto from "./pages/DepositCrypto";
+import DepositeFiat from "./pages/DepositFiat";
+import Withdraw from "./pages/Withdraw";
+import WithdrawCrypto from "./pages/WIthdrawCrypto";
+import WithdrawFiat from "./pages/WithdrawFiat";
 
 const App: React.FC = () => {
-  return <h1 className="text-white text-4xl text-center">RendBit Token Launchpad</h1>;
+  return (
+    <HashRouter>
+      <Routes>
+        <Route path="/" element={<Navigate to="/dashboard" />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/deposit" element={<Deposit />} />
+        <Route path="/deposit-crypto" element={<DepositCrypto />} />
+        <Route path="/deposit-fiat" element={<DepositeFiat />} />
+        <Route path="/withdraw" element={<Withdraw />} />
+        <Route path="/withdraw-crypto" element={<WithdrawCrypto />} />
+        <Route path="/withdraw-fiat" element={<WithdrawFiat />} />
+        <Route path="/login" element={<Login />} />
+      </Routes>
+    </HashRouter>
+  );
 };
 
 export default App;
