@@ -13,7 +13,7 @@ const WithdrawFiat: React.FC = () => {
         <SideNav />
         <div className="w-full lg:w-[84%] ml-auto">
           <TopNav />
-          <div className="py-[20px] px-[10px] h-[100vh]  mt-[160px] lg:mx-[50px]">
+          <div className="py-[20px] px-[10px] h-[100vh]  mt-[90px] lg:mx-[50px]">
             <h1 className="text-white text-[32px] font-semibold">
               Withdraw Crypto
             </h1>

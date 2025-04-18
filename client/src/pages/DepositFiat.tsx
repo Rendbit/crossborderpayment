@@ -13,7 +13,7 @@ const DepositFiat: React.FC = () => {
         <SideNav />
         <div className="w-full lg:w-[84%] ml-auto">
           <TopNav />
-          <div className="py-[20px] px-[10px] h-[100vh]  mt-[160px] lg:mx-[50px]">
+          <div className="py-[20px] px-[10px] h-[100vh]  mt-[90px] lg:mx-[50px]">
             <h1 className="text-white text-[32px] font-semibold">Deposit Crypto</h1>
             <div className="border mt-5 border-[#FFFFFF]/50 rounded-2xl p-5 lg:w-[500px] w-full lg:ml-0 lg:mr-auto mx-auto">
               <div>
