@@ -30,100 +30,62 @@ import { User } from "../models/User";
  * 2. Uses the retrieved currency ID to fetch the conversion rate of the specified currency to a target currency (e.g., USD).
  * 3. Returns the conversion rates in the response or an appropriate error message if any step fails.
  */
-
 export const getConversionRates = async (req: any, res: any): Promise<any> => {
   try {
-    // Parse the input amount and symbol from the request body
-    const { inputAmount, symbol }: ConversionRequest =
+    const { inputAmount, inputSymbol, outputSymbol }: ConversionRequest =
       ConversionRequestSchema.parse(req.body);
+    const fiatList = ["NGNC", "GHSC", "KHSC"];
 
-    // Set up headers for the API requests, including the CoinMarketCap API key
-    const headers = {
-      "X-CMC_PRO_API_KEY": `${process.env.CMC_PRO_API_KEY}`,
+    const cleanSymbol = (symbol: string) => {
+      let upperSymbol = symbol.toUpperCase();
+      if (upperSymbol === "NATIVE") return "XLM";
+
+      if (upperSymbol.startsWith("Y")) upperSymbol = upperSymbol.slice(1);
+      if (upperSymbol.endsWith("C")) upperSymbol = upperSymbol.slice(0, -1);
+
+      return fiatList.includes(upperSymbol)
+        ? upperSymbol
+        : symbol.toUpperCase();
     };
 
-    // Construct the URL to fetch XLM rates from the CoinMarketCap API
-    const xlmUrl = `${process.env.CMC_API_URL}${symbol}`;
-    const xlmResponse = await fetch(xlmUrl, { headers });
-    const xlmData = await xlmResponse.json();
+    const input = cleanSymbol(inputSymbol);
+    const output = cleanSymbol(outputSymbol);
 
-    // Check if the XLM data is available in the API response
-    if (!xlmData.data || !xlmData.data.XLM) {
-      return res.status(httpStatus.EXPECTATION_FAILED).json({
-        message: "Failed to fetch XLM rates",
-        status: httpStatus.EXPECTATION_FAILED,
-        success: false,
-      });
-    }
+    console.log({ input, output });
 
-    // Calculate the conversion rates for XLM to the target currency and vice versa
-    const xlmToCurrency = xlmData.data.XLM.quote[symbol]?.price;
-    const currencyToXlm = Number(inputAmount) / xlmToCurrency;
+    const url = `https://pro-api.coinmarketcap.com/v1/tools/price-conversion?amount=${inputAmount}&symbol=${input}&convert=${output}`;
 
-    // Fetch the list of fiat currencies from the CoinMarketCap API
-    const fiatMapResponse = await fetch(
-      `https://pro-api.coinmarketcap.com/v1/fiat/map`,
-      { headers }
-    );
-
-    // Check if the fiat currency data request was successful
-    if (!fiatMapResponse.ok) {
-      return res.status(httpStatus.EXPECTATION_FAILED).json({
-        message: "Error fetching currency data",
-        status: httpStatus.EXPECTATION_FAILED,
-        success: false,
-      });
-    }
-
-    // Parse the fiat currency data from the API response
-    const fiatData = await fiatMapResponse.json();
-    const currencyData = fiatData?.data?.find(
-      (currency: { symbol: string }) => currency.symbol === symbol
-    );
-
-    // Check if the target currency is found in the CoinMarketCap data
-    if (!currencyData) {
-      return res.status(httpStatus.NOT_FOUND).json({
-        message: `${symbol} not found in CoinMarketCap data`,
-        status: httpStatus.NOT_FOUND,
-        success: false,
-      });
-    }
-
-    // Fetch the conversion rate of the target currency to USD
-    const conversionResponse = await fetch(
-      `https://pro-api.coinmarketcap.com/v1/tools/price-conversion?amount=1&id=${currencyData.id}&convert=USD`,
-      { headers }
-    );
-
-    // Check if the conversion rate request was successful
-    if (!conversionResponse.ok) {
-      return res.status(httpStatus.EXPECTATION_FAILED).json({
-        message: "Error fetching conversion data",
-        status: httpStatus.EXPECTATION_FAILED,
-        success: false,
-      });
-    }
-
-    // Parse the conversion rate data from the API response
-    const conversionData = await conversionResponse.json();
-    const usdToCurrencyRate = conversionData?.data?.quote?.USD?.price || 0;
-
-    return res.status(httpStatus.OK).json({
-      data: {
-        xlmToCurrency,
-        currencyToXlm,
-        usdToCurrencyRate,
-        currencyToUsd: 1 / usdToCurrencyRate,
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "X-CMC_PRO_API_KEY": `${process.env.CMC_PRO_API_KEY}`,
+        Accept: "application/json",
       },
-      status: httpStatus.OK,
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      console.log({ data });
+      throw new Error(`Error fetching conversion data: ${response.statusText}`);
+    }
+
+    const result = data.data;
+
+    return res.status(200).json({
+      data: {
+        inputAmount,
+        inputSymbol: input,
+        outputSymbol: output,
+        originalAmount: inputAmount,
+        convertedAmount: result.quote[output].price,
+        rate: result.quote[output].price / inputAmount,
+      },
       success: true,
     });
   } catch (error: any) {
-    console.error("Error fetching conversion rates:", error);
-    return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
-      message: error.message || "Error fetching conversion rates",
-      status: httpStatus.INTERNAL_SERVER_ERROR,
+    console.error("Conversion error:", error.message);
+    return res.status(500).json({
+      message: error.message || "Conversion failed",
       success: false,
     });
   }
@@ -175,8 +137,17 @@ export const getConversionRate = async (
       })
       .join(",");
 
+    const currencyType =
+      param.currencyType.toUpperCase() === "NATIVE"
+        ? "XLM"
+        : param.currencyType.endsWith("c") ||
+          param.currencyType.endsWith("C") ||
+          param.currencyType.startsWith("y")
+        ? param.currencyType.slice(0, -1)
+        : param.currencyType;
+
     // Construct API URLs for fetching conversion rates in the selected currency, USD, and NGN
-    const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${symbols}&convert=${param.currencyType
+    const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${symbols}&convert=${currencyType
       .trim()
       .toUpperCase()}`;
     const usdUrl = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${symbols}&convert=USD`;
@@ -197,8 +168,17 @@ export const getConversionRate = async (
         fetch(currencyUrl, { headers }), // Fetch currency exchange rates
       ]);
 
+    // Parse the JSON responses from the APIs
+    const [data, usdData, ngnData, currencyData] = await Promise.all([
+      response.json(),
+      usdResponse.json(),
+      ngnResponse.json(),
+      currencyRespose.json(),
+    ]);
+
     // Check if the responses are successful, throw errors if any request fails
     if (!response.ok) {
+      console.log({ data });
       throw new Error("Failed to fetch asset rates for the selected currency");
     }
     if (!usdResponse.ok) {
@@ -210,14 +190,6 @@ export const getConversionRate = async (
     if (!currencyRespose.ok) {
       throw new Error("Failed to fetch currency exchange rates");
     }
-
-    // Parse the JSON responses from the APIs
-    const [data, usdData, ngnData, currencyData] = await Promise.all([
-      response.json(),
-      usdResponse.json(),
-      ngnResponse.json(),
-      currencyRespose.json(),
-    ]);
 
     // Iterate through each token in the token list to calculate equivalent balances
     param.tokenList.forEach((token) => {
@@ -240,8 +212,7 @@ export const getConversionRate = async (
       if (data.data && data.data[symbol]) {
         // Retrieve the conversion rates for the selected currency, USD, and NGN
         const selectedCurrencyRate =
-          data.data[symbol].quote[param.currencyType.trim().toUpperCase()]
-            .price;
+          data.data[symbol].quote[currencyType.trim().toUpperCase()].price;
         const usdRate = usdData.data[symbol].quote.USD.price;
         const ngnRate = ngnData.data[symbol].quote.NGN.price;
 
@@ -381,14 +352,17 @@ export const getAllWalletAssets = async (req: any, res: any) => {
 
     // Fetch wallet assets data from the Horizon API
     const resp = await fetch(url);
-    if (!resp.ok) {
-      return res.status(httpStatus.EXPECTATION_FAILED).json({
-        message: "Failed to get all assets",
-        status: httpStatus.EXPECTATION_FAILED,
-        success: false,
-      });
-    }
     const walletAssets = await resp.json();
+    if (walletAssets.status === 404) {
+      throw new Error(
+        "Fund your wallet with at least 5 XLM to activate your account."
+      );
+    }
+    if (!resp.ok) {
+      throw new Error(
+        walletAssets.details || "Failed to fetch all wallet assets"
+      );
+    }
 
     // Process the fetched data and format the response
     const data = walletAssets.balances;
@@ -586,11 +560,20 @@ export const getAllWalletAssets = async (req: any, res: any) => {
  * The function simply returns the predefined list of public assets as trust lines.
  */
 export const getAllTrustLines = async (req: any, res: any): Promise<any> => {
-  return res.status(httpStatus.OK).json({
-    data: { trustLines: PUBLIC_ASSETS },
-    status: httpStatus.OK,
-    success: true,
-  });
+  try {
+    return res.status(httpStatus.OK).json({
+      data: { trustLines: PUBLIC_ASSETS },
+      status: httpStatus.OK,
+      success: true,
+    });
+  } catch (error: any) {
+    console.error("Error fetching trust lines: ", error);
+    return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+      message: error.message || "Error fetching trust lines",
+      status: httpStatus.INTERNAL_SERVER_ERROR,
+      success: false,
+    });
+  }
 };
 
 /**
@@ -616,7 +599,6 @@ export const getPath = async (req: any, res: any): Promise<any> => {
         ? PUBLIC_ASSETS[sourceAssetCode as keyof typeof PUBLIC_ASSETS].issuer
         : TESTNET_ASSETS[sourceAssetCode as keyof typeof TESTNET_ASSETS].issuer;
 
-  
     const desAssetIssuer =
       process.env.STELLAR_NETWORK === "public"
         ? PUBLIC_ASSETS[desAssetCode as keyof typeof PUBLIC_ASSETS].issuer

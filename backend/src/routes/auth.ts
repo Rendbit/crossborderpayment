@@ -17,7 +17,7 @@ import { apiKeyValidator } from "../middlewares/apiKeyValidator";
 
 const router = express.Router();
 router.use(apiKeyValidator);
-router.use(moderateLimiter);
+// router.use(moderateLimiter);
 
 /**
  * @swagger
@@ -186,7 +186,7 @@ router.post("/register", register);
 
 /**
  * @swagger
- * /api/auth/wallet/create:
+ * /api/auth/create-wallet:
  *   post:
  *     summary: Create Stellar wallet for user
  *     description: Generates a Stellar wallet (public/private keypair) for the authenticated user. Encrypts private key using email, password, and pin code. Only one wallet per user is allowed.
@@ -235,7 +235,7 @@ router.post("/register", register);
  *       500:
  *         description: Server error
  */
-router.post("/wallet/create", authenticate, createWallet);
+router.post("/create-wallet", authenticate, createWallet);
 
 /**
  * @swagger
@@ -273,7 +273,7 @@ router.post("/forgot-password", forgotPassword);
 
 /**
  * @swagger
- * /api/auth/forgot-password/resend:
+ * /api/auth/resend-forgot-password-otp:
  *   post:
  *     summary: Resend OTP for password reset
  *     description: Resends the OTP to the user's registered email for resetting password.
@@ -303,7 +303,7 @@ router.post("/forgot-password", forgotPassword);
  *       500:
  *         description: Internal server error
  */
-router.post("/forgot-password/resend", resendForgotPasswordOTP);
+router.post("/resend-forgot-password-otp", resendForgotPasswordOTP);
 
 /**
  * @swagger
@@ -343,7 +343,7 @@ router.post("/verify-email", verifyEmail);
 
 /**
  * @swagger
- * /api/auth/resend-verification-otp:
+ * /api/auth/resend-verify-email-otp:
  *   post:
  *     summary: Resend OTP for email verification
  *     description: Resends a one-time password (OTP) to the user's email address for verification purposes.
@@ -373,7 +373,7 @@ router.post("/verify-email", verifyEmail);
  *       500:
  *         description: Internal server error
  */
-router.post("/resend-verification-otp", resendEmailVerificationOTP);
+router.post("/resend-verify-email-otp", resendEmailVerificationOTP);
 
 /**
  * @swagger

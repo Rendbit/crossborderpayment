@@ -596,7 +596,7 @@ export const validateUser = async (details: any) => {
 export const createWallet = async (req: any, res: any) => {
   try {
     const user = req.user;
-    const { pinCode } = req.body;
+    const { pinCode, username, country } = req.body;
 
     // 👉 Check first: if user already has a wallet, do nothing else
     if (user.stellarPublicKey) {
@@ -632,6 +632,8 @@ export const createWallet = async (req: any, res: any) => {
               `${user.primaryEmail}${hashedPasword}${pinCode}`
             ),
             pinCode: pinCode,
+            username: username,
+            country: country,
           },
         },
         { new: true }

@@ -9,12 +9,13 @@ import {
   strictReceive,
   strictSend,
   swap,
+  getTransactions
 } from "../controllers/transaction";
 import { apiKeyValidator } from "../middlewares/apiKeyValidator";
 
 const router = express.Router();
 router.use(apiKeyValidator);
-router.use(moderateLimiter);
+// router.use(moderateLimiter);
 
 /**
  * @swagger
@@ -329,5 +330,38 @@ router.post("/strictReceive", authenticate, strictReceive);
  *         description: Internal server error while fetching fiat transactions.
  */
 router.get("/fiat-all", authenticate, getFiatTransactions);
+
+/**
+ * @swagger
+ * /api/transaction/crypto-all:
+ *   get:
+ *     summary: Get crypto transaction history
+ *     description: Retrieves crypto transaction history for the authenticated user.
+ *     tags: [Transaction]
+ *     security:
+ *       - bearerAuth: []
+ *       - apiKey: []
+ *     responses:
+ *       200:
+ *         description: Crypto transaction history retrieved successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                 status:
+ *                   type: integer
+ *                   example: 200
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *       500:
+ *         description: Internal server error while fetching fiat transactions.
+ */
+router.get("/crypto-all", authenticate, getTransactions);
 
 export default router;

@@ -76,7 +76,7 @@ export const initiateTransfer24 = async (req: any, res: any) => {
     return res.status(httpStatus.OK).json({
       data: { json, authToken },
       status: httpStatus.OK,
-      sucess: true,
+      success: true,
     });
   } catch (error: any) {
     // Log the error and return an error response
@@ -142,11 +142,8 @@ export const queryTransfers24 = async (req: any, res: any) => {
 
     // Handle non-OK responses from the transfer server
     if (!resp.ok) {
-      return res.status(httpStatus.EXPECTATION_FAILED).json({
-        message: `${json.error}`,
-        status: httpStatus.EXPECTATION_FAILED,
-        success: false,
-      });
+      console.log(json);
+      throw new Error(json.error || "Failed to query transaction.");
     }
 
     // Return a success response with the transaction data

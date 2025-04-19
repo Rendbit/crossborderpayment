@@ -1,3 +1,4 @@
+
 import dotenv from "dotenv";
 import httpStatus from "http-status";
 
@@ -19,7 +20,7 @@ export const apiKeyValidator = (req: any, res: any, next: any) => {
       success: false,
     });
   } else if (clientKey && clientKey !== API_KEY) {
-    console.log({ API_KEY, clientKey });
+    console.log({ ExpectedKey: API_KEY, KeyFromUser: clientKey });
     return res.status(httpStatus.UNAUTHORIZED).json({
       status: httpStatus.UNAUTHORIZED,
       message: "Invalid API key",

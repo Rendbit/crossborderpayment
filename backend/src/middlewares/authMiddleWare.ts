@@ -6,9 +6,10 @@ export async function authenticate(req: any, res: any, next: any) {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.error({
+    return res.status(httpStatus.UNAUTHORIZED).json({
       message: "Unauthorized",
       status: httpStatus.UNAUTHORIZED,
+      success: false
     });
   }
 
@@ -21,26 +22,30 @@ export async function authenticate(req: any, res: any, next: any) {
       req.user = { ...user, decoded };
       next();
     } else {
-      return res.error({
+      return res.status(httpStatus.UNAUTHORIZED).json({
         message: "Invalid token payload",
         status: httpStatus.UNAUTHORIZED,
+        success: false
       });
     }
   } catch (error: any) {
     if (error.name === "TokenExpiredError") {
-      return res.error({
+      return res.status(httpStatus.UNAUTHORIZED).json({
         message: "Login has expired",
         status: httpStatus.UNAUTHORIZED,
+        success: false
       });
     } else if (error.name === "JsonWebTokenError") {
-      return res.error({
+      return res.status(httpStatus.UNAUTHORIZED).json({
         message: "Invalid token",
         status: httpStatus.UNAUTHORIZED,
+        success: false
       });
     } else {
-      return res.error({
+      return res.status(httpStatus.UNAUTHORIZED).json({
         message: "Authentication error",
         status: httpStatus.UNAUTHORIZED,
+        success: false
       });
     }
   }

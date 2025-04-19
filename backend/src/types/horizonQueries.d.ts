@@ -1,6 +1,7 @@
 interface ConversionRequest {
   inputAmount: number;
-  symbol: string;
+  inputSymbol: string;
+  outputSymbol: string;
 }
 interface GetConversionRate {
   tokenList: any[];

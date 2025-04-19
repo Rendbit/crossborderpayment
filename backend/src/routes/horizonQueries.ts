@@ -13,7 +13,7 @@ import { apiKeyValidator } from "../middlewares/apiKeyValidator";
 
 const router = express.Router();
 router.use(apiKeyValidator);
-router.use(moderateLimiter);
+// router.use(moderateLimiter);
 
 /**
  * @swagger
@@ -24,7 +24,7 @@ router.use(moderateLimiter);
 
 /**
  * @swagger
- * /api/horizonQuery/conversion:
+ * /api/horizonQueries/getConversionRates:
  *   post:
  *     summary: Get conversion rates between XLM and a fiat currency
  *     description: Fetches conversion rates for XLM to a given currency and vice versa using CoinMarketCap API.
@@ -79,11 +79,11 @@ router.use(moderateLimiter);
  *       500:
  *         description: Internal server error
  */
-router.post("/conversion", getConversionRates);
+router.post("/getConversionRates", getConversionRates);
 
 /**
  * @swagger
- * /api/horizonQuery/assets:
+ * /api/horizonQueries/getAllWalletAssets:
  *   get:
  *     summary: Get all wallet assets for a user from Stellar Horizon
  *     tags:
@@ -107,11 +107,11 @@ router.post("/conversion", getConversionRates);
  *       500:
  *         description: Internal server error.
  */
-router.get("/assets", authenticate, getAllWalletAssets);
+router.get("/getAllWalletAssets", authenticate, getAllWalletAssets);
 
 /**
  * @swagger
- * /api/horizonQuery/trustlines:
+ * /api/horizonQueries/getAllTrustLines:
  *   get:
  *     summary: Get all available trust lines (public assets)
  *     tags:
@@ -125,11 +125,11 @@ router.get("/assets", authenticate, getAllWalletAssets);
  *       500:
  *         description: Internal server error.
  */
-router.get("/trustlines", getAllTrustLines);
+router.get("/getAllTrustLines", getAllTrustLines);
 
 /**
  * @swagger
- * /api/horizonQuery/path:
+ * /api/horizonQueries/path:
  *   post:
  *     summary: Get payment path on Stellar network
  *     tags:
@@ -174,7 +174,7 @@ router.post("/path", getPath);
 
 /**
  * @swagger
- * /api/horizonQuery/fetch-assets:
+ * /api/horizonQueries/fetch-assets:
  *   post:
  *     summary: Fetch assets from Stellar Expert API
  *     tags:
@@ -221,7 +221,7 @@ router.post("/fetch-assets", fetchAssets);
 
 /**
  * @swagger
- * /api/horizonQuery/fetch-user-details:
+ * /api/horizonQueries/fetch-user-details:
  *   post:
  *     summary: Fetch user details using input and search type
  *     tags:

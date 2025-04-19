@@ -137,17 +137,17 @@ export class WalletHelper {
             const returnValue = getResponse.returnValue; // Extract the return value
             return { status: true, value: returnValue, hash: hsh }; // Return success with value and hash
           } else {
-            console.log({ getResponse });
+            // console.log({ getResponse });
 
             const result = StellarSdk.xdr.TransactionResult.fromXDR(
               getResponse.resultXdr.toXDR(),
               "base64"
             );
             const opResult = result.result().results()[0].value();
-            console.log({ opResult });
+            // console.log({ opResult });
             const code = opResult.switch().name;
 
-            console.log({ code });
+            // console.log({ code });
 
             const error = this.decodeError(opResult, code);
             return error;

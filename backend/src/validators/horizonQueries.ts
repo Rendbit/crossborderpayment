@@ -12,9 +12,11 @@ import { z } from "zod";
 const ConversionRequestSchema = z
   .object({
     inputAmount: z.number().positive(),
-    symbol: z
+    inputSymbol: z
       .string()
-      .length(3)
+      .regex(/^[A-Za-z]+$/),
+    outputSymbol: z
+      .string()
       .regex(/^[A-Za-z]+$/),
   })
   .strict();

@@ -13,7 +13,7 @@ import { authenticate } from "../middlewares/authMiddleWare";
 import { moderateLimiter } from "../middlewares/rateLimiter";
 const router = Router();
 
-router.use(moderateLimiter);
+// router.use(moderateLimiter);
 
 /**
  * @swagger

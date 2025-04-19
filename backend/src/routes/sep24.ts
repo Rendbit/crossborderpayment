@@ -6,7 +6,7 @@ import { apiKeyValidator } from "../middlewares/apiKeyValidator";
 
 const router = express.Router();
 router.use(apiKeyValidator);
-router.use(moderateLimiter);
+// router.use(moderateLimiter);
 
 /**
  * @swagger
@@ -17,7 +17,7 @@ router.use(moderateLimiter);
 
 /**
  * @swagger
- * /api/sep24/initiate/{txType}:
+ * /api/sep24/initiateTransfer24/{txType}:
  *   post:
  *     summary: Initiates a SEP-24 transfer
  *     tags: [SEP-24]
@@ -50,11 +50,11 @@ router.use(moderateLimiter);
  *       500:
  *         description: Internal server error
  */
-router.post("/initiate/:txType", authenticate, initiateTransfer24);
+router.post("/initiateTransfer24/:txType", authenticate, initiateTransfer24);
 
 /**
  * @swagger
- * /api/sep24/query:
+ * /api/sep24/queryTransfers24:
  *   get:
  *     summary: Query SEP-24 transfer history
  *     tags: [SEP-24]
@@ -76,6 +76,6 @@ router.post("/initiate/:txType", authenticate, initiateTransfer24);
  *       500:
  *         description: Internal server error
  */
-router.get("/query", authenticate, queryTransfers24);
+router.get("/queryTransfers24", authenticate, queryTransfers24);
 
 export default router;

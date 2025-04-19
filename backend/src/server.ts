@@ -46,7 +46,7 @@ async function bootstrap() {
     app.use("/api/user", userRoute);
     app.use("/api/mfa", mfaRoute);
     app.use("/api/sep24", sep24Route);
-    app.use("/api/horizonQuery", horizonQueryRoute);
+    app.use("/api/horizonQueries", horizonQueryRoute);
     app.use("/api/transaction", transactionRoute);
 
     // Swagger Docs
@@ -79,16 +79,16 @@ async function bootstrap() {
       res.send("Welcome to the RendBit Waitlist API");
     });
 
-    // // 404 handler
-    // app.use((req, res) => {
-    //   res.status(404).json({ message: "Route not found" });
-    // });
+    // 404 handler
+    app.use((req, res) => {
+      res.status(404).json({ message: "Route not found", success: false });
+    });
 
     // Start server
     const PORT = process.env.PORT || 8005;
     app.listen(PORT, () => {
       console.log(`🚀 Server is running on http://localhost:${PORT}`);
-      console.log(`🚀 View docs on ${process.env.BASE_URL}/docs`);
+      console.log(`🚀 View docs on ${process.env.BASE_URL}/api/docs`);
     });
   } catch (err: any) {
     console.error("❌ Failed to start app:", err);

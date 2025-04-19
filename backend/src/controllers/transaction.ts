@@ -19,8 +19,7 @@ const server = new StellarSdk.SorobanRpc.Server(
 export const addTrustline = async (req: any, res: any) => {
   try {
     let { assetCode } = req.body;
-    assetCode = assetCode.toUpperCase();
-
+    console.log({ assetCode });
     const user = req.user;
     // Create the asset object using the provided asset code and the corresponding issuer.
     const asset = new StellarSdk.Asset(
@@ -68,11 +67,11 @@ export const addTrustline = async (req: any, res: any) => {
     const signedTransaction: any = await WalletHelper.execTranst(
       transaction,
       StellarSdk.Keypair.fromSecret(decryptedPrivateKey),
-      'changeTrust'
+      "changeTrust"
     );
 
     if (!signedTransaction.status) {
-      throw new Error(signedTransaction.msg);
+      throw new Error(signedTransaction.msg || "Failed to add assest.");
     }
     // Return the transaction details, network passphrase, and signed transaction.
     return res.status(httpStatus.OK).json({
@@ -101,8 +100,6 @@ export const addTrustline = async (req: any, res: any) => {
 export const removeTrustline = async (req: any, res: any) => {
   try {
     let { assetCode } = req.body;
-    assetCode = assetCode.toUpperCase();
-
     const user = req.user;
     // Create the asset object using the provided asset code and the corresponding issuer.
     const asset = new StellarSdk.Asset(
@@ -149,14 +146,15 @@ export const removeTrustline = async (req: any, res: any) => {
     const signedTransaction: any = await WalletHelper.execTranst(
       transaction,
       StellarSdk.Keypair.fromSecret(decryptedPrivateKey),
-      'changeTrust'
+      "changeTrust"
     );
+
     if (!signedTransaction.status) {
-      throw new Error(signedTransaction.msg);
+      throw new Error(signedTransaction.msg || "Failed to remove assest.");
     }
 
     // Return the transaction details, network passphrase, and signed transaction.
-    return {
+    return res.status(httpStatus.OK).json({
       data: {
         transaction: transaction.toXDR(),
         network_passphrase:
@@ -168,7 +166,7 @@ export const removeTrustline = async (req: any, res: any) => {
       message: "Trustline removed successfully.",
       status: httpStatus.OK,
       success: true,
-    };
+    });
   } catch (error: any) {
     console.log("Error removing trustline.", error);
     return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
@@ -248,10 +246,12 @@ export const payment = async (req: any, res: any) => {
     const resp: any = await WalletHelper.execTranst(
       transaction,
       StellarSdk.Keypair.fromSecret(decryptedPrivateKey),
-      'payment'
+      "payment"
     );
 
-    if (!resp.status) throw new Error(resp.msg);
+    if (!resp.status) {
+      throw new Error(resp.msg);
+    }
     const timestamp = Date.now();
     const date = new Date(timestamp);
 
@@ -416,7 +416,7 @@ export const swap = async (req: any, res: any) => {
     const resp: any = await WalletHelper.execTranst(
       transaction,
       StellarSdk.Keypair.fromSecret(decryptedPrivateKey),
-      'swap'
+      "swap"
     );
     if (!resp.status) throw new Error(resp.msg);
 
@@ -540,7 +540,7 @@ export const strictSend = async (req: any, res: any) => {
     const resp: any = await WalletHelper.execTranst(
       transaction,
       StellarSdk.Keypair.fromSecret(decryptedPrivateKey),
-      'strictSend'
+      "strictSend"
     );
     if (!resp.status) throw new Error(resp.msg);
 
@@ -663,7 +663,7 @@ export const strictReceive = async (req: any, res: any) => {
     const resp: any = await WalletHelper.execTranst(
       transaction,
       StellarSdk.Keypair.fromSecret(decryptedPrivateKey),
-      'strictReceive'
+      "strictReceive"
     );
 
     if (!resp.status) throw new Error(resp.msg);
@@ -697,12 +697,17 @@ export const getTransactions = async (req: any, res: any) => {
     );
 
     // Check if the response is successful, otherwise throw an exception
+    const data = await response.json();
+    if (data.status === 404) {
+      throw new Error(
+        "Fund your wallet with at least 5 XLM to activate your account."
+      );
+    }
     if (!response.ok) {
-      throw new Error("Failed to fetch transactions");
+      throw new Error(data.details || "Failed to fetch transactions");
     }
 
     // Parse the JSON response to get transaction data
-    const data = await response.json();
     const transactions = data._embedded.records;
 
     // Initialize the Stellar SDK server
