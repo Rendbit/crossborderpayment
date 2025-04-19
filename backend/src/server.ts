@@ -75,7 +75,7 @@ async function bootstrap() {
     );
 
     // Default route
-    app.get("/api", (req, res) => {
+    app.get("/crossborderpayment/api", (req, res) => {
       res.send("Welcome to the RendBit Waitlist API");
     });
 
