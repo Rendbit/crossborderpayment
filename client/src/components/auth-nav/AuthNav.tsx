@@ -8,13 +8,13 @@ const AuthNav: React.FC = () => {
   return (
     <nav className=" flex items-center justify-between py-5 relative md:px-[100px] px-[20px] z-[1000]">
       <div className="flex items-center gap-10">
-        <Link to="/" className="block">
+        <a href="https://rendbit.com" className="block">
           <img
             src="./images/rendbit-logo.svg"
             className="w-[250px]"
             alt="Logo"
           />
-        </Link>
+        </a>
 
         {openNav && (
           <div className="px-[20px] py-[20px] w-full flex flex-col fixed bg-white left-0 translate-x-0 h-[100vh] z-[12] top-0 items-center gap-10">

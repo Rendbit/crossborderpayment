@@ -124,41 +124,39 @@ const TopNav: React.FC = () => {
       <div
         className={
           mobileNav === true
-            ? `p-[20px] flex items-center bg-white justify-between z-[9999] lg:hidden fixed w-full `
-            : `p-[20px] flex lg:hidden items-center justify-between`
+            ? `p-[20px] flex items-center bg-white justify-between  mt-[-80px] z-[9999] lg:hidden fixed w-full `
+            : `p-[20px] flex lg:hidden items-center justify-between mt-[-80px]`
         }
       >
-        <Link to="/">
-          <img
-            src={
-              mobileNav === true
-                ? `/images/mammon-app-logo-dark.svg`
-                : `/images/rendbit-logo.svg`
-            }
-            className="w-[200px] h-[200px]"
-            alt="RendBit Logo"
-          />
-        </Link>
-        <div className="flex items-center gap-4">
-          <div className="p-2 rounded-[8px] bg-[#B9B9B926]">
+        <img
+          src={
+            mobileNav === true
+              ? `/images/rendbit-logo.svg`
+              : `/images/rendbit-logo.svg`
+          }
+          className="w-[200px] h-[200px]"
+          alt="RendBit Logo"
+        />
+        {/* <div className="flex items-center gap-4">
+          <div className="p-2 rounded-[8px] bg-[white]">
             <img
               src="/images/notification.svg"
               alt="Notification Icon"
               className="w-[20px] h-[20px] cursor-pointer"
-              onClick={() => setNotification(true)}
+              // onClick={() => setNotification(true)}
             />
           </div>
-        </div>
+        </div> */}
         {/* */}
-        {notification && (
+        {/* {notification && (
           <div className="h-[500px] overflow-y-scroll absolute z-[999999] mt-[590px] right-0 bg-white shadow-md border w-[360px] p-5 rounded-[8px]">
             <div className="flex items-center justify-between">
               <p className="text-[#282828] font-[500] text-[20px]">
                 Notifications
               </p>
               <MdClose
-                className="text-black cursor-pointer text-[20px]"
-                onClick={() => setNotification(false)}
+                className="text-white cursor-pointer text-[20px]"
+                // onClick={() => setNotification(false)}
               />
             </div>
             {notificationArray.map((item, index) => {
@@ -176,7 +174,7 @@ const TopNav: React.FC = () => {
               );
             })}
           </div>
-        )}
+        )} */}
       </div>
       <div
         className={
@@ -208,8 +206,8 @@ const TopNav: React.FC = () => {
         <div
           className={
             mobileNav === true
-              ? "p-2 rounded-[8px] bg-[#000000] text-[24px] cursor-pointer"
-              : "p-2 rounded-[8px] bg-[#B9B9B926] text-[24px] cursor-pointer"
+              ? "p-2 rounded-[8px] bg-[white] text-[24px] cursor-pointer"
+              : "p-2 rounded-[8px] bg-[white] text-[24px] cursor-pointer"
           }
         >
           <BiMenu onClick={() => setMobileNav(!mobileNav)} />

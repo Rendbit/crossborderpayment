@@ -17,7 +17,7 @@ import Settings from "./pages/Settings";
 import CreateAccount from "./pages/CreateAccount";
 import ConfirmEmail from "./pages/ConfirmEmail";
 import AboutSelf from "./pages/AboutSelf";
-import ForgotPassword from "./pages/ForgotPAssword";
+import ForgotPassword from "./pages/ForgotPassword";
 import PasswordReset from "./pages/PasswordReset";
 
 const App: React.FC = () => {
