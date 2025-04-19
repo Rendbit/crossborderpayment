@@ -89,7 +89,7 @@ const Login: React.FC = () => {
       {authPage ? (
         <div className="relative">
           <AuthNav />
-          <div className="sm:mt-[5rem] mt-[2rem] h-[100vh] ">
+          <div className="sm:mt-[5rem] mt-[2rem] h-[100vh] mx-3">
             <div className="flex flex-col justify-center items-center relative z-[11]">
               <div className="px-4 sm:px-8 pt-8 pb-5 rounded-[16px] w-full sm:w-[488px] border">
                 <div className="hidden top-bg relative top-[-20px] sm:flex items-center justify-center w-[300px] mx-auto">

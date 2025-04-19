@@ -86,7 +86,7 @@ const CreateAccount: React.FC = () => {
   return (
     <div className="relative">
       <AuthNav />
-      <div className="sm:mt-[10rem] h-[100%] md:mx-3">
+      <div className="sm:mt-[10rem] h-[100%] mx-3">
         <div className="flex flex-col justify-center items-center relative z-[11]">
           <h2 className="text-[24px] text-white  font-semibold mb-2">
             Create Account

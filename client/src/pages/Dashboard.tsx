@@ -478,7 +478,7 @@ const Dashboard: React.FC = () => {
                 className={`w-full  rounded-[8px] bg-[#010014]  p-5 relative `}
               >
                 <div className={`flex items-center justify-between`}>
-                  <p className="font-[500] text-[20px]">Assets</p>
+                  <p className="font-[500] text-[20px] text-white">Assets</p>
                   <div className="flex gap-3 items-center">
                     <button
                       className="bg-[#0E7BB2] cursor-pointer py-[6px] px-6 text-[12px] text-white md:text-[16px] rounded-[8px]"

@@ -93,7 +93,7 @@ const PasswordReset: React.FC = () => {
   return (
     <div className="relative">
       <AuthNav />
-      <div className="sm:mt-[10rem] h-[100%] mt-[5rem]">
+      <div className="sm:mt-[10rem] h-[100%] mt-[5rem] mx-3">
         <h2 className="text-[24px] font-semibold text-center text-white">
           Reset your password
         </h2>

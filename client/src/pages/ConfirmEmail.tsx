@@ -77,7 +77,7 @@ const ConfirmEmail: React.FC = () => {
   return (
     <div className="relative">
       <AuthNav />
-      <div className="sm:mt-[5rem] h-[75vh] mt-[7rem]">
+      <div className="sm:mt-[5rem] h-[75vh] mt-[7rem]  mx-3">
         <h2 className="text-[24px] font-semibold text-white text-center">
           Confirm Email Address
         </h2>
