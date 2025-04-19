@@ -94,7 +94,7 @@ const Login: React.FC = () => {
               <div className="px-4 sm:px-8 pt-8 pb-5 rounded-[16px] w-full sm:w-[488px] border">
                 <div className="hidden top-bg relative top-[-20px] sm:flex items-center justify-center w-[300px] mx-auto">
                   <img
-                    src="./images/mammon-app-favicon.svg"
+                    src="./images/favicon.svg"
                     alt="RendBit Logo"
                     className="mx-auto mb-4 relative top-[-65px]"
                   />
@@ -147,7 +147,7 @@ const Login: React.FC = () => {
                     <span>Verify Code</span>
                     {verifyCodeLoader && (
                       <img
-                        src="./images/loader.gif"
+                        src="./image/loader.gif"
                         className="w-[20px] mx-2"
                         alt=""
                       />
@@ -159,7 +159,7 @@ const Login: React.FC = () => {
           </div>
           <div className="mt-[50px] mb-5 sm:mx-10 flex sm:flex-row flex-col sm:gap-0 gap-3 items-center justify-between">
             <p className="text-[white] text-[14px]">
-              &copy; {new Date().getFullYear()} RendBit finance. All rights
+              &copy; {new Date().getFullYear()} RendBit. All rights
               reserved.
             </p>
             <div className="text-[white] text-[14px] flex items-center gap-4">
@@ -200,7 +200,7 @@ const Login: React.FC = () => {
                     <span>Verify Code</span>
                     {verifyCodeLoader && (
                       <img
-                        src="./images/loader.gif"
+                        src="./image/loader.gif"
                         className="w-[20px] mx-2"
                         alt=""
                       />
@@ -214,18 +214,21 @@ const Login: React.FC = () => {
       ) : (
         <div className="relative">
           <AuthNav />
-          <div className="sm:mt-[5rem] mt-[-7rem]">
-            <div className="flex flex-col h-[100vh] justify-center items-center relative z-[11]">
-              <div className="border border-[#B2B2B27A] px-4 sm:px-8 pt-8 pb-5 rounded-[16px] w-full sm:w-[488px]">
-                <div className="hidden top-bg relative top-[-20px] sm:flex items-center justify-center w-[300px] mx-auto">
+          <div className="sm:mt-[5rem] mt-[7rem]">
+            <div className="flex flex-col h-[70vh] justify-center items-center relative z-[11]">
+              <h2 className="text-[24px] text-white font-semibold mb-2">
+                Login
+              </h2>
+              <div className="border border-[#FFFFFF]/50 px-4 sm:px-8 pt-8 pb-5 rounded-md w-full sm:w-[488px]">
+                <div className="hidden top-bg relative top-[50px] sm:flex items-center justify-center w-[300px] mx-auto">
                   <img
-                    src="./images/mammon-app-favicon.svg"
+                    src="./images/favicon.svg"
                     alt="RendBit Logo"
                     className="mx-auto mb-4 relative top-[-65px]"
                   />
                 </div>
-                <div className="text-center mb-12 mt-[-80px] relative z-[100]">
-                  <h2 className="text-[36px] font-semibold mb-2">Login</h2>
+                <div className="text-center mb-12 mt-[-30px] relative z-[100]">
+                  <h2 className="text-[24px] text-white mb-2">RendBit</h2>
                   <p className="text-[#ffffff] text-[14px]">
                     Login to access your dashboard
                   </p>
@@ -235,7 +238,7 @@ const Login: React.FC = () => {
                   className="flex flex-col sm:w-[400px] mx-auto"
                 >
                   <div>
-                    <label className="text-[#ffffff] gont-[500] text-[14px] mb-1 block">
+                    <label className="text-[#ffffff] font-[500] text-[14px] mb-1 block">
                       Email
                     </label>
                     <input
@@ -244,37 +247,41 @@ const Login: React.FC = () => {
                       disabled={loading}
                       placeholder="Enter your email"
                       autoComplete="off"
-                      className="bg-transparent border border-[#B2B2B27A] text-[#ffffff] p-2 rounded-[6px] outline-none w-full autofill:bg-transparent autofill:shadow-[0_0_0px_1000px_rgba(0,0,0,0)]"
+                      name="email-field"
+                      className="border border-[#FFFFFF]/50 bg-[#FFFFFF]/8 text-[#ffffff] p-2 rounded-[6px] outline-none w-full"
                     />
                   </div>
+
                   <div className="mt-5">
-                    <label className="text-[#ffffff] gont-[500] text-[14px] mb-1 block">
+                    <label className="text-[#ffffff] font-[500] text-[14px] mb-1 block">
                       Password
                     </label>
-                    <div className="flex items-center justify-between border border-[#B2B2B27A] p-2 rounded-[6px] w-full">
+                    <div className="flex items-center justify-between border border-[#FFFFFF]/50 bg-[#FFFFFF]/8 p-2 rounded-[6px] w-full">
                       <input
                         type={passwordType}
                         onChange={(e) => setPassword(e.target.value)}
                         disabled={loading}
                         placeholder="********"
-                        autoComplete="off"
-                        className="outline-none w-full bg-transparent text-white autofill:bg-transparent autofill:shadow-[0_0_0px_1000px_rgba(0,0,0,0)]"
+                        autoComplete="new-password"
+                        name="password-field"
+                        className="outline-none w-full  text-white"
                       />
                       <div>
                         {passwordType === "password" ? (
                           <GoEye
-                            className="cursor-pointer white"
+                            className="cursor-pointer text-white"
                             onClick={() => setPasswordType("text")}
                           />
                         ) : (
                           <GoEyeClosed
-                            className="cursor-pointer white"
+                            className="cursor-pointer text-white"
                             onClick={() => setPasswordType("password")}
                           />
                         )}
                       </div>
                     </div>
                   </div>
+
                   <p
                     className="text-white cursor-pointer text-end mt-2 text-[14px]"
                     onClick={() => navigate("/forgot-password")}
@@ -285,12 +292,12 @@ const Login: React.FC = () => {
                   <button
                     onClick={handleSignIn}
                     disabled={loading}
-                    className="flex justify-center items-center bg-primary-color text-white py-2 px-4 rounded-[8px] text-[14px] mt-5"
+                    className="flex justify-center cursor-pointer items-center bg-[#0E7BB2] border border-[#FFFFFF]/50 text-white py-2 px-4 rounded-[8px] text-[14px] mt-5"
                   >
                     <span>Login</span>
                     {loading && (
                       <img
-                        src="./images/loader.gif"
+                        src="./image/loader.gif"
                         className="w-[20px] mx-2"
                         alt=""
                       />
@@ -299,7 +306,7 @@ const Login: React.FC = () => {
 
                   <div className="text-center text-white mt-5 sm:mt-[40px] text-[14px]">
                     Don&apos;t have an account?{" "}
-                    <Link to="/create-account" className="text-blue-600">
+                    <Link to="/create-account" className="text-[#0E7BB2]">
                       Register
                     </Link>
                   </div>
@@ -320,7 +327,7 @@ const Login: React.FC = () => {
           </div>
           <div className="mt-[50px] mb-5 sm:mx-10 flex sm:flex-row flex-col sm:gap-0 gap-3 items-center justify-between">
             <p className="text-[white] text-[14px]">
-              &copy; {new Date().getFullYear()} RendBit finance. All rights
+              &copy; {new Date().getFullYear()} RendBit. All rights
               reserved.
             </p>
             <div className="text-[white] text-[14px] flex items-center gap-4">
@@ -366,7 +373,7 @@ const Login: React.FC = () => {
                     <span>Verify code</span>
                     {verifyCodeLoader && (
                       <img
-                        src="./images/loader.gif"
+                        src="./image/loader.gif"
                         className="w-[20px] mx-2"
                         alt=""
                       />

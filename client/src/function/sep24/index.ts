@@ -1,17 +1,13 @@
 const queryTransaction = async (token: string, assetCode: string) => {
   try {
     const res = await fetch(
-      `${import.meta.env.VITE_BASE_URL}/sep24/queryTransfers24`,
+      `${import.meta.env.VITE_BASE_URL}/sep24/queryTransfers24?assetCode=${assetCode}`,
       {
-        method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
           "x-api-key": `${import.meta.env.VITE_API_KEY}`,
         },
-        body: JSON.stringify({
-          assetCode,
-        }),
       }
     );
     const data = await res.json();
@@ -26,10 +22,11 @@ const queryTransaction = async (token: string, assetCode: string) => {
   }
 };
 
-const initiateDeposit = async (token: string, assetCode: string) => {
+const initiateTransfer24 = async (token: string, assetCode: string, stellarPublicKey: string, txType: string) => {
+  console.log({assetCode, txType})
   try {
     const res = await fetch(
-      `${import.meta.env.VITE_BASE_URL}/sep24/initiateTransfer24/deposit`,
+      `${import.meta.env.VITE_BASE_URL}/sep24/initiateTransfer24/${txType}`,
       {
         method: "POST",
         headers: {
@@ -37,21 +34,19 @@ const initiateDeposit = async (token: string, assetCode: string) => {
           Authorization: `Bearer ${token}`,
           "x-api-key": `${import.meta.env.VITE_API_KEY}`,
         },
-        body: JSON.stringify({
-          assetCode,
-        }),
+        body: JSON.stringify({assetCode, stellarPublicKey})
       }
     );
     const data = await res.json();
     if (!res.ok) {
-      throw new Error(data.message || "Failed to initiate deposit");
+      throw new Error(data.message || `Failed to initiate ${txType}`);
     }
 
     return data;
   } catch (error: any) {
-    console.error("Error handling initiate deposit:", error);
-    throw new Error(error.message || "Error handling initiate deposit.");
+    console.error(`Error handling initiate ${txType}:`, error);
+    throw new Error(error.message || `Error handling initiate ${txType}.`);
   }
 };
 
-export { queryTransaction, initiateDeposit };
+export { queryTransaction, initiateTransfer24 };

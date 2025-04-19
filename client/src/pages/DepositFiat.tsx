@@ -14,12 +14,16 @@ const DepositFiat: React.FC = () => {
         <div className="w-full lg:w-[84%] ml-auto">
           <TopNav />
           <div className="py-[20px] px-[10px] h-[100vh]  mt-[90px] lg:mx-[50px]">
-            <h1 className="text-white text-[32px] font-semibold">Deposit Crypto</h1>
+            <h1 className="text-white text-[32px] font-semibold">
+              Deposit Crypto
+            </h1>
             <div className="border mt-5 border-[#FFFFFF]/50 rounded-2xl p-5 lg:w-[500px] w-full lg:ml-0 lg:mr-auto mx-auto">
-              <div>
-                <img src="" alt="" width="25px" />
+              <div className="flex items-center gap-3">
+                <div className="bg-[#ffffff] p-2 rounded-full flex items-center justify-center">
+                  <RiBankLine className="text-primary-color text-[22px]" />
+                </div>
 
-                <div className="ml-1 hidden lg:block">
+                <div className="ml-2">
                   <p className="text-white text-[20px] font-semibold">
                     Get crypto within a short period of time
                   </p>
@@ -37,11 +41,8 @@ const DepositFiat: React.FC = () => {
                   <div className="w-full lg:w-[500px] lg:p-2 bg-gradient-to-b from-[#FFFFFF]/70 to-[#41F8F8]/40 rounded-lg border border-[#FFFFFF]/50">
                     <div className="p-3 rounded-[8px]">
                       <div className="flex items-center justify-between">
-                        <div>
+                        <div className="p-3 rounded-md bg-[#FFFFFF]/30">
                           <p className="text-[#ffffff]">Bank Transfer</p>
-                        </div>
-                        <div className="bg-[#ffffff] p-1 rounded-full">
-                          <RiBankLine className="text-white text-[22px]" />
                         </div>
                       </div>
                       <div className="mt-5">

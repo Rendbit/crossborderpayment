@@ -56,7 +56,7 @@ const SaveCardModal: React.FC<SaveCardModalProps> = ({ setSaveCardModal }) => {
         <div className="flex flex-col items-center mt-10 gap-4 md:w-[80%] w-[90%] mx-auto mb-[2rem]">
           <button
             className="bg-primary-color text-white py-2 px-8 rounded-[6px] w-full text-[14px] lgtext-[16px]"
-            onClick={() => navigate(`/swap-assets`)}
+            onClick={() => navigate(`/swap`)}
           >
             I understand, continue
           </button>

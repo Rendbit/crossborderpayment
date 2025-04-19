@@ -18,10 +18,12 @@ const WithdrawFiat: React.FC = () => {
               Withdraw Crypto
             </h1>
             <div className="border mt-5 border-[#FFFFFF]/50 rounded-2xl p-5 lg:w-[500px] w-full lg:ml-0 lg:mr-auto mx-auto">
-              <div>
-                <img src="" alt="" width="25px" />
+              <div className="flex items-center gap-3">
+                <div className="bg-[#ffffff] p-2 rounded-full flex items-center justify-center">
+                  <RiBankLine className="text-primary-color text-[22px]" />
+                </div>
 
-                <div className="ml-1 hidden lg:block">
+                <div className="ml-2">
                   <p className="text-white text-[20px] font-semibold">
                     Get fiat within a short period of time
                   </p>
@@ -42,9 +44,6 @@ const WithdrawFiat: React.FC = () => {
                         <div>
                           <p className="text-[#ffffff]">Bank Transfer</p>
                         </div>
-                        <div className="bg-[#ffffff] p-1 rounded-full">
-                          <RiBankLine className="text-white text-[22px]" />
-                        </div>
                       </div>
                       <div className="mt-5">
                         <p className="text-white">Transfer Time</p>
@@ -53,13 +52,7 @@ const WithdrawFiat: React.FC = () => {
                     </div>
                     <div className="flex items-center justify-center">
                       <button
-                        className="py-2 cursor-pointer w-[90%] rounded-[6px] border border-transparent text-white bg-[#0E7BB2] mb-3 mt-[4rem]"
-                        style={{
-                          borderImage:
-                            "linear-gradient(to right, #FFFFFF, #FFFFFF20) 1",
-                          borderImageSlice: 1,
-                          borderRadius: "6px",
-                        }}
+                        className="py-2 cursor-pointer w-[90%] rounded-[6px] border border-[#FFFFFF]/50 text-white bg-[#0E7BB2] mb-3 mt-[4rem]"
                         onClick={() => navigate(`/withdraw-provider`)}
                       >
                         Proceed

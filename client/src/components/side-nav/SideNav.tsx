@@ -42,8 +42,8 @@ const SideNav: React.FC = () => {
     >
       <div className="p-5 border-b cursor-pointer">
         <img
-          src="./images/mammon-app-logo.svg"
-          className="w-[50px] h-[50px]"
+          src="./images/rendbit-logo.svg"
+          className="w-[100%]"
           alt="Logo"
         />
       </div>
@@ -173,10 +173,10 @@ const SideNav: React.FC = () => {
             </div>
           </Link>
           <Link
-            to="/swap-assets"
+            to="/swap"
             className={
-              pathname.includes("/swap-assets") ||
-              pathname.includes("swap-assets")
+              pathname.includes("/swap") ||
+              pathname.includes("swap")
                 ? `flex items-center justify-between py-[10px] text-[#ffffff] bg-[#ffffff1F] px-8`
                 : `px-8 flex items-center justify-between py-[10px] text-[#ffffff]`
             }

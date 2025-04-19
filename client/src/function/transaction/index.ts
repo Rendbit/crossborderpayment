@@ -44,7 +44,6 @@ const getFiatTransactionHistory = async (
         import.meta.env.VITE_BASE_URL
       }/transaction/fiat-all?page=${page}&limit=${limit}`,
       {
-        method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -161,19 +160,20 @@ const swapAssets = async (
 const removeTrustLine = async (assetCode: string, token: string) => {
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/transaction/remove-trustline`,
+      `${import.meta.env.VITE_BASE_URL}/transaction/remove-trustline`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
-          "x-api-key": `${process.env.NEXT_PUBLIC_API_KEY}`,
+          "x-api-key": `${import.meta.env.VITE_API_KEY}`,
         },
         body: JSON.stringify({
           assetCode,
         }),
       }
     );
+    console.log({res})
     const data = await res.json();
     if (!res.ok) {
       throw new Error(data.message || "Failed to remove trustline");
@@ -188,13 +188,13 @@ const removeTrustLine = async (assetCode: string, token: string) => {
 const addTrustLine = async (assetCode: string, token: string) => {
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_BASE_URL}/transaction/add-trustline`,
+      `${import.meta.env.VITE_BASE_URL}/transaction/add-trustline`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
-          "x-api-key": `${process.env.NEXT_PUBLIC_API_KEY}`,
+          "x-api-key": `${import.meta.env.VITE_API_KEY}`,
         },
         body: JSON.stringify({
           assetCode,

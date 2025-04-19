@@ -9,6 +9,7 @@ import QRCode from "react-qr-code";
 import Loader from "../components/loader/Loader";
 import { getMyAssets } from "../function/horizonQuery";
 import { useNavigate } from "react-router-dom";
+import { RiExchange2Line } from "react-icons/ri";
 
 const DepositCrypto: React.FC = () => {
   const user = Cookies.get("token");
@@ -100,11 +101,13 @@ const DepositCrypto: React.FC = () => {
         <div className="w-full lg:w-[84%] ml-auto">
           <TopNav />
           <div className="py-[20px] h-[100vh] px-[10px]  mt-[70px] lg:mx-[50px] ">
-            <div>
-              <img src={selectedAsset?.image} alt="" width="25px" />
+            <div className="flex items-center gap-3">
+              <div className="bg-[#ffffff] p-2 rounded-full flex items-center justify-center">
+                <RiExchange2Line className="text-primary-color text-[22px]" />
+              </div>
 
-              <div className="mt-5 ml-1 hidden lg:block">
-                <p className="text-white text-[24px] font-semibold">
+              <div className="ml-2">
+              <p className="text-white text-[24px] font-semibold">
                   Choose preferred crypto
                 </p>
                 <p className="font-[300] text-[#ffffff]">

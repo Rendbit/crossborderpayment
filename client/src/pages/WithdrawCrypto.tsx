@@ -10,6 +10,8 @@ import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
 import { makeWithdrawal } from "../function/transaction";
 import { getMyAssets } from "../function/horizonQuery";
+import { RiBankLine } from "react-icons/ri";
+import { formateDecimal } from "../utils";
 
 const WithdrawCrypto: React.FC = () => {
   const settingsTypeArray = ["Address"];
@@ -18,7 +20,7 @@ const WithdrawCrypto: React.FC = () => {
   const [currencyDropDown, setCurrencyDropDown] = useState<any>(false);
   const [loadingWalletAssets, setLoadingWalletAssets] =
     useState<boolean>(false);
-  const userInfoArrayTab = ["Email", "Phone", "Pay ID", "Mammon ID"];
+  const userInfoArrayTab = ["Email", "Phone", "Pay ID", "RendBit ID"];
   const [selectedInfo, setSelectedInfo] = useState<any>(userInfoArrayTab[0]);
   const [selectedInfoIndex, setSelectedInfoIndex] = useState<number>(0);
   const [msg, setMsg] = useState<string>("");
@@ -48,18 +50,20 @@ const WithdrawCrypto: React.FC = () => {
       setSelectedAsset(parsedWalletAssets?.allWalletAssets[0]);
       setCurrentbalance(parsedWalletAssets?.allWalletAssets[0].balance || 0);
     }
-  }, [assets]);
+  }, [assets, loading]);
 
   async function handleMakeWithdrawal() {
     setLoading(true);
     if (isActivateWalletAlert) {
       setMsg("Fund your wallet with at least 5 XLM to activate your account.");
       setAlertType("error");
+      setLoading(false);
       return;
     }
     if (!sourceAmount || !address) {
       setMsg("Please enter both amount and address");
       setAlertType("error");
+      setLoading(false);
       return;
     }
     try {
@@ -86,6 +90,12 @@ const WithdrawCrypto: React.FC = () => {
         setLoading(false);
         return;
       }
+      setCurrentbalance(currentBalance - sourceAmount);
+      setSourceAmount("");
+      setAddress("");
+      setMsg(response.message);
+      setAlertType("success");
+      await handleGetMyAssets();
     } catch (error: any) {
       setMsg(error.message || "Failed to withdrawal crypto");
       setAlertType("error");
@@ -106,7 +116,7 @@ const WithdrawCrypto: React.FC = () => {
         setLoadingWalletAssets(false);
         return;
       }
-      const response = await getMyAssets(user, selectedAsset);
+      const response = await getMyAssets(user, selectedAsset?.asset_code);
 
       if (!response.success) {
         if (
@@ -125,6 +135,8 @@ const WithdrawCrypto: React.FC = () => {
       setAssets(response?.data);
       setSelectedAsset(response?.data?.allWalletAssets[0]);
       setCurrentbalance(response?.data?.allWalletAssets[0].balance || 0);
+      setSourceAmount("");
+      setAddress("");
     } catch (error: any) {
       if (
         error.message.includes(
@@ -149,7 +161,10 @@ const WithdrawCrypto: React.FC = () => {
         <div className="lg:w-[84%] w-full ml-auto">
           <TopNav />
           <div className="py-[20px] px-[10px] h-[100vh] mt-[70px] md:mx-[50px] mx-[5px]">
-            <div className="mt-5 ml-1">
+            <div className="mt-5 ml-1 flex items-center gap-3">
+              <div className="bg-[#ffffff] p-2 rounded-full flex items-center justify-center">
+                <RiBankLine className="text-primary-color text-[22px]" />
+              </div>
               <p className="text-white text-[20px] md:text-[36px]">
                 Withdraw Crypto
               </p>
@@ -162,8 +177,6 @@ const WithdrawCrypto: React.FC = () => {
 
             <div className="border border-[#FFFFFF]/50 p-3 rounded-[11px]">
               <div>
-                <img src={selectedAsset?.image} alt="" width="25px" />
-
                 <div className="ml-1 hidden lg:block">
                   <p className="text-white text-[24px] font-semibold">
                     Choose preferred crypto
@@ -188,7 +201,7 @@ const WithdrawCrypto: React.FC = () => {
                         <span className={`text-white`}>
                           {currentBalance == 0
                             ? "0"
-                            : currentBalance?.toFixed(8)}
+                            : formateDecimal(currentBalance)}
                         </span>
                       </div>
                     </div>
@@ -307,8 +320,8 @@ const WithdrawCrypto: React.FC = () => {
                           />
                         </div>
                         <p className="text-[#ffffff] py-2 px-2 text-[12px] font-[300]">
-                          It’s a RebdBit account. Send instantly and 0 fee via
-                          rendbitID:{" "}
+                          It’s a RendBit account. Send instantly and 0 fee via
+                          rendbit ID:{" "}
                           <span className="text-white">(Coming soon ***)</span>
                         </p>
                       </div>
@@ -417,12 +430,12 @@ const WithdrawCrypto: React.FC = () => {
                   <button
                     onClick={handleMakeWithdrawal}
                     disabled={loading}
-                    className="flex justify-center items-center bg-[#0E7BB2] text-white p-3 rounded-lg w-full mt-[2rem]"
+                    className="flex cursor-pointer justify-center items-center bg-[#0E7BB2] text-white p-3 rounded-lg w-full mt-[2rem]"
                   >
                     <span>Confirm</span>
                     {loading && (
                       <img
-                        src="./images/loader.gif"
+                        src="./image/loader.gif"
                         className="w-[20px] mx-2"
                         alt=""
                       />

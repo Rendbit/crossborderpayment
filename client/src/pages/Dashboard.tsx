@@ -14,6 +14,8 @@ import {
   getTransactionHistory,
   removeTrustLine,
 } from "../function/transaction";
+import { formateDecimal } from "../utils";
+import AssetProgressBar from "../components/progress-bar/AssetProgressBar";
 
 const Dashboard: React.FC = () => {
   const [userData, setUserData] = useState<any>();
@@ -29,14 +31,18 @@ const Dashboard: React.FC = () => {
   const [PUBLIC_ASSETS, setPublic_Assets] = useState<any>([]);
   const [loadingPUBLIC_ASSETS, setLoadingPUBLIC_ASSETS] =
     useState<boolean>(false);
-  const [convertCurrency, setConvertCurrency] = useState("USDC");
+  const [convertCurrency, setConvertCurrency] = useState("USD");
+
   const assets = [
-    "NGN",
-    "USDC",
-    // "GHSC", "KESC"
+    { symbol: "NGNC", name: "Nigeria Naira", displaySymbol: "NGN" },
+    { symbol: "USDC", name: "United State Dollars", displaySymbol: "USD" },
+    // { symbol: "GHSC", name: "Ghana Cedis", displaySymbol: "GHS" },
+    // { symbol: "KESC", name: "Kenya Shillings", displaySymbol: "KES" },
   ];
   const [selectedAsset, setSelectedAsset] = useState<any>();
-  const [selectedCurrency, setSelectedCurrency] = useState(assets[0]);
+  const [selectedCurrency, setSelectedCurrency] = useState(
+    assets[0].displaySymbol
+  );
   const [dropDown, setDropDown] = useState<any>();
   const [removeDropDown, setRemoveDropDown] = useState<any>();
   const [transactionHistory, setTransactionHistory] = useState<any[]>([]);
@@ -115,7 +121,7 @@ const Dashboard: React.FC = () => {
         setLoadingWalletAssets(false);
         return;
       }
-      const response = await getMyAssets(user, selectedAsset);
+      const response = await getMyAssets(user, selectedCurrency);
       if (!response.success) {
         if (
           response.message.includes(
@@ -231,13 +237,16 @@ const Dashboard: React.FC = () => {
         setMsg(response.message);
         setAlertType("error");
         setLoading(false);
+        console.log({ response });
         return;
       }
+      await handleGetMyAssets();
       setMsg(response.message);
+      setDropDown(false);
+      setRemoveDropDown(false);
       setAlertType("success");
       setSelectedTrustLine(false);
-      handleGetMyAssets();
-      handleGetTransactionHistory();
+      await handleGetTransactionHistory();
     } catch (error: any) {
       setMsg(error.message || "Failed to remove trustline");
       setAlertType("error");
@@ -260,13 +269,13 @@ const Dashboard: React.FC = () => {
         setLoading(false);
         return;
       }
+      await handleGetMyAssets();
       setMsg(response.message);
       setAlertType("success");
       setSelectedAsset(false);
       setDropDown(false);
       setRemoveDropDown(false);
-      handleGetMyAssets();
-      handleGetTransactionHistory();
+      await handleGetTransactionHistory();
     } catch (error: any) {
       setMsg(error.message || "Failed to add trustline");
       setAlertType("error");
@@ -333,7 +342,7 @@ const Dashboard: React.FC = () => {
   }
 
   const walletAssetCodes =
-    walletAssets?.allWalletAssets?.map((asset) => asset?.asset_code) || [];
+    walletAssets?.allWalletAssets?.map((asset: any) => asset?.asset_code) || [];
 
   return (
     <div>
@@ -351,9 +360,9 @@ const Dashboard: React.FC = () => {
               </p>
             </div>
 
-            <div className={`flex md:flex-row items-center gap-5`}>
+            <div className={`md:flex grid items-center gap-5`}>
               <div
-                className={`bg-[#010014] border  border-[#B2B2B27A] text-white pt-3 rounded-lg w-full mx-auto ${
+                className={`bg-gradient-to-b from-[#0E84B2] to-[#0F2267]/5 border  border-[#FFFFFF]/20 text-white pt-3 rounded-lg w-full mx-auto ${
                   loadingWalletAssets
                     ? "animate-pulse from-primary-color to-blue-400"
                     : ""
@@ -361,13 +370,13 @@ const Dashboard: React.FC = () => {
               >
                 <div className={`mb-4 px-6 `}>
                   <div className="flex justify-between">
-                    <h2 className="text-[#a6a6a6] text-[24px]">
+                    <h2 className="text-[#FFFFFF]/70 text-[18px]">
                       <b>BALANCE</b>
                     </h2>
                     <div className="relative mb-[10px] ml-[10px]">
                       <b>
                         <span
-                          className="text-[#a6a6a6] inline-flex text-[24px] items-center cursor-pointer"
+                          className="text-[#FFFFFF]/70 inline-flex text-[18px] items-center cursor-pointer"
                           onClick={() => setCurrencyChange(!currencyChange)}
                         >
                           {selectedCurrency} <GoChevronDown />
@@ -375,21 +384,21 @@ const Dashboard: React.FC = () => {
                       </b>
                       {currencyChange && (
                         <div className="absolute bg-white border rounded shadow">
-                          {assets.map((currency) => (
+                          {assets.map((currency, index) => (
                             <p
-                              key={currency}
+                              key={index}
                               className="px-2 py-1 text-[black] cursor-pointer"
                               onClick={() => {
                                 setCurrencyChange(false);
-                                setSelectedCurrency(currency);
-                                if (currency === "NGN") {
+                                setSelectedCurrency(currency.displaySymbol);
+                                if (currency.symbol === "NGNC") {
                                   setCurrentPrice(
                                     walletAssets.allWalletTotalBalanceInNgn
                                   );
                                   setConvertPrice(
                                     walletAssets.allWalletTotalBalanceInUsd || 0
                                   );
-                                  setConvertCurrency("USDC");
+                                  setConvertCurrency("USD");
                                 } else {
                                   setConvertCurrency("NGN");
                                   setConvertPrice(
@@ -401,13 +410,14 @@ const Dashboard: React.FC = () => {
                                 }
                               }}
                             >
-                              {currency}
+                              {currency.displaySymbol}
                             </p>
                           ))}
                         </div>
                       )}
                     </div>
                   </div>
+
                   <div className="flex ">
                     <p className="md:text-4xl mt-2 mb-2 text-[white] text-3xl">
                       <b>
@@ -420,6 +430,10 @@ const Dashboard: React.FC = () => {
                     ≈ {convertPrice?.toFixed(2) || "loading..."}{" "}
                     {convertCurrency}
                   </p>
+                </div>
+
+                <div className="mt-3 px-6">
+                  <AssetProgressBar />
                 </div>
                 <div className={`flex px-6 gap-4 py-4 rounded-b-lg`}>
                   <button
@@ -437,7 +451,7 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
               <div
-                className={`border border-[#B2B2B27A] pt-3 rounded-lg w-full mx-auto `}
+                className={`border border-[#FFFFFF]/20 pt-3 rounded-lg w-full mx-auto `}
               >
                 <div className={`flex justify-between items-start mb-16 px-3 `}>
                   <div>
@@ -451,7 +465,7 @@ const Dashboard: React.FC = () => {
                   </div>
                 </div>
                 <div className={`flex bg-[#99AAF961] px-6 py-4 rounded-b-lg `}>
-                  <button className="text-white bg-primary-color py-[6px] px-4 rounded-md opacity-0">
+                  <button className="text-white bg-[#0E7BB2] py-[6px] px-4 rounded-md opacity-0">
                     Explore Ecosystem
                   </button>
                 </div>
@@ -566,7 +580,8 @@ const Dashboard: React.FC = () => {
                 {removeDropDown === "trustLine" && (
                   <>
                     <div
-                      className={`absolute w-full border lg:h-[330px] h-[250px] rounded-[6px] bg-white z-[1] py-3 left-0 overflow-y-scroll mt-5 `}
+                      className={`absolute w-full border rounded-[6px] bg-white z-[1] py-3 left-0 overflow-y-scroll mt-5 `}
+                      style={{ height: "100%", maxHeight: "330px" }}
                     >
                       {loadingWalletAssets ? (
                         <ArrayItemLoader />
@@ -574,36 +589,40 @@ const Dashboard: React.FC = () => {
                         (() => {
                           const removableAssets =
                             walletAssets?.allWalletAssets?.filter(
-                              (asset) => asset?.asset_code !== "NATIVE"
+                              (asset: any) => asset?.asset_code !== "NATIVE"
                             );
 
                           return removableAssets?.length > 0 ? (
-                            removableAssets?.map((asset, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center gap-2 py-3 hover:bg-gray-200 cursor-pointer px-3"
-                                onClick={() => setSelectedTrustLine(asset)}
-                              >
-                                <img
-                                  src={asset?.image}
-                                  alt=""
-                                  className="w-[30px]"
-                                />
-                                <div>
-                                  <p className="text-[#1C1C1C]">
-                                    {asset?.asset_name}
-                                  </p>
-                                  <p className="text-[9px] text-[#0E0E0E]">
-                                    {asset.code === "NATIVE"
-                                      ? "XLM"
-                                      : asset?.asset_code}
-                                  </p>
+                            removableAssets?.map(
+                              (asset: any, index: number) => (
+                                <div
+                                  key={index}
+                                  className="flex items-center gap-2 py-3 hover:bg-gray-200 cursor-pointer px-3"
+                                  onClick={() => {
+                                    setSelectedTrustLine(asset);
+                                  }}
+                                >
+                                  <img
+                                    src={asset?.image}
+                                    alt="assset"
+                                    className="w-[30px]"
+                                  />
+                                  <div>
+                                    <p className="text-[#1C1C1C]">
+                                      {asset?.asset_name}
+                                    </p>
+                                    <p className="text-[9px] text-[#0E0E0E]">
+                                      {asset.code === "NATIVE"
+                                        ? "XLM"
+                                        : asset?.asset_code}
+                                    </p>
+                                  </div>
                                 </div>
-                              </div>
-                            ))
+                              )
+                            )
                           ) : (
                             <p className="text-center text-gray-500 py-3">
-                              No more assets to remove
+                              No assets to remove
                             </p>
                           );
                         })()
@@ -617,45 +636,55 @@ const Dashboard: React.FC = () => {
                     {isActivateWalletAlert && activateWalletAlert}
                   </p>
                 ) : (
-                  <div className="mt-10  h-[430px] overflow-y-scroll">
+                  <div
+                    className="mt-10 overflow-y-scroll"
+                    style={{ height: "100%", maxHeight: "430px" }}
+                  >
                     {loadingWalletAssets ? (
                       <ArrayItemLoader />
                     ) : (
                       <>
-                        {walletAssets?.allWalletAssets?.map((asset, index) => {
-                          return (
-                            <div
-                              key={index}
-                              className="flex items-center justify-between border-b border-[#E4E7EC99] pb-2 mb-5 cursor-pointer"
-                            >
-                              <div className="flex items-center gap-2">
-                                <img
-                                  src={asset?.image}
-                                  alt=""
-                                  className="w-[30px]"
-                                />
-                                <div>
-                                  <p className="text-[white]">
-                                    {asset?.asset_name}
+                        {walletAssets?.allWalletAssets?.map(
+                          (asset: any, index: number) => {
+                            return (
+                              <div
+                                key={index}
+                                className="flex items-center justify-between text-white border-b border-[#E4E7EC99] pb-2 mb-5 cursor-pointer"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <img
+                                    src={asset?.image}
+                                    alt=""
+                                    className="w-[30px]"
+                                  />
+                                  <div>
+                                    <p className="text-[white]">
+                                      {asset?.asset_name}
+                                    </p>
+                                    <p className="text-[9px] text-[white]">
+                                      {asset?.asset_code === "NATIVE"
+                                        ? "XLM"
+                                        : asset?.asset_code}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex flex-col items-end pr-3 ">
+                                  <p className="text-[20px]">
+                                    {formateDecimal(asset?.balance || 0)}
                                   </p>
-                                  <p className="text-[9px] text-[white]">
-                                    {asset?.asset_code === "NATIVE"
-                                      ? "XLM"
-                                      : asset?.asset_code}
-                                  </p>
+                                  <div className="text-[16px] text-[white] flex items-center gap-[2px]">
+                                    <p>
+                                      $
+                                      {formateDecimal(
+                                        asset?.equivalentBalanceInUsd || 0
+                                      )}
+                                    </p>
+                                  </div>
                                 </div>
                               </div>
-                              <div className="flex flex-col items-end pr-3">
-                                <p>{Number(asset?.balance).toFixed(8)}</p>
-                                <div className="text-[10px] text-[white] flex items-center gap-[2px]">
-                                  <p>
-                                    ${asset?.equivalentBalanceInUsd?.toFixed(9)}
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          }
+                        )}
                       </>
                     )}
                   </div>
@@ -690,7 +719,7 @@ const Dashboard: React.FC = () => {
               background: "rgba(18, 18, 18, 0.8)",
             }}
           >
-            <div className="bg-white" style={{ borderRadius: "10px" }}>
+            <div className="bg-black mx-3" style={{ borderRadius: "10px" }}>
               <div className="text-center  flex items-center justify-center flex-col mt-7">
                 <img
                   src={selectedTrustLine.image}
@@ -698,10 +727,10 @@ const Dashboard: React.FC = () => {
                   alt=""
                 />
                 <div>
-                  <p className="text-[#1C1C1C]">
+                  <p className="text-[white]">
                     {selectedTrustLine?.asset_name}
                   </p>
-                  <p className="text-[#0E0E0E] text-[12px]">
+                  <p className="text-[white] text-[12px]">
                     {selectedTrustLine?.asset_code === "NATIVE"
                       ? "XLM"
                       : selectedTrustLine?.asset_code}
@@ -713,7 +742,7 @@ const Dashboard: React.FC = () => {
                 className="flex items-center justify-between mt-[1rem] px-[2rem] flex-col"
                 style={{ padding: "0 2rem", textAlign: "center" }}
               >
-                <p className="text-gray-500 text-[15px] mb-2 text-center">
+                <p className="text-white text-[15px] mb-2 text-center">
                   Are you sure you want to{" "}
                   <span className="font-[500]">REMOVE</span> this asset from
                   your list of trustlines?
@@ -721,21 +750,21 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="flex items-center gap-4 px-[2rem] mb-8">
                 <button
-                  className="bg-red-500 text-white p-3 rounded-lg w-full mt-[2rem]"
+                  className="bg-[#B3261E] cursor-pointer border border-[white]/50 text-white p-3 rounded-lg w-full mt-[2rem]"
                   onClick={() => setSelectedTrustLine(false)}
                   disabled={loading}
                 >
                   No
                 </button>
                 <button
-                  className="flex justify-center items-center bg-primary-color text-white p-3 rounded-lg w-full mt-[2rem]"
+                  className="flex justify-center items-center cursor-pointer border border-white/50 bg-[#0E7BB2] text-white p-3 rounded-lg w-full mt-[2rem]"
                   onClick={handlRemoveTrustLine}
                   disabled={loading}
                 >
                   <span>Yes, continue</span>
                   {loading && (
                     <img
-                      src="./images/loader.gif"
+                      src="./image/loader.gif"
                       className="w-[20px] mx-2"
                       alt=""
                     />
@@ -763,7 +792,7 @@ const Dashboard: React.FC = () => {
               background: "rgba(18, 18, 18, 0.8)",
             }}
           >
-            <div className="bg-white" style={{ borderRadius: "10px" }}>
+            <div className="bg-black mx-3" style={{ borderRadius: "10px" }}>
               <div className="text-center  flex items-center justify-center flex-col mt-7">
                 <img
                   src={selectedAsset.image}
@@ -771,8 +800,8 @@ const Dashboard: React.FC = () => {
                   alt=""
                 />
                 <div>
-                  <p className="text-[#1C1C1C]">{selectedAsset?.name}</p>
-                  <p className="text-[#0E0E0E] text-[12px]">
+                  <p className="text-[white]">{selectedAsset?.name}</p>
+                  <p className="text-[white] text-[12px]">
                     {selectedAsset?.code === "NATIVE"
                       ? "XLM"
                       : selectedAsset?.code}
@@ -784,7 +813,7 @@ const Dashboard: React.FC = () => {
                 className="flex items-center justify-between mt-[1rem] px-[2rem] flex-col"
                 style={{ padding: "0 2rem", textAlign: "center" }}
               >
-                <p className="text-gray-500 text-[15px] mb-2 text-center">
+                <p className="text-white text-[15px] mb-2 text-center">
                   Are you sure you want to{" "}
                   <span className="font-[500]">ADD</span> this asset from your
                   list of trustlines?
@@ -792,21 +821,21 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="flex items-center gap-4 px-[2rem] mb-8">
                 <button
-                  className="bg-red-500 text-white p-3 rounded-lg w-full mt-[2rem]"
+                  className="bg-[#B3261E] border cursor-pointer border-white/50 text-white p-3 rounded-lg w-full mt-[2rem]"
                   onClick={() => setSelectedAsset(false)}
                   disabled={loading}
                 >
                   No
                 </button>
                 <button
-                  className="flex justify-center items-center bg-primary-color text-white p-3 rounded-lg w-full mt-[2rem]"
+                  className="flex justify-center items-center border cursor-pointer border-white/50 bg-[#0E7BB2] text-white p-3 rounded-lg w-full mt-[2rem]"
                   onClick={handleAddTrustLine}
                   disabled={loading}
                 >
                   <span>Yes, continue</span>
                   {loading && (
                     <img
-                      src="./images/loader.gif"
+                      src="./image/loader.gif"
                       className="w-[20px] mx-2"
                       alt=""
                     />

@@ -17,7 +17,7 @@ const TopNav: React.FC = () => {
   const [notification, setNotification] = useState(false);
   const [mobileNav, setMobileNav] = useState(false);
 
-  const [userData, setUserData] = useState<any>({});
+  const [userData, setUserData] = useState<any>(null);
   const navigate = useNavigate();
   const pathname = window.location.pathname;
   const user = Cookies.get("token");
@@ -31,8 +31,8 @@ const TopNav: React.FC = () => {
   async function getUserInfo() {
     try {
       if (user) {
-        const respone = await getProfile(user);
-        setUserData(respone.data);
+        const response = await getProfile(user);
+        setUserData(response.data);
       }
     } catch (error) {
       console.error(error);
@@ -45,16 +45,25 @@ const TopNav: React.FC = () => {
     if (parsedUser) {
       setUserData(parsedUser);
     }
+
     getUserInfo();
   }, []);
 
   return (
     <div>
       <div
-        style={{ display: "none" }}
-        className="bg-[#FFFFFF]  shadow-[inset_5px_0px_10px_black,inset_-5px_0px_10px_#E1E1E1] rounded-[8px] hidden lg:flex items-center justify-center gap-[70px] w-[95%] py-[1.2rem] top-0 right-0 z-[99] mx-auto mt-[1.2rem] relative"
+        // style={{ display: "none" }}
+        className="bg-[#02001C] fixed hidden lg:flex items-center justify-center gap-[70px] w-[100%] py-[1.2rem] top-0 right-0 z-[99] mx-auto"
       >
         <div className="flex justify-between px-[3rem] w-full">
+          <div className=" cursor-pointer">
+            <img
+              src="./images/rendbit-logo.svg"
+              className="w-[100%]"
+              alt="Logo"
+            />
+          </div>
+
           <div className="flex items-center gap-5">
             <div className="flex items-center gap-2">
               {/* <img src="./images/overview.svg" alt="" /> */}
@@ -69,25 +78,26 @@ const TopNav: React.FC = () => {
           </div>
           <div className="flex items-center gap-2">
             {/* <img src="./images/moon.svg" alt="" /> */}
-            <div className="p-2 rounded-[8px] bg-[#B9B9B926]">
+            {/* <div className="p-2 rounded-[8px] bg-[#B9B9B926]">
               <img
                 src="./images/notification.svg"
                 alt=""
                 className="cursor-pointer"
                 onClick={() => setNotification(true)}
               />
-            </div>
+            </div> */}
             <button
               className="flex items-center gap-2 text-white px-4 py-[10px] rounded-[8px] cutom-btn-gradient text-[14px]"
-              onClick={() => navigate("/leader-board")}
+              // onClick={() => navigate("/leader-board")}
             >
               <img src="./images/ranking.svg" alt="" />
-              <p>Leaderboard</p>
+              {/* <p>Leaderboard</p> */}
+              <p className="text-white">{userData?.username}</p>
             </button>
           </div>
         </div>
 
-        {notification && (
+        {/* {notification && (
           <div className="h-[500px] overflow-y-scroll absolute z-[9999] mt-[590px] right-0 bg-white shadow-md border w-[360px] p-5 rounded-[8px]">
             <div className="flex items-center justify-between">
               <p className="text-[#282828] font-[500] text-[20px]">
@@ -109,7 +119,7 @@ const TopNav: React.FC = () => {
               );
             })}
           </div>
-        )}
+        )} */}
       </div>
       <div
         className={
@@ -123,7 +133,7 @@ const TopNav: React.FC = () => {
             src={
               mobileNav === true
                 ? `/images/mammon-app-logo-dark.svg`
-                : `/images/mammon-app-logo.svg`
+                : `/images/rendbit-logo.svg`
             }
             className="w-[200px] h-[200px]"
             alt="RendBit Logo"
@@ -141,9 +151,7 @@ const TopNav: React.FC = () => {
         </div>
         {/* */}
         {notification && (
-          <div
-            className="h-[500px] overflow-y-scroll absolute z-[999999] mt-[590px] right-0 bg-white shadow-md border w-[360px] p-5 rounded-[8px]"
-          >
+          <div className="h-[500px] overflow-y-scroll absolute z-[999999] mt-[590px] right-0 bg-white shadow-md border w-[360px] p-5 rounded-[8px]">
             <div className="flex items-center justify-between">
               <p className="text-[#282828] font-[500] text-[20px]">
                 Notifications
@@ -357,15 +365,15 @@ const TopNav: React.FC = () => {
                       </div>
                     </Link>
                     <Link
-                      to="/swap-assets"
+                      to="/swap"
                       className={
-                        pathname.includes("swap-assets")
+                        pathname.includes("swap")
                           ? `flex items-center justify-between py-[10px] text-[#072AC8] bg-[#072AC81F] px-5`
                           : `px-5 flex items-center justify-between py-[10px] text-black`
                       }
                     >
                       <div className="flex items-center">
-                        {pathname.includes("swap-assets") ? (
+                        {pathname.includes("swap") ? (
                           <img
                             src="./images/swap-colored.svg"
                             className="w-[20px] h-[20px]"

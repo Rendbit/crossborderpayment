@@ -1,4 +1,4 @@
-const getMyAssets = async (token: string, selectedAsset = "NGN") => {
+const getMyAssets = async (token: string, selectedAsset = "NGNC") => {
   try {
     const res = await fetch(
       `${import.meta.env.VITE_BASE_URL}/horizonQueries/getAllWalletAssets?currencyType=${selectedAsset}`,
@@ -88,7 +88,8 @@ const getAllTrustLines = async (token: string) => {
 const getConversionRates = async (
   token: string,
   inputAmount: number,
-  symbol: string
+  inputSymbol: string,
+  outputSymbol: string,
 ) => {
   try {
     const res = await fetch(
@@ -101,7 +102,8 @@ const getConversionRates = async (
           "x-api-key": `${import.meta.env.VITE_API_KEY}`,
         },
         body: JSON.stringify({
-          symbol,
+          inputSymbol,
+          outputSymbol,
           inputAmount,
         }),
       }

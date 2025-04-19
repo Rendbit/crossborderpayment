@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { BiSearch } from "react-icons/bi";
 import ArrayTableLoader from "../loader/ArrayTableLoader";
+import { formateDecimal } from "../../utils";
 
 interface TransactionTableProps {
   name: string;
@@ -44,7 +45,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
   };
 
   return (
-    <div className=" mt-5  p-6">
+    <div className=" mt-5 ">
       <div className="md:flex block items-center md:justify-between mb-10">
         <p className="text-[#ffffff] sm:text-[20px]">{name}</p>
         <div className="flex items-center gap-2 border rounded-full py-[6px] px-3">
@@ -52,7 +53,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
           <input
             onChange={(e) => setSearchText(e.target.value)}
             type="text"
-            className="bg-white outline-none p-2 rounded-md text-[12px] text-[black]"
+            className="bg-white outline-none w-[200px] p-2 rounded-md text-[12px] text-[black]"
             placeholder="Filter Transactions by ID"
           />
         </div>
@@ -80,19 +81,19 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
               <tbody>
                 {!currentTransactions.length ? (
                   <tr>
-                    <td className="px-6 py-4 text-white">Fund your wallet with at least 5 XLM to activate your account.</td>
+                    <td className="px-6 py-4 text-white">No transaction.</td>
                   </tr>
                 ) : (
-                  currentTransactions.map((transaction, index) => (
+                  currentTransactions.map((transaction: any, index: number) => (
                     <tr
                       key={index}
-                      className="text-[12px] border-b border-[#dcdcdc]"
+                      className="text-[12px] text-white border-t border-[#FFFFFF]/50"
                     >
                       <td className="px-6 py-4">
                         {(currentPage - 1) * itemsPerPage + index + 1}.
                       </td>
                       <td className="px-6 py-4">
-                        {tableType === "fiat"
+                        [{tableType === "fiat"
                           ? `${transaction?.id?.slice(
                               0,
                               6
@@ -102,12 +103,12 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                               6
                             )}......${transaction?.transaction_hash?.slice(
                               -6
-                            )}`}
+                            )}`}]
                       </td>
                       <td className="px-6 py-4">
                         {tableType === "fiat"
-                          ? transaction.amount_in || "N/A"
-                          : transaction?.amount || "N/A"}
+                          ? formateDecimal(Number(transaction?.amount_in)) || "N/A"
+                          : formateDecimal(Number(transaction?.amount)) || "N/A"}
                       </td>
                       <td className="px-6 py-4 capitalize">
                         {tableType === "fiat"

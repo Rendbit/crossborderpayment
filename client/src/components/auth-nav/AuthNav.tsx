@@ -10,7 +10,7 @@ const AuthNav: React.FC = () => {
       <div className="flex items-center gap-10">
         <Link to="/" className="block">
           <img
-            src="./images/mammon-app-logo.svg"
+            src="./images/rendbit-logo.svg"
             className="w-[250px]"
             alt="Logo"
           />
@@ -21,7 +21,7 @@ const AuthNav: React.FC = () => {
             <div className="flex items-center justify-between w-full">
               <Link to="/" className="block">
                 <img
-                  src="./images/mammon-app-logo.svg"
+                  src="./images/rendbit-logo.svg"
                   className="w-[250px]"
                   alt="Logo"
                 />
