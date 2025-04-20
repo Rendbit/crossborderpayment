@@ -34,24 +34,24 @@ export const getConversionRates = async (req: any, res: any): Promise<any> => {
   try {
     const { inputAmount, inputSymbol, outputSymbol }: ConversionRequest =
       ConversionRequestSchema.parse(req.body);
-    const fiatList = ["NGNC", "GHSC", "KHSC"];
+      
+      const fiatList = ["NGN", "GHS", "KHS"]; // Updated to match cleaned symbols
 
-    const cleanSymbol = (symbol: string) => {
-      let upperSymbol = symbol.toUpperCase();
-      if (upperSymbol === "NATIVE") return "XLM";
-
-      if (upperSymbol.startsWith("Y")) upperSymbol = upperSymbol.slice(1);
-      if (upperSymbol.endsWith("C")) upperSymbol = upperSymbol.slice(0, -1);
-
-      return fiatList.includes(upperSymbol)
-        ? upperSymbol
-        : symbol.toUpperCase();
-    };
-
-    const input = cleanSymbol(inputSymbol);
-    const output = cleanSymbol(outputSymbol);
-
-    console.log({ input, output });
+      const cleanSymbol = (symbol: string) => {
+        let upperSymbol = symbol.toUpperCase();
+        if (upperSymbol === "NATIVE") return "XLM";
+      
+        if (upperSymbol.startsWith("Y")) upperSymbol = upperSymbol.slice(1);
+        if (upperSymbol.endsWith("C")) upperSymbol = upperSymbol.slice(0, -1); // remove ending C
+      
+        return fiatList.includes(upperSymbol) ? upperSymbol : symbol.toUpperCase();
+      };
+      
+      
+      const input = cleanSymbol(inputSymbol);
+      const output = cleanSymbol(outputSymbol);
+      
+      
 
     const url = `https://pro-api.coinmarketcap.com/v1/tools/price-conversion?amount=${inputAmount}&symbol=${input}&convert=${output}`;
 
