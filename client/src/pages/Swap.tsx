@@ -26,7 +26,9 @@ const Swap: React.FC = () => {
   const [activateWalletAlert, setActivateWalletAlert] = useState<string>("");
   const [isActivateWalletAlert, setIsActivateWalletAlert] =
     useState<boolean>(false);
-  const [selectedCurrency, setSelectedCurrency] = useState(assets && assets.length ? assets[0] : []);
+  const [selectedCurrency, setSelectedCurrency] = useState(
+    assets && assets.length ? assets[0] : []
+  );
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [processing, setProcessing] = useState<boolean>(false);
   const [rateExchange, setExchangeRate] = useState<number | string>("");
@@ -147,10 +149,7 @@ const Swap: React.FC = () => {
         setLoadingWalletAssets(false);
         return;
       }
-      const response = await getMyAssets(
-        user,
-        selectedAsset?.asset_code
-      );
+      const response = await getMyAssets(user, selectedAsset?.asset_code);
       console.log({ response });
 
       if (!response.success) {
@@ -265,11 +264,12 @@ const Swap: React.FC = () => {
       setSwapping(false);
       setAlertType("success");
       setMsg(
-        `${selectedCurrency} ${formatNumberWithCommas(
+        ` ${selectedAsset.asset_code} ${formatNumberWithCommas(
           sourceAmount
-        )} swapped to ${formatNumberWithCommas(Number(descAmount))} ${
-          selectedAsset.asset_code
-        } successfully.`
+        )} swapped to  ${formatNumberWithCommas(Number(descAmount))} 
+        ${selectedCurrency}
+        
+        successfully.`
       );
     } catch (error: any) {
       setMsg(error.message || "An error occurred. Please try again.");
