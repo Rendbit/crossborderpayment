@@ -30,5 +30,5 @@ app.listen(PORT, () => {
       .catch((err) => {
         console.error(`[KEEP-AWAKE] Ping failed: ${err.message}`);
       });
-  }, 14 * 60 * 1000); // 14 mins
+  }, 25 * 60 * 1000); // 25 mins
 });
