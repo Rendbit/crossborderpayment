@@ -1,21 +1,34 @@
 const express = require('express');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 require('dotenv').config();
+
 const app = express();
 
 app.use(
   '/',
   createProxyMiddleware({
-    target: process.env.BASE_URL, 
-    changeOrigin: true, 
-    ws: true, 
+    target: process.env.BASE_URL,
+    changeOrigin: true,
+    ws: true,
     onProxyRes(proxyRes, req, res) {
       console.log(`Proxying request: ${req.method} ${req.url}`);
     },
   })
 );
 
-const PORT = 8080;
+const PORT = process.env.PORT || 8080;
+const SERVER_URL = `https://${process.env.RENDER_SUBDOMAIN}.onrender.com/crossborderpayment/api`;
+
 app.listen(PORT, () => {
-  console.log(`Proxy server running at http://localhost:${PORT}`);
+
+  // 🔁 Keep-alive pinger every 14 minutes
+  setInterval(() => {
+    fetch(SERVER_URL)
+      .then((res) => {
+        console.log(`[KEEP-AWAKE] Pinged server: ${res.status} at ${new Date().toISOString()}`);
+      })
+      .catch((err) => {
+        console.error(`[KEEP-AWAKE] Ping failed: ${err.message}`);
+      });
+  }, 14 * 60 * 1000); // 14 mins
 });
