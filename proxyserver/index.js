@@ -17,7 +17,7 @@ app.use(
 );
 
 const PORT = process.env.PORT || 8080;
-const SERVER_URL = `https://${process.env.RENDER_SUBDOMAIN}.onrender.com/crossborderpayment/api`;
+const SERVER_URL = `${process.env.RENDER_SUBDOMAIN}`;
 
 app.listen(PORT, () => {
 
