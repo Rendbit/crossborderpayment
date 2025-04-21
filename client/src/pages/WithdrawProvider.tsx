@@ -47,6 +47,35 @@ const WithdrawProvider: React.FC = () => {
     handleGetMyAssets();
   }, []);
 
+  useEffect(() => {
+    if (!url) return;
+
+    const iframeDoneListener = () => {
+      const iframe = document.getElementById(
+        "withdrawal-iframe"
+      ) as HTMLIFrameElement;
+      if (!iframe) return;
+
+      try {
+        const currentUrl = iframe.contentWindow?.location.href;
+        if (
+          currentUrl?.includes("success") ||
+          currentUrl?.includes("callback")
+        ) {
+          setModal(false);
+          setUrl(null);
+          handleQueryTransaction();
+        }
+      } catch (err) {
+        // CORS restrictions might block access, ignore silently
+      }
+    };
+
+    const interval = setInterval(iframeDoneListener, 1500); // check every 1.5s
+
+    return () => clearInterval(interval);
+  }, [url]);
+
   async function handleInitiateWithdrawal() {
     setLoading(true);
     if (isActivateWalletAlert) {
@@ -186,7 +215,7 @@ const WithdrawProvider: React.FC = () => {
       const asset = response?.data?.allWalletAssets?.find(
         (asset: any) => asset.asset_code === selectedCurrency.symbol
       );
-      
+
       setCurrentbalance(asset?.balance || 0);
     } catch (error: any) {
       if (
@@ -207,7 +236,7 @@ const WithdrawProvider: React.FC = () => {
 
   return (
     <div>
-      <div className="flex items-start">
+      <div className="flex items-start overflow-hidden">
         <SideNav />
         <div className="w-full lg:w-[84%]  ml-auto">
           <TopNav />
@@ -290,9 +319,9 @@ const WithdrawProvider: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="lg:flex items-center justify-center hidden">
+                    <div className="flex items-center justify-center mx-3">
                       <button
-                        className="flex border border-[#FFFFFF]/50 cursor-pointer bg-[#0E7BB2] rounded-md justify-center items-center py-2 w-[90%] mx-auto text-white mb-3 mt-[4rem]"
+                        className="flex border border-[#FFFFFF]/50 w-full cursor-pointer bg-[#0E7BB2] rounded-md justify-center items-center py-2  mx-auto text-white mb-3 mt-[4rem]"
                         onClick={handleInitiateWithdrawal}
                         disabled={loading}
                       >
@@ -308,73 +337,34 @@ const WithdrawProvider: React.FC = () => {
                     </div>
                   </div>
                 </div>
-
-                <div className="lg:hidden items-center justify-center flex mt-[8rem] mb-[3rem] w-[500px] mx-auto responsive-widths">
-                  <button
-                    className="flex justify-center rounded-md cursor-pointer bg-[#0E7BB2] border-[#FFFFFF]/50 items-center py-2 w-full mx-auto text-white mb-3 mt-[4rem]"
-                    onClick={handleInitiateWithdrawal}
-                    disabled={loading}
-                  >
-                    <span>Proceed</span>
-                    {loading && (
-                      <img
-                        src="./image/loader.gif"
-                        className="w-[20px] mx-2"
-                        alt=""
-                      />
-                    )}
-                  </button>
-                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-      {modal === "withdraw" && (
-        <div
-          style={{
-            position: "fixed",
-            width: "100%",
-            left: "0",
-            top: "0",
-            zIndex: "99",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            height: "100vh",
-            background: "rgba(18, 18, 18, 0.8)",
-          }}
-        >
-          <div className="bg-[black] border border-white/50 rounded-md p-5">
-            {/* <i className=' ri-close-fill block text-[1.2rem] text-end mt-[1rem] mr-[1rem] cursor-pointer'></i> */}
-            <div className="flex items-center justify-between mt-[1rem] px-[2rem] mb-[2rem] flex-col">
-              <p className="text-white text-[16px] mb-5 text-center">
-                Note that you are being redirected to a third-party website to
-                make your withdrawal. <br /> Once transaction is completed
-                please come back to the website to confirm your transaction
-              </p>
 
-              <div className="flex gap-3 items-center justify-center ">
-                <button
-                  className="px-3 py-[6px] rounded-md bg-[#0E7BB2] border border-white/50 cursor-pointer text-white "
-                  onClick={() => {
-                    setModal("confirmPayment");
-                    window.open(url, "_blank");
-                  }}
-                >
-                  Continue
-                </button>
-                <button
-                  className="px-3 py-[6px] rounded-md text-white  bg-[#B3261E] border border-white/50 cursor-pointer"
-                  onClick={() => setModal(false)}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
+      {modal === "withdraw" && url && (
+        <div className="fixed inset-0  z-50 bg-black/70 flex items-center justify-center">
+          <div className="relative mt-3 w-[95%] max-w-[600px] h-[90vh] md:h-[85vh] bg-black border border-white/50 rounded-lg overflow-hidden">
+            <iframe
+              id="withdrawal-iframe"
+              src={url}
+              title="Withdrawal Process"
+              className="w-full h-full bg-black"
+            ></iframe>
+            <button
+              className="absolute cursor-pointer top-2 right-2 border border-white/50 bg-[#B3261E] text-white px-3 py-1 rounded hover:bg-red-600"
+              onClick={() => {
+                setModal(false);
+                setUrl(null);
+              }}
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
+
       {modal === "confirmPayment" && (
         <div
           style={{

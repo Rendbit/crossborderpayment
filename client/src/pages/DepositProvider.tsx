@@ -35,6 +35,36 @@ const DepositProvider: React.FC = () => {
   const [currencyChange, setCurrencyChange] = useState<any>(false);
   const [selectedCurrency, setSelectedCurrency] = useState<any>(fiatAssets[0]);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!url) return;
+
+    const iframeDoneListener = () => {
+      const iframe = document.getElementById(
+        "deposit-iframe"
+      ) as HTMLIFrameElement;
+      if (!iframe) return;
+
+      try {
+        const currentUrl = iframe.contentWindow?.location.href;
+        if (
+          currentUrl?.includes("success") ||
+          currentUrl?.includes("callback")
+        ) {
+          setModal(false);
+          setUrl(null);
+          handleQueryTransaction();
+        }
+      } catch (err) {
+        // CORS restrictions might block access, ignore silently
+      }
+    };
+
+    const interval = setInterval(iframeDoneListener, 1500); // check every 1.5s
+
+    return () => clearInterval(interval);
+  }, [url]);
+
   useEffect(() => {
     const token = Cookies.get("token");
     if (!token) {
@@ -73,7 +103,7 @@ const DepositProvider: React.FC = () => {
         return;
       }
       setUrl(response.data.json.url);
-      setModal("withdraw");
+      setModal("deposit");
     } catch (error: any) {
       setMsg(error.message || "Failed to Initiate deposit");
       setAlertType("error");
@@ -148,7 +178,7 @@ const DepositProvider: React.FC = () => {
       const asset = response?.data?.allWalletAssets?.find(
         (asset: any) => asset.asset_code === selectedCurrency.symbol
       );
-      
+
       setCurrentbalance(asset?.balance || 0);
     } catch (error: any) {
       if (
@@ -294,52 +324,29 @@ const DepositProvider: React.FC = () => {
           </div>
         </div>
       </div>
-      {modal === "withdraw" && (
-        <div
-          style={{
-            position: "fixed",
-            width: "100%",
-            left: "0",
-            top: "0",
-            zIndex: "99",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            height: "100vh",
-            background: "rgba(18, 18, 18, 0.8)",
-          }}
-        >
-          <div className="bg-[black] border border-white/50 rounded-md p-5">
-            {/* <i className=' ri-close-fill block text-[1.2rem] text-end mt-[1rem] mr-[1rem] cursor-pointer'></i> */}
-            <div className="flex items-center justify-between mt-[1rem] px-[2rem] mb-[2rem] flex-col">
-              <p className="text-white text-[16px] mb-5 text-center">
-                Note that you are being redirected to a third-party website to
-                make your deposit. <br /> Once transaction is completed please
-                come back to the website to confirm your transaction
-              </p>
-              <div className="flex items-center gap-3 justify-between">
-                <button
-                  className="px-3 py-[6px] bg-[#0E7BB2] border border-white/50 cursor-pointer text-white bg-primary-color rounded-md"
-                  onClick={() => {
-                    setModal("confirmPayment");
-                    window.open(url, "_blank");
-                  }}
-                >
-                  Continue
-                </button>
-                <button
-                  className="px-3 py-[6px] text-white cursor-pointer border border-white/50 bg-[#B3261E] rounded-md"
-                  onClick={() => {
-                    setModal(false);
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
+
+      {modal === "deposit" && url && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center">
+          <div className="relative w-[95%] max-w-[600px] h-[90vh] md:h-[85vh] bg-black border border-white/50 rounded-lg overflow-hidden">
+            <iframe
+              id="deposit-iframe"
+              src={url}
+              title="Deposit Process"
+              className="w-full h-full bg-black"
+            ></iframe>
+            <button
+              className="absolute cursor-pointer top-2 right-2 border border-white/50 bg-[#B3261E] text-white px-3 py-1 rounded hover:bg-red-600"
+              onClick={() => {
+                setModal(false);
+                setUrl(null);
+              }}
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
+
       {modal === "confirmPayment" && (
         <div
           style={{
