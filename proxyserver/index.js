@@ -18,6 +18,7 @@ app.use(
 
 const PORT = process.env.PORT || 8080;
 const SERVER_URL = `${process.env.RENDER_SUBDOMAIN}`;
+const RENDER_SUBDOMAIN_WAITLIST = `${process.env.RENDER_SUBDOMAIN_WAITLIST}`;
 
 app.listen(PORT, () => {
 
@@ -29,6 +30,13 @@ app.listen(PORT, () => {
       })
       .catch((err) => {
         console.error(`[KEEP-AWAKE] Ping failed: ${err.message}`);
+      });
+    fetch(RENDER_SUBDOMAIN_WAITLIST)
+      .then((res) => {
+        console.log(`[KEEP-AWAKE] Pinged waitlist server server: ${res.status} at ${new Date().toISOString()}`);
+      })
+      .catch((err) => {
+        console.error(`[KEEP-AWAKE] Ping waitlist server failed: ${err.message}`);
       });
   }, 25 * 60 * 1000); // 25 mins
 });
