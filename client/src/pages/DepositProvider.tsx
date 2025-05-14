@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { RiBankLine } from "react-icons/ri";
 import SideNav from "../components/side-nav/SideNav";
 import TopNav from "../components/top-nav/TopNav";
@@ -10,9 +10,11 @@ import { initiateTransfer24, queryTransaction } from "../function/sep24";
 import { getMyAssets } from "../function/horizonQuery";
 import { formateDecimal } from "../utils";
 import { useNavigate } from "react-router-dom";
+
 const DepositProvider: React.FC = () => {
   const user = Cookies.get("token");
   const [loading, setLoading] = useState<boolean>(false);
+  const [isIframeLoading, setIsIframeLoading] = useState<boolean>(false);
   const [url, setUrl] = useState<any>(null);
   const [transactionInfo, setTransactionInfo] = useState<any>();
   const [modal, setModal] = useState<any>(false);
@@ -35,6 +37,46 @@ const DepositProvider: React.FC = () => {
   const [currencyChange, setCurrencyChange] = useState<any>(false);
   const [selectedCurrency, setSelectedCurrency] = useState<any>(fiatAssets[0]);
   const navigate = useNavigate();
+
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const [fallbackUrl, setFallbackUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!modal || !url) return;
+
+    const interval = setInterval(() => {
+      try {
+        const newSrc = iframeRef.current?.contentWindow?.location.href;
+        if (newSrc && newSrc !== url) {
+          console.log("Detected redirect to:", newSrc);
+          setFallbackUrl(newSrc);
+          setUrl(newSrc); // replace with the new iframe url
+        }
+      } catch (err) {
+        // This will throw due to cross-origin, we expect this
+        // But if you already have fallbackUrl, you can load it
+        if (fallbackUrl) {
+          console.log({ fallbackUrl });
+          setUrl(fallbackUrl);
+        }
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [modal, url, fallbackUrl]);
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data === 'closeIframe') {
+        setModal(false);
+        setUrl(null);
+        setIsIframeLoading(true);
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+  
 
   useEffect(() => {
     if (!url) return;
@@ -328,17 +370,29 @@ const DepositProvider: React.FC = () => {
       {modal === "deposit" && url && (
         <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center">
           <div className="relative w-[95%] max-w-[600px] h-[90vh] md:h-[85vh] bg-black border border-white/50 rounded-lg overflow-hidden">
+            {/* Loading Indicator */}
+            {isIframeLoading && (
+              <div className="absolute inset-0 flex items-center justify-center z-10 bg-black/80">
+                <div className="text-white text-center text-[20px] animate-pulse">
+                  Loading...
+                </div>
+              </div>
+            )}
+
             <iframe
               id="deposit-iframe"
               src={url}
               title="Deposit Process"
               className="w-full h-full bg-black"
+              onLoad={() => setIsIframeLoading(false)}
             ></iframe>
+
             <button
-              className="absolute cursor-pointer top-2 right-2 border border-white/50 bg-[#B3261E] text-white px-3 py-1 rounded hover:bg-red-600"
+              className="absolute cursor-pointer top-2 right-2 border border-white/50 bg-[#B3261E] text-white px-3 py-1 rounded hover:bg-red-600 z-20"
               onClick={() => {
                 setModal(false);
                 setUrl(null);
+                setIsIframeLoading(true); // reset loading for next open
               }}
             >
               Close

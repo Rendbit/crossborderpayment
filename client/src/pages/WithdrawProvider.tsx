@@ -36,6 +36,26 @@ const WithdrawProvider: React.FC = () => {
   const [assets, setAssets] = useState<any>([]);
   const [address, setAddress] = useState<string>("");
   const navigate = useNavigate();
+  const [isIframeLoading, setIsIframeLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      try {
+        if (event.data === "closeIframe") {
+          setModal(false);
+          setUrl(null);
+          setIsIframeLoading(true);
+        }
+      } catch (err) {
+        console.error("Error in postMessage handling:", err);
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
+
   useEffect(() => {
     const token = Cookies.get("token");
     if (!token) {
@@ -346,9 +366,18 @@ const WithdrawProvider: React.FC = () => {
       {modal === "withdraw" && url && (
         <div className="fixed inset-0  z-50 bg-black/70 flex items-center justify-center">
           <div className="relative mt-3 w-[95%] max-w-[600px] h-[90vh] md:h-[85vh] bg-black border border-white/50 rounded-lg overflow-hidden">
+            {isIframeLoading && (
+              <div className="absolute inset-0 flex items-center justify-center z-10 bg-black/80">
+                <div className="text-white text-[20px] animate-pulse">
+                  Loading...
+                </div>
+              </div>
+            )}
             <iframe
               id="withdrawal-iframe"
+              onError={(e) => console.error("Iframe load error:", e)}
               src={url}
+              onLoad={() => setIsIframeLoading(false)}
               title="Withdrawal Process"
               className="w-full h-full bg-black"
             ></iframe>
