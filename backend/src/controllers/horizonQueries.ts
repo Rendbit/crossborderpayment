@@ -34,7 +34,6 @@ export const getConversionRates = async (req: any, res: any): Promise<any> => {
   try {
     const { inputAmount, inputSymbol, outputSymbol }: ConversionRequest =
       ConversionRequestSchema.parse(req.body);
-      
       const fiatList = ["NGN", "GHS", "KHS"]; // Updated to match cleaned symbols
 
       const cleanSymbol = (symbol: string) => {

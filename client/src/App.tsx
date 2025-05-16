@@ -3,9 +3,10 @@ import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Deposit from "./pages/Deposit";
+import Transfer from "./pages/Transfer";
 import DepositCrypto from "./pages/DepositCrypto";
 import DepositeFiat from "./pages/DepositFiat";
-import Withdraw from "./pages/Withdraw";
+import Withdraw from "./pages/Transfer";
 import WithdrawCrypto from "./pages/WithdrawCrypto";
 import WithdrawFiat from "./pages/WithdrawFiat";
 import WithdrawProvider from "./pages/WithdrawProvider";
@@ -29,6 +30,7 @@ const App: React.FC = () => {
         <Route path="/wallet" element={<Wallet />} />
         <Route path="/swap" element={<Swap />} />
         <Route path="/deposit" element={<Deposit />} />
+        <Route path="/transfer" element={<Transfer />} />
         <Route path="/deposit-crypto" element={<DepositCrypto />} />
         <Route path="/deposit-fiat" element={<DepositeFiat />} />
         <Route path="/deposit-provider" element={<DepositProvider />} />

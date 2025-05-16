@@ -7,6 +7,7 @@ import Alert from "../components/alert/Alert";
 import { getConversionRates, getMyAssets } from "../function/horizonQuery";
 import { formateDecimal } from "../utils";
 import { swapAssets } from "../function/transaction";
+import { RiBankLine } from "react-icons/ri";
 
 const Swap: React.FC = () => {
   const user = Cookies.get("token");
@@ -272,7 +273,8 @@ const Swap: React.FC = () => {
         successfully.`
       );
     } catch (error: any) {
-      setMsg(error.message || "An error occurred. Please try again.");
+      // setMsg(error.message || "An error occurred. Please try again.");
+      console.log(error);
       setAlertType("error");
     } finally {
       setLoading(false);
@@ -326,351 +328,365 @@ const Swap: React.FC = () => {
     <div>
       <div className="flex items-start ">
         <SideNav />
-        <div className="w-full lg:w-[84%]  ml-auto mb-10">
+        <div className="w-full lg:w-[84%] ml-auto">
           <TopNav />
-          <div className="lg:px-[10px] h-[100vh] pb-[30px] pt-[10px]  mt-[70px] lg:mx-[30px] ">
-            <div className="lg:px-[10px]">
-              <div className="rounded-[11px] w-full py-[30px] px-[10px] ">
-                <div className="w-[70%] lg:mb-20 mb-5">
-                  <p className="lg:text-[32px] text-[20px] text-white">
-                    Swap Asset
-                  </p>
-                  <small className="text-[#ffffff]">
-                    Leave at least 1.5XLM for gas fee
-                  </small>
-                  <p className="text-[#ffffff] font-[300] lg:text-[14px] text-[12px] mt-3">
-                    Choose your crypto and start earning daily interest today.
-                    Rates may increase or decrease in the future. The change
-                    will be communicated in advance.
-                  </p>
-                </div>
-                <div className="border border-[#B2B2B27A] py-6 sm:px-[40px] p-[15px] rounded-[8px] shadow lg:max-w-[500px] md:w-[100%] mx-auto w-full ">
-                  <div className="my-4">
-                    <div className="flex justify-between items-center">
-                      <p className="text-[#ffffff] text-[14px] font-[300]">
-                        Source amount
-                      </p>
-                      <div className="flex text-[14px]">
-                        <p className="text-[#ffffff]">Balance:</p>
-                        <span className="text-white mx-2">
-                          {formateDecimal(currentBalance)}
-                        </span>
-                      </div>
+          <div
+            className={`pb-[30px] lg:mx-[30px] h-[100%] md:fixed lg:w-[84%] w-full ${
+              !next ? "md:mt-[70px]" : ""
+            }`}
+          >
+            <main
+              className={`flex-grow px-4  ${
+                next ? "md:pt-[80px] " : "md:mt-[70px]"
+              } text-white sm:px-10 pb-5  overflow-hidden`}
+            >
+              <div className="max-w-6xl  mx-auto">
+                <div className="bg-white/5 border border-white/10 rounded-2xl shadow-lg md:p-6 px-4 md:mt-[50px] text-white">
+                  <div className="text-center mb-8">
+                    <div className="inline-block bg-[#0E7BB2] mt-4 p-3 rounded-full shadow-md">
+                      <RiBankLine className="text-white text-xl" />
                     </div>
-                    <small className="text-[#ffffff]">
+                    <h1 className="mt-4 text-2xl font-bold">Swap Asset</h1>
+                    <p className="text-gray-400 text-sm">
+                      Choose your crypto and wait for the transaction to
+                      complete.
+                    </p>
+                    <p className="text-gray-400 text-sm">
                       Leave at least 1.5XLM for gas fee
-                    </small>
-
-                    <div className="relative mt-5">
-                      <div className="flex justify-between bg-[#FFFFFF]/8 border border-[#FFFFFF]/50 rounded-md relative z-[12] p-2 items-center">
-                        <div className="flex item-center gap-2">
-                          <div
-                            className="flex items-center bg-[#FFFFFF]/8 rounded-md p-2 cursor-pointer"
-                            onClick={() => {
-                              setCurrencyDropDown(
-                                currencyDropDown === "from" ? false : "from"
-                              );
-                            }}
-                          >
+                    </p>
+                  </div>
+                  <div className="rounded-[11px] mt-[-50px] w-full py-[30px] md:px-[10px] ">
+                    <div className=" py-6 md:p-[15px] rounded-[8px] shadow  mx-auto w-full ">
+                      <div className="my-4">
+                        <div className="flex p-4 bg-white/10 rounded-xl justify-between items-center">
+                          <div>
+                            <p className="text-sm font-medium text-gray-400">
+                              Balance
+                            </p>
+                            <p className="text-lg font-semibold">
+                              {currentBalance === 0
+                                ? "0"
+                                : formateDecimal(currentBalance)}
+                            </p>
+                          </div>
+                          <div className="flex text-[14px]">
                             <img
                               src={selectedAsset?.image}
                               alt=""
-                              width="20px"
+                              className="w-5 h-5"
                             />
+                            <span className="uppercase text-sm">
+                              {selectedAsset?.asset_code}
+                            </span>
+                          </div>
+                        </div>
 
-                            <div className="mr-3 ml-1 flex items-center  gap-2 text-[12px] text-white uppercase">
-                              <p>{selectedAsset?.asset_code || "SELECT"}</p>
-                              <p className="text-[12px] text-white">
-                                <IoChevronDown />
-                              </p>
+                        <div className="relative mt-5">
+                          <p className="text-sm text-gray-400">
+                            FROM&nbsp;AMOUNT
+                          </p>
+                          <div className="flex justify-between bg-[#FFFFFF]/8 border border-[#FFFFFF]/50 rounded-md relative z-[12] p-2 items-center">
+                            <div className="flex item-center gap-2">
+                              <div
+                                className="flex items-center bg-[#FFFFFF]/8 rounded-md p-2 cursor-pointer"
+                                onClick={() => {
+                                  setCurrencyDropDown(
+                                    currencyDropDown === "from" ? false : "from"
+                                  );
+                                }}
+                              >
+                                <img
+                                  src={selectedAsset?.image}
+                                  alt=""
+                                  width="20px"
+                                />
+
+                                <div className="mr-3 ml-1 flex items-center  gap-2 text-[12px] text-white uppercase">
+                                  <p>{selectedAsset?.asset_code || "SELECT"}</p>
+                                  <p className="text-[12px] text-white">
+                                    <IoChevronDown />
+                                  </p>
+                                </div>
+                              </div>
+                              <input
+                                type="number"
+                                id="input-amount"
+                                className="outline-none lg:w-1/2 w-full bg-transparent text-[#ffffff]"
+                                placeholder="Enter amount"
+                                value={sourceAmount}
+                                disabled={swapping}
+                                onChange={(e) => {
+                                  handleCurrencyChange(e);
+                                  if (typingTimeoutRef.current)
+                                    clearTimeout(typingTimeoutRef.current);
+                                  typingTimeoutRef.current = setTimeout(() => {
+                                    fetchXlmRate(
+                                      Number(e.target.value),
+                                      selectedAsset?.asset_code,
+                                      selectedCurrency
+                                    );
+                                  }, 500);
+                                }}
+                              />
+                            </div>
+                            <p
+                              className="text-white text-[12px] cursor-pointer"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (!swapping) {
+                                  handleMax(currentBalance);
+                                  fetchXlmRate(
+                                    currentBalance,
+                                    selectedAsset?.asset_code,
+                                    selectedCurrency
+                                  );
+                                }
+                              }}
+                            >
+                              Max
+                            </p>
+                          </div>
+
+                          {currencyDropDown === "from" && (
+                            <div className="absolute bg-black z-50 text-white rounded-md shadow-md py-2 px-3 max-h-[200px] overflow-y-auto">
+                              {filteredFromAssets?.map(
+                                (asset: any, index: number) => (
+                                  <div
+                                    key={index}
+                                    className="py-2 px-4 cursor-pointer "
+                                    onClick={() => {
+                                      handleInputCurrencyChange(
+                                        asset.asset_code,
+                                        sourceAmount
+                                      );
+                                      setSelectedCurrency(selectedCurrency);
+                                      setSelectedAsset(asset);
+                                      setCurrencyDropDown(false);
+                                      setCurrentbalance(asset.balance);
+                                      setSourceAmount("");
+                                    }}
+                                  >
+                                    <div
+                                      key={index}
+                                      className="flex items-center gap-2"
+                                    >
+                                      <img
+                                        src={asset.image}
+                                        alt=""
+                                        width="25px"
+                                      />
+                                      <div className="flex gap-2 items-center">
+                                        <p className="font-medium text-sm">
+                                          {asset.asset_name}
+                                        </p>
+                                        <p className="text-xs">
+                                          ({asset.asset_code})
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="my-4">
+                        <p className="text-sm text-gray-400">TO&nbsp;AMOUNT</p>
+                        <div className="relative">
+                          <div className="flex justify-between bg-[#FFFFFF]/8 border border-[#FFFFFF]/50 rounded-md relative z-[10] px-2 items-center">
+                            <div
+                              className="flex items-center bg-[#FFFFFF]/8 rounded-md p-2 cursor-pointer"
+                              onClick={() =>
+                                setCurrencyDropDown(
+                                  currencyDropDown === "to" ? false : "to"
+                                )
+                              }
+                            >
+                              <img
+                                src={selectedAssetReceive?.image}
+                                alt=""
+                                width="20px"
+                              />
+                              <div className="mr-3 ml-1 flex items-center h-[20px]  gap-2 text-[12px] text-white uppercase">
+                                <p>
+                                  {selectedAssetReceive?.asset_code || "SELECT"}
+                                </p>
+                                <p className="text-[12px] text-white">
+                                  <IoChevronDown />
+                                </p>
+                              </div>
+                            </div>&nbsp;&nbsp;
+
+                            <div className="flex justify-between gap-3 w-auto items-center bg-white/10 my-3 rounded-xl px-4 py-2">
+                              <div className="flex items-center justify-between">
+                                <p className="text-sm text-gray-400">
+                                 AMOUNT:
+                                </p>
+                              </div>
+                              <input
+                                type="number"
+                                disabled
+                                value={
+                                  sourceAmount
+                                    ? Number(descAmount).toFixed(8)
+                                    : ""
+                                }
+                                className="w-full bg-transparent outline-none md:text-md text-sm font-semibold"
+                              />
+                              {processing && sourceAmount && (
+                                <img
+                                  src="./images/loader.gif"
+                                  className="w-[20px] h-[20px] mx-2"
+                                  alt=""
+                                />
+                              )}
                             </div>
                           </div>
-                          <input
-                            type="number"
-                            id="input-amount"
-                            className="outline-none lg:w-1/2 w-full bg-transparent text-[#ffffff]"
-                            placeholder="Enter amount"
-                            value={sourceAmount}
-                            disabled={swapping}
-                            onChange={(e) => {
-                              handleCurrencyChange(e);
-                              if (typingTimeoutRef.current)
-                                clearTimeout(typingTimeoutRef.current);
-                              typingTimeoutRef.current = setTimeout(() => {
-                                fetchXlmRate(
-                                  Number(e.target.value),
-                                  selectedAsset?.asset_code,
-                                  selectedCurrency
-                                );
-                              }, 500);
-                            }}
-                          />
+                          {currencyDropDown === "to" && (
+                            <div className="absolute bg-black z-50 text-white rounded-md shadow-md py-2 px-3 max-h-[200px] overflow-y-auto">
+                              {filteredReceiveAssets?.map(
+                                (asset: any, index: number) => (
+                                  <div
+                                    key={index}
+                                    className="py-2 px-4 cursor-pointer "
+                                    onClick={() => {
+                                      if (loading) return;
+                                      setSelectedCurrency(asset.asset_code);
+                                      setSelectedAsset(selectedAsset);
+                                      setSelectedAssetReceive(asset);
+                                      setCurrencyDropDown(false);
+                                      handleOuputCurrencyChange(
+                                        asset.asset_code,
+                                        sourceAmount
+                                      );
+                                    }}
+                                  >
+                                    <div
+                                      key={index}
+                                      className="flex items-center gap-2"
+                                    >
+                                      <img
+                                        src={asset.image}
+                                        alt=""
+                                        width="25px"
+                                      />
+                                      <div className="flex gap-2 items-center">
+                                        <p className="font-medium text-sm">
+                                          {asset.asset_name}
+                                        </p>
+                                        <p className="text-xs">
+                                          ({asset.asset_code})
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                )
+                              )}
+                            </div>
+                          )}
                         </div>
-                        <p
-                          className="text-white text-[12px] cursor-pointer"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (!swapping) {
-                              handleMax(currentBalance);
-                              fetchXlmRate(
-                                currentBalance,
-                                selectedAsset?.asset_code,
-                                selectedCurrency
-                              );
-                            }
+                      </div>
+                      <div>
+                        <label
+                          htmlFor="small-range"
+                          className="text-[#ffffff] text-[14px] font-[300]"
+                        >
+                          Slippage
+                        </label>
+                        <input
+                          id="small-range"
+                          type="range"
+                          min={0.5}
+                          max={10}
+                          step={0.01}
+                          value={value}
+                          disabled={loading}
+                          onChange={handleChange}
+                          className="w-full h-1 mb-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-sm dark:bg-gray-700"
+                        />
+                        <p className="text-[#ffffff] text-[14px] font-[300] text-center">
+                          {value}%
+                        </p>
+                      </div>
+
+                      {next ? (
+                        <button
+                          className="flex gap-2 justify-center items-center bg-[#0E7BB2] border border-white/50 text-white p-3 rounded-lg w-full mt-[1rem] cursor-pointer"
+                          disabled={!sourceAmount || !descAmount || swapping}
+                          onClick={async () => {
+                            await handleSwapAssets();
+                            setTimeout(() => {
+                              const starAnimation =
+                                document.createElement("div");
+                              starAnimation.className =
+                                "fixed top-0 left-0 w-full h-full z-50 pointer-events-none star-animation";
+                              document.body.appendChild(starAnimation);
+
+                              for (let i = 0; i < 50; i++) {
+                                const star = document.createElement("div");
+                                star.className = "star";
+                                star.style.left = `${Math.random() * 100}%`;
+                                star.style.top = `${Math.random() * 100}%`;
+                                starAnimation.appendChild(star);
+                              }
+
+                              setTimeout(() => {
+                                document.body.removeChild(starAnimation);
+                              }, 5000);
+                            }, 3000);
                           }}
                         >
-                          Max
-                        </p>
-                      </div>
-
-                      {currencyDropDown === "from" && (
-                        <div className="absolute bg-white w-full mt-[38px] pt-3 pb-3 z-[11] top-[18px] shadow-md">
-                          {filteredFromAssets?.map(
-                            (asset: any, index: number) => (
-                              <div
-                                key={index}
-                                className="py-2 px-4 cursor-pointer "
-                                onClick={() => {
-                                  handleInputCurrencyChange(
-                                    asset.asset_code,
-                                    sourceAmount
-                                  );
-                                  setSelectedCurrency(selectedCurrency);
-                                  setSelectedAsset(asset);
-                                  setCurrencyDropDown(false);
-                                  setCurrentbalance(asset.balance);
-                                  setSourceAmount("");
-                                }}
-                              >
-                                <div
-                                  key={index}
-                                  className="flex items-center gap-2"
-                                >
-                                  <img src={asset.image} alt="" width="25px" />
-                                  <div>
-                                    <p className="text-[#000000] font-[300] text-[14px]">
-                                      {asset.asset_name}
-                                    </p>
-                                    <p className="text-[10px] text-[#000000]">
-                                      {asset.asset_code}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                            )
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="my-4">
-                    <div className="flex justify-between items-center">
-                      <p className="text-[#ffffff] text-[14px] font-[300]">
-                        RECEIVE AMOUNT
-                      </p>
-                    </div>
-                    <div className="relative">
-                      <div className="flex justify-between bg-[#FFFFFF]/8 border border-[#FFFFFF]/50 rounded-md relative z-[10] p-2 items-center">
-                        <div className="flex item-center w-full gap-2">
-                          <div
-                            className="flex items-center bg-[#FFFFFF]/8 rounded-md p-2 cursor-pointer"
-                            onClick={() =>
-                              setCurrencyDropDown(
-                                currencyDropDown === "to" ? false : "to"
-                              )
-                            }
-                          >
-                            <img
-                              src={selectedAssetReceive?.image}
-                              alt=""
-                              width="20px"
-                            />
-                            <div className="mr-3 ml-1 flex items-center  gap-2 text-[12px] text-white uppercase">
-                              <p>
-                                {selectedAssetReceive?.asset_code || "SELECT"}
-                              </p>
-                              <p className="text-[12px] text-white">
-                                <IoChevronDown />
-                              </p>
-                            </div>
-                          </div>
-
-                          <input
-                            type="number"
-                            id="input-amount"
-                            disabled
-                            className="outline-none w-full bg-transparent text-[#ffffff]"
-                            value={
-                              sourceAmount ? Number(descAmount).toFixed(8) : ""
-                            }
-                          />
-                          {processing && sourceAmount && (
+                          <span>Swap</span>
+                          {loading && (
                             <img
                               src="./images/loader.gif"
-                              className="w-[20px] h-[20px] mx-2"
+                              className="w-[20px] mx-2"
                               alt=""
                             />
                           )}
-                        </div>
-                      </div>
-                      {currencyDropDown === "to" && (
-                        <div className="absolute bg-[#F1F1F1] mt-[37px] w-full pt-3 pb-3 top-[18px] shadow-md">
-                          {filteredReceiveAssets?.map(
-                            (asset: any, index: number) => (
-                              <div
-                                key={index}
-                                className="py-2 px-4 cursor-pointer "
-                                onClick={() => {
-                                  if (loading) return;
-                                  setSelectedCurrency(asset.asset_code);
-                                  setSelectedAsset(selectedAsset);
-                                  setSelectedAssetReceive(asset);
-                                  setCurrencyDropDown(false);
-                                  handleOuputCurrencyChange(
-                                    asset.asset_code,
-                                    sourceAmount
-                                  );
-                                }}
-                              >
-                                <div
-                                  key={index}
-                                  className="flex items-center gap-2"
-                                >
-                                  <img src={asset.image} alt="" width="25px" />
-                                  <div>
-                                    <p className="text-[#000000] font-[300] text-[14px]">
-                                      {asset.asset_name}
-                                    </p>
-                                    <p className="text-[10px] text-[#000000]">
-                                      {asset.asset_code}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                            )
-                          )}
-                        </div>
+                        </button>
+                      ) : (
+                        <button
+                          className="bg-[#0E7BB2] border border-white/50 text-white p-3 rounded-lg w-full mt-[1rem] cursor-pointer"
+                          disabled={!sourceAmount && !descAmount}
+                          onClick={handleNext}
+                        >
+                          Next
+                        </button>
                       )}
                     </div>
-                  </div>
-                  <div>
-                    <label
-                      htmlFor="small-range"
-                      className="text-[#ffffff] text-[14px] font-[300]"
-                    >
-                      Slippage
-                    </label>
-                    <input
-                      id="small-range"
-                      type="range"
-                      min={0.5}
-                      max={10}
-                      step={0.01}
-                      value={value}
-                      disabled={loading}
-                      onChange={handleChange}
-                      className="w-full h-1 mb-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-sm dark:bg-gray-700"
-                    />
-                    <p className="text-[#ffffff] text-[14px] font-[300] text-center">
-                      {value}%
-                    </p>
-                  </div>
 
-                  {next ? (
-                    <button
-                      className="flex gap-2 justify-center items-center bg-[#0E7BB2] border border-white/50 text-white p-3 rounded-lg w-full mt-[1rem] cursor-pointer"
-                      disabled={!sourceAmount || !descAmount || swapping}
-                      onClick={async () => {
-                        await handleSwapAssets();
-                        setTimeout(() => {
-                          const starAnimation = document.createElement("div");
-                          starAnimation.className =
-                            "fixed top-0 left-0 w-full h-full z-50 pointer-events-none star-animation";
-                          document.body.appendChild(starAnimation);
-
-                          for (let i = 0; i < 50; i++) {
-                            const star = document.createElement("div");
-                            star.className = "star";
-                            star.style.left = `${Math.random() * 100}%`;
-                            star.style.top = `${Math.random() * 100}%`;
-                            starAnimation.appendChild(star);
-                          }
-
-                          setTimeout(() => {
-                            document.body.removeChild(starAnimation);
-                          }, 5000);
-                        }, 3000);
-                      }}
-                    >
-                      <span>Swap</span>
-                      {loading && (
-                        <img
-                          src="./images/loader.gif"
-                          className="w-[20px] mx-2"
-                          alt=""
-                        />
-                      )}
-                    </button>
-                  ) : (
-                    <button
-                      className="bg-[#0E7BB2] border border-white/50 text-white p-3 rounded-lg w-full mt-[1rem] cursor-pointer"
-                      disabled={!sourceAmount && !descAmount}
-                      onClick={handleNext}
-                    >
-                      Next
-                    </button>
-                  )}
-                </div>
-
-                <div
-                  className={`flex md:flex-row-reverse flex-col mt-[50px] md:mt-[0px] md:px-[64px] px-[16px] items-end justify-between lg:max-w-[1400px] md:w-[100%] mx-auto`}
-                >
-                  {next && (
-                    <div className="flex justify-center items-center w-full">
-                      <div className="py-4 px-[40px] rounded-[8px] lg:w-[500px] w-full bg-black mt-[1rem] border border-[#B2B2B27A] animate-fade-in">
-                        <p className="text-[14px] text-[#ffffff] border-b border-[#CFCFCF] pb-2">
-                          {selectedAsset.asset_code === "NATIVE"
-                            ? "XLM"
-                            : selectedAsset.asset_code}{" "}
-                          {formatNumberWithCommas(sourceAmount)} ={" "}
-                          {selectedCurrency === "NATIVE"
-                            ? "XLM"
-                            : selectedCurrency}{" "}
-                          {formatNumberWithCommas(descAmount)}
-                        </p>
-                        <div className="flex flex-col gap-[8px] mt-5">
-                          <div className="flex items-center justify-between text-[14px] text-[#ffffff]">
-                            <p>Slippage</p>
-                            <p>{value}%</p>
-                          </div>
-                          {/* <div className="flex items-center justify-between text-[14px] text-[#ffffff]">
-                            <p>Exchange Rate</p>
-                            <p>
-                              1
+                    <div>
+                      {next && (
+                        <div className="w-[100%]">
+                          <div className="py-4 px-[40px] mt-[20px] rounded-[8px] w-full bg-white/10  border border-[#B2B2B27A] animate-fade-in">
+                            <p className="text-[14px] text-[#ffffff] border-b border-[#CFCFCF] pb-2">
+                              {selectedAsset.asset_code === "NATIVE"
+                                ? "XLM"
+                                : selectedAsset.asset_code}{" "}
+                              {formatNumberWithCommas(sourceAmount)} ={" "}
                               {selectedCurrency === "NATIVE"
                                 ? "XLM"
                                 : selectedCurrency}{" "}
-                              ={" "}
-                              {Number(
-                                formatNumberWithCommas(rateExchange)
-                              ).toFixed(4)}{" "}
-                              {selectedAsset.asset_code === "NATIVE"
-                                ? "XLM"
-                                : selectedAsset.asset_code}
+                              {formatNumberWithCommas(descAmount)}
                             </p>
-                          </div> */}
-                          <div className="flex items-center justify-between text-[14px] text-[#ffffff]">
-                            <p>Transaction Cost</p>
-                            <p>~XLM 0.0000001</p>
+                            <div className="flex flex-col gap-[8px] mt-5">
+                              <div className="flex items-center justify-between text-[14px] text-[#ffffff]">
+                                <p>Slippage</p>
+                                <p>{value}%</p>
+                              </div>
+                              <div className="flex items-center justify-between text-[14px] text-[#ffffff]">
+                                <p>Transaction Cost</p>
+                                <p>~XLM 0.0000001</p>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </div>
-                  )}
+                      )}
 
-                  <style>{`
+                      <style>{`
           @keyframes fade-in {
             from {
               opacity: 0;
@@ -685,9 +701,9 @@ const Swap: React.FC = () => {
             animation: fade-in 0.5s ease-out;
           }
         `}</style>
-                </div>
+                    </div>
 
-                <style>{`
+                    <style>{`
                   .star-animation {
                     position: fixed;
                     top: 0;
@@ -718,8 +734,10 @@ const Swap: React.FC = () => {
                     }
                   }
                 `}</style>
+                  </div>
+                </div>
               </div>
-            </div>
+            </main>
           </div>
         </div>
       </div>

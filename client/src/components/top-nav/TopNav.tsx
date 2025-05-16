@@ -51,12 +51,9 @@ const TopNav: React.FC = () => {
 
   return (
     <div>
-      <div
-        // style={{ display: "none" }}
-        className="bg-[#02001C] fixed hidden lg:flex items-center justify-center gap-[70px] w-[100%] py-[1.2rem] top-0 right-0 z-[99] mx-auto"
-      >
+      <div className="bg-[#0E7BB2]/10 mb-[50px] fixed hidden lg:flex items-center justify-center gap-[70px] w-[100%] py-[1.2rem] top-0 right-0 z-[99] mx-auto">
         <div className="flex justify-between px-[3rem] w-full">
-          <div className=" cursor-pointer">
+          <div className="p-5 cursor-pointer">
             <img
               src="./images/rendbit-logo.svg"
               className="w-[100%]"
@@ -64,62 +61,13 @@ const TopNav: React.FC = () => {
             />
           </div>
 
-          <div className="flex items-center gap-5">
-            <div className="flex items-center gap-2">
-              {/* <img src="./images/overview.svg" alt="" /> */}
-              <p>
-                {/* <p className='text-black capitalize'>{location.pathname.replace(/^\//, '')}</p> */}
-              </p>
-            </div>
-            {/* <div className='flex items-center gap-2 bg-[#F8F8F8] shadow-[inset_5px_0px_10px_black,inset_-5px_0px_10px_#E1E1E1] rounded-[4px] px-[12px] py-[7px] w-[200px] lg:w-[400px] '>
-              <CiSearch className='text-black text-[26px] cursor-pointer'/>
-              <input type="text" placeholder='Search transactions, assets etc.' className='text-[#333333] w-full placeholder:text-[#333333] bg-transparent text-[14px] outline-none'/>
-            </div> */}
-          </div>
           <div className="flex items-center gap-2">
-            {/* <img src="./images/moon.svg" alt="" /> */}
-            {/* <div className="p-2 rounded-[8px] bg-[#B9B9B926]">
-              <img
-                src="./images/notification.svg"
-                alt=""
-                className="cursor-pointer"
-                onClick={() => setNotification(true)}
-              />
-            </div> */}
-            <button
-              className="flex items-center gap-2 text-white px-4 py-[10px] rounded-[8px] cutom-btn-gradient text-[14px]"
-              // onClick={() => navigate("/leader-board")}
-            >
+            <button className="flex items-center gap-2 text-white px-4 py-[10px] rounded-[8px] cutom-btn-gradient text-[14px]">
               <img src="./images/ranking.svg" alt="" />
-              {/* <p>Leaderboard</p> */}
               <p className="text-white">{userData?.username}</p>
             </button>
           </div>
         </div>
-
-        {/* {notification && (
-          <div className="h-[500px] overflow-y-scroll absolute z-[9999] mt-[590px] right-0 bg-white shadow-md border w-[360px] p-5 rounded-[8px]">
-            <div className="flex items-center justify-between">
-              <p className="text-[#282828] font-[500] text-[20px]">
-                Notifications
-              </p>
-              <MdClose
-                className="text-black cursor-pointer text-[20px]"
-                onClick={() => setNotification(false)}
-              />
-            </div>
-            {notificationArray.map((item, index) => {
-              return (
-                <div key={index} className="border-b mt-5 pb-1">
-                  <p className="text-primary-color font-[600]">{item.title}</p>
-                  <p className="text-[#767676] font-[300] text-[14px]">
-                    {item.desc}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        )} */}
       </div>
       <div
         className={
@@ -137,44 +85,6 @@ const TopNav: React.FC = () => {
           className="w-[200px] h-[200px]"
           alt="RendBit Logo"
         />
-        {/* <div className="flex items-center gap-4">
-          <div className="p-2 rounded-[8px] bg-[white]">
-            <img
-              src="/images/notification.svg"
-              alt="Notification Icon"
-              className="w-[20px] h-[20px] cursor-pointer"
-              // onClick={() => setNotification(true)}
-            />
-          </div>
-        </div> */}
-        {/* */}
-        {/* {notification && (
-          <div className="h-[500px] overflow-y-scroll absolute z-[999999] mt-[590px] right-0 bg-white shadow-md border w-[360px] p-5 rounded-[8px]">
-            <div className="flex items-center justify-between">
-              <p className="text-[#282828] font-[500] text-[20px]">
-                Notifications
-              </p>
-              <MdClose
-                className="text-white cursor-pointer text-[20px]"
-                // onClick={() => setNotification(false)}
-              />
-            </div>
-            {notificationArray.map((item, index) => {
-              return (
-                <div
-                  style={{ display: "none" }}
-                  key={index}
-                  className="border-b mt-5 pb-1"
-                >
-                  <p className="text-primary-color font-[600]">{item.title}</p>
-                  <p className="text-[#767676] font-[300] text-[14px]">
-                    {item.desc}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        )} */}
       </div>
       <div
         className={
@@ -227,10 +137,6 @@ const TopNav: React.FC = () => {
                 </div>
                 {selectedNav === "home" && (
                   <div className="ml-2 my-3 text-[#2B2D36] grid gap-2 text-[14px] font-[400]">
-                    {/* <div className='flex items-center gap-3 cursor-pointer'>
-                      <BsEmojiSmile className='text-[16px]'/>
-                      <p>Get Started</p>
-                    </div> */}
                     <Link
                       to="/dashboard"
                       className={
@@ -340,13 +246,13 @@ const TopNav: React.FC = () => {
                     <Link
                       to="/withdraw"
                       className={
-                        pathname.includes("withdraw")
+                        pathname.includes("transfer")
                           ? `flex items-center justify-between py-[10px] text-[#072AC8] bg-[#072AC81F] px-5`
                           : `px-5 flex items-center justify-between py-[10px] text-black`
                       }
                     >
                       <div className="flex items-center">
-                        {pathname.includes("withdraw") ? (
+                        {pathname.includes("transfer") ? (
                           <img
                             src="./images/money-send-colored.svg"
                             className="w-[20px] h-[20px]"
@@ -359,7 +265,7 @@ const TopNav: React.FC = () => {
                             alt="cup image"
                           />
                         )}
-                        <p className="ml-[10px]">Withdraw</p>
+                        <p className="ml-[10px]">Transfer</p>
                       </div>
                     </Link>
                     <Link
@@ -417,29 +323,6 @@ const TopNav: React.FC = () => {
                 )}
               </div>
 
-              {/* <div>
-                <div className='flex items-center justify-between cursor-pointer' onClick={() => setSelectedNav(selectedNav === 'earn' ? false : 'earn')}>
-                  <p>EARN</p>
-                  <GoChevronDown className='text-[24px]'/>
-                </div>
-                {
-                  selectedNav === "earn" &&
-                  <div className='ml-2 my-3 text-[#2B2D36] grid gap-2 text-[14px] font-[400]'>
-                    <Link to='/savings' className={ pathname.includes('/savings') || pathname.includes('/save-asset') ? `flex items-center justify-between py-[10px] text-[#072AC8] bg-[#072AC81F] px-5` :`px-5 flex items-center justify-between py-[10px] text-black`}>
-                      <div className="flex items-center">
-                        {
-                          pathname.includes('savings') ?
-                          <img src="./images/strongbox@3x-1.svg" className="w-[20px] h-[20px]"  alt="cup image" />
-                          :
-                          <img src="./images/strongbox@3x.svg" className="w-[20px] h-[20px]"  alt="cup image" />
-                        }
-                        <p className="ml-[10px]">Savings</p>
-                      </div>
-                    </Link>
-                  </div>
-                }
-              </div> */}
-
               <div>
                 <div
                   className="flex items-center justify-between cursor-pointer"
@@ -479,17 +362,6 @@ const TopNav: React.FC = () => {
                         <p className="ml-[10px]">Settings</p>
                       </div>
                     </Link>
-                    {/* <Link to='/help-and-support' className={ pathname.includes('/help-and-support') ? `flex items-center justify-between py-[10px] text-[#072AC8] bg-[#072AC81F] px-5` :`px-5 flex items-center justify-between py-[10px] text-black`}>
-                      <div className="flex items-center">
-                        {
-                          pathname.includes('help-and-support') ?
-                          <img src="./images/message-question@3x-1.svg" className="w-[20px] h-[20px]"  alt="cup image" />
-                          :
-                          <img src="./images/message-question@3x.svg" className="w-[20px] h-[20px]"  alt="cup image" />
-                        }
-                          <p className="ml-[10px]">Help & Support</p>
-                      </div>
-                    </Link> */}
                     <div
                       onClick={handleLogout}
                       className="cursor-pointer px-5 flex items-center justify-between py-[10px] text-black"

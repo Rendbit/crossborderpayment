@@ -335,8 +335,10 @@ const Settings: React.FC = () => {
       }
       setMultiFAInfo(response.data);
     } catch (error: any) {
-      setMsg(error.message || "Failed get MFA details.");
-      setAlertType("error");
+      if (error.message !== "MFA settings not found, returning default") {
+        setMsg(error.message || "Failed get MFA details.");
+        setAlertType("error");
+      }
     } finally {
       setLoading(false);
     }

@@ -37,25 +37,12 @@ const SideNav: React.FC = () => {
 
   return (
     <div
-      className=" z-[1] fixed h-screen scrollbar w-[18%] hidden lg:block"
-      style={{ borderTopRightRadius: "8px", borderBottomRightRadius: "8px" }}
+      className=" z-[1] bg-[#0E7BB2]/10 fixed mt-[111.5px] h-screen scrollbar w-[18%] hidden lg:block"
     >
-      <div className="p-5 border-b cursor-pointer">
-        <img
-          src="./images/rendbit-logo.svg"
-          className="w-[100%]"
-          alt="Logo"
-        />
-      </div>
-      <div className="border-r border-[#B2B2B27A] h-screen">
+     
+      <div className="h-screen">
         <div className="mt-7 text-white ">
           <p className="text-[12px] text-[#ffffff] mb-2 px-5">DASHBOARD</p>
-          {/* <Link to='/get-started' className={ pathname.includes('/get-started') ? `flex items-center justify-between py-[10px] text-[#ffffff] bg-[#ffffff1F] px-8` :`px-8 flex items-center justify-between py-[10px] text-[#ffffff]`}>
-          <div className="flex items-center">
-            <BsEmojiSmile />
-            <p className="ml-[10px]">Get Started</p>
-          </div>
-        </Link> */}
           <Link
             to="/dashboard"
             className={
@@ -65,7 +52,6 @@ const SideNav: React.FC = () => {
             }
           >
             <div className="flex items-center">
-              {/* <RxDashboard /> */}
               {pathname.includes("/dashboard") ? (
                 <img
                   src="./images/element-3.svg"
@@ -82,17 +68,6 @@ const SideNav: React.FC = () => {
               <p className="ml-[10px]">Dashboard</p>
             </div>
           </Link>
-          {/* <Link to='/earn-points' className={ pathname.includes('/earn-points') ? `flex items-center justify-between py-[10px] text-[#ffffff] px-8 bg-[#ffffff1F]` :`px-8 flex items-center justify-between py-[10px] text-[#ffffff]`}>
-          <div className="flex items-center">
-            {
-              pathname.includes('/earn-points') ?
-              <img src="./images/cup-colored.svg" className="w-[20px] h-[20px]"  alt="cup image" />
-              :
-              <img src="./images/cup.svg" className="w-[20px] h-[20px]"  alt="cup image" />
-            }
-              <p className="ml-[10px]">Earn Points</p>
-          </div>
-        </Link> */}
         </div>
 
         <div className="mt-7 text-white">
@@ -147,16 +122,17 @@ const SideNav: React.FC = () => {
               <p className="ml-[10px]">Deposit</p>
             </div>
           </Link>
+
           <Link
-            to="/withdraw"
+            to="/transfer"
             className={
-              pathname.includes("withdraw")
+              pathname.includes("transfer")
                 ? `flex items-center justify-between py-[10px] text-[#ffffff] bg-[#ffffff1F] px-8`
                 : `px-8 flex items-center justify-between py-[10px] text-[#ffffff]`
             }
           >
             <div className="flex items-center">
-              {pathname.includes("withdraw") ? (
+              {pathname.includes("transfer") ? (
                 <img
                   src="./images/money-send-colored.svg"
                   className="w-[20px] h-[20px]"
@@ -169,14 +145,13 @@ const SideNav: React.FC = () => {
                   alt="cup image"
                 />
               )}
-              <p className="ml-[10px]">Withdraw</p>
+              <p className="ml-[10px]">Transfer</p>
             </div>
           </Link>
           <Link
             to="/swap"
             className={
-              pathname.includes("/swap") ||
-              pathname.includes("swap")
+              pathname.includes("/swap") || pathname.includes("swap")
                 ? `flex items-center justify-between py-[10px] text-[#ffffff] bg-[#ffffff1F] px-8`
                 : `px-8 flex items-center justify-between py-[10px] text-[#ffffff]`
             }
@@ -226,21 +201,6 @@ const SideNav: React.FC = () => {
           </Link>
         </div>
 
-        {/* <div className="mt-7 text-white">
-        <p className="text-[12px] text-[#ffffff] mb-2 px-5">EARN</p>
-        <Link to='/savings' className={ pathname.includes('/savings') || pathname.includes('/save-asset') ? `flex items-center justify-between py-[10px] text-[#ffffff] bg-[#ffffff1F] px-8` :`px-8 flex items-center justify-between py-[10px] text-[#ffffff]`}>
-          <div className="flex items-center">
-            {
-              pathname.includes('savings') ?
-              <img src="./images/strongbox@3x-1.svg" className="w-[20px] h-[20px]"  alt="cup image" />
-              :
-              <img src="./images/strongbox@3x.svg" className="w-[20px] h-[20px]"  alt="cup image" />
-            }
-            <p className="ml-[10px]">Savings</p>
-          </div>
-        </Link>
-      </div> */}
-
         <div className="mt-7 text-white">
           <p className="text-[12px] text-[#ffffff] mb-2 px-5">ACCOUNT</p>
           <Link
@@ -268,17 +228,7 @@ const SideNav: React.FC = () => {
               <p className="ml-[10px]">Settings</p>
             </div>
           </Link>
-          {/* <Link to='/help-and-support' className={ pathname.includes('/help-and-support') ? `flex items-center justify-between py-[10px] text-[#ffffff] bg-[#ffffff1F] px-8` :`px-8 flex items-center justify-between py-[10px] text-[#ffffff]`}>
-          <div className="flex items-center">
-            {
-              pathname.includes('help-and-support') ?
-              <img src="./images/message-question@3x-1.svg" className="w-[20px] h-[20px]"  alt="cup image" />
-              :
-              <img src="./images/message-question@3x.svg" className="w-[20px] h-[20px]"  alt="cup image" />
-            }
-              <p className="ml-[10px]">Help & Support</p>
-          </div>
-        </Link> */}
+
           <div
             onClick={handleLogout}
             className="cursor-pointer px-8 flex items-center justify-between py-[10px] text-[#ffffff]"
@@ -293,16 +243,6 @@ const SideNav: React.FC = () => {
             </div>
           </div>
         </div>
-
-        {/* <div className="ml-[10px] mt-[15rem] mb-16">
-        <div className="flex align-center">
-            <img src={userData?.userProfileUrl} className="w-[50px]" style={{ marginRight: 12, }} />
-            <div>
-              <p className='text-[#ffffff] text-[14px] font-[500]'>{userData?.username}</p>
-              <p className="text-[#6F7975] text-[12px] tex-[#ffffff]">{userData?.primaryEmail}</p>
-            </div>
-          </div>
-      </div> */}
       </div>
     </div>
   );

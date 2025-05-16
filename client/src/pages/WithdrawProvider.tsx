@@ -11,6 +11,8 @@ import { makeWithdrawal } from "../function/transaction";
 import { getMyAssets } from "../function/horizonQuery";
 import { formateDecimal } from "../utils";
 import { useNavigate } from "react-router-dom";
+import { IoChevronDown } from "react-icons/io5";
+import { FiLoader } from "react-icons/fi";
 
 const WithdrawProvider: React.FC = () => {
   const user = Cookies.get("token");
@@ -22,6 +24,9 @@ const WithdrawProvider: React.FC = () => {
     // { symbol: "GHSC", name: "Ghana Cedis", displaySymbol: "GHS" },
     // { symbol: "KESC", name: "Kenya Shillings", displaySymbol: "KES" },
   ];
+  const [amunt, setAmount] = useState<string>("0");
+  const [currencyDropDown, setCurrencyDropDown] = useState<any>(false);
+
   const [selectedCurrency, setSelectedCurrency] = useState<any>(fiatAssets[0]);
   const [transactionInfo, setTransactionInfo] = useState<any>();
   const [modal, setModal] = useState<any>(false);
@@ -32,11 +37,17 @@ const WithdrawProvider: React.FC = () => {
     useState<boolean>(false);
   const [loadingWalletAssets, setLoadingWalletAssets] =
     useState<boolean>(false);
-  const [currentBalance, setCurrentbalance] = useState<number>(0);
   const [assets, setAssets] = useState<any>([]);
   const [address, setAddress] = useState<string>("");
   const navigate = useNavigate();
   const [isIframeLoading, setIsIframeLoading] = useState<boolean>(false);
+  const [country, setCountry] = useState<any>("");
+  const [loader, setLoader] = useState<any>(false);
+  const [allCountries, setAllCountries] = useState<any>([]);
+  const [showCountries, setShowCountries] = useState<any>(false);
+  const [searchText, setSeacrhText] = useState<any>("");
+  const [selectedAsset, setSelectedAsset] = useState<any>();
+  const [currentBalance, setCurrentbalance] = useState<number>(0);
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
@@ -55,6 +66,16 @@ const WithdrawProvider: React.FC = () => {
 
     return () => window.removeEventListener("message", handleMessage);
   }, []);
+  useEffect(() => {
+    const storedWalletAssets = localStorage.getItem("walletAssets");
+    const parsedWalletAssets = JSON.parse(storedWalletAssets || "null");
+
+    if (!selectedAsset) {
+      setAssets(parsedWalletAssets);
+      setSelectedAsset(parsedWalletAssets?.allWalletAssets[0]);
+      setCurrentbalance(parsedWalletAssets?.allWalletAssets[0].balance || 0);
+    }
+  }, [assets, loading]);
 
   useEffect(() => {
     const token = Cookies.get("token");
@@ -65,6 +86,7 @@ const WithdrawProvider: React.FC = () => {
     const parsedUserData = JSON.parse(storedUserData || "null");
     setAddress(parsedUserData?.stellarPublicKey);
     handleGetMyAssets();
+    getAllCountries();
   }, []);
 
   useEffect(() => {
@@ -98,6 +120,12 @@ const WithdrawProvider: React.FC = () => {
 
   async function handleInitiateWithdrawal() {
     setLoading(true);
+    if (!country) {
+      setMsg("Please enter recipient country");
+      setAlertType("error");
+      setLoading(false);
+      return;
+    }
     if (isActivateWalletAlert) {
       setMsg("Fund your wallet with at least 5 XLM to activate your account.");
       setAlertType("error");
@@ -138,6 +166,23 @@ const WithdrawProvider: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function getAllCountries() {
+    setLoader(true);
+    const response = await fetch(
+      "https://api.countrystatecity.in/v1/countries",
+      {
+        headers: {
+          "X-CSCAPI-KEY":
+            "VUJ1UU5aSmlLU2xiNEJxdUg0RnQ0akNZbXAyV2ZiVHlnN1F6dHA1dg==",
+        },
+      }
+    );
+    const data = await response.json();
+    if (response) setLoader(false);
+    setAllCountries(data);
+    return data;
   }
 
   async function handleMakeWithdrawal(transactionInfo: any) {
@@ -255,117 +300,168 @@ const WithdrawProvider: React.FC = () => {
   }
 
   return (
-    <div>
-      <div className="flex items-start overflow-hidden">
-        <SideNav />
-        <div className="w-full lg:w-[84%]  ml-auto">
-          <TopNav />
-          <div className="py-[20px] px-[10px] h-[100vh]  mt-[90px] lg:mx-[50px]">
-            <h1 className="text-white text-[28px] font-semibold">
-              Withdraw Crypto
-            </h1>
-            {isActivateWalletAlert && (
-              <p className="text-black tetx-center flex justify-center items-center align-middle text-[20px] p-5 bg-red-300 rounded-md my-2">
-                {isActivateWalletAlert && activateWalletAlert}
+    <div className="h-auto py-6">
+      {isActivateWalletAlert && (
+        <p className="text-black tetx-center flex justify-center items-center align-middle text-[20px] p-5 bg-red-300 rounded-md my-2">
+          {isActivateWalletAlert && activateWalletAlert}
+        </p>
+      )}
+      <div className="space-y-8 text-center text-gray-300">
+        <div className="grid gap-6">
+          <div className="flex justify-between items-center bg-white/10 rounded-xl p-4">
+            <div>
+              <p className="text-sm font-medium text-gray-400">Balance</p>
+              <p className="text-lg font-semibold">
+                {currentBalance === 0 ? "0" : formateDecimal(currentBalance)}
               </p>
-            )}
-            <div className="border mt-5 border-[#FFFFFF]/50 rounded-2xl p-5 lg:w-[500px] w-full lg:ml-0 lg:mr-auto mx-auto">
-              <div className="flex items-center gap-3">
-                <div className="bg-[#ffffff] p-2 rounded-full flex items-center justify-center">
-                  <RiBankLine className="text-primary-color text-[22px]" />
-                </div>
+            </div>
+            <div
+              className="flex items-center gap-2 cursor-pointer px-3 py-2 bg-[#2A313D] rounded-lg"
+              onClick={() => {
+                if (isActivateWalletAlert) return;
+                setShowCountries(false);
 
-                <div className="ml-2">
-                  <p className="text-white text-[18px] font-semibold">
-                    Convert your crypto to fiat
-                  </p>
-                  <p className="font-[300] text-[#ffffff] text-[14px]">
-                    Choose Preferred Method
-                  </p>
-                </div>
-              </div>
-              <div className="mt-9">
-                <div className="flex items-center justify-between">
-                  <h2 className=" lg:text-[#ffffff] text-white mb-2 font-[500] lg:font-[400]">
-                    Choose a currency
-                  </h2>
-                  <div className="flex text-[14px] font-semibold">
-                    <p className="text-[#ffffff] mr-1">Balance:</p>
-                    <span className={`text-white`}>
-                      {currentBalance === 0
-                        ? "0"
-                        : formateDecimal(currentBalance)}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex gap-5">
-                  <div className="w-full lg:w-[500px] lg:p-2 bg-gradient-to-b from-[#FFFFFF]/70 to-[#41F8F8]/40 rounded-lg border border-[#FFFFFF]/50">
-                    <div className="p-3 rounded-[8px]">
-                      <div className="flex items-center justify-between">
-                        <div className="relative mb-[10px]">
-                          <span
-                            className="text-sm text-white bg-[#FFFFFF]/30 rounded-md p-3 inline-flex items-center cursor-pointer"
-                            onClick={() => {
-                              if (loading) return;
-                              setCurrencyChange(!currencyChange);
-                            }}
-                          >
-                            {selectedCurrency.name} <GoChevronDown />
-                          </span>
-                          {currencyChange && (
-                            <div className="absolute bg-white border rounded shadow w-full mt-1 z-10 max-w-full">
-                              {fiatAssets.map((currency, index) => (
-                                <p
-                                  key={index}
-                                  className="px-2 py-1 text-[black] cursor-pointer hover:bg-gray-200"
-                                  onClick={() => {
-                                    if (loading) return;
-                                    setCurrencyChange(false);
-                                    setSelectedCurrency(currency);
-                                  }}
-                                >
-                                  {currency.name}
-                                </p>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="mt-5">
-                        <p className="text-white">Provider fee</p>
-                        <p className="font-300 text-[#ffffff]">
-                          Dynamic partner fees
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-center mx-3">
-                      <button
-                        className="flex border border-[#FFFFFF]/50 w-full cursor-pointer bg-[#0E7BB2] rounded-md justify-center items-center py-2  mx-auto text-white mb-3 mt-[4rem]"
-                        onClick={handleInitiateWithdrawal}
-                        disabled={loading}
-                      >
-                        <span>Proceed</span>
-                        {loading && (
-                          <img
-                            src="./image/loader.gif"
-                            className="w-[20px] mx-2"
-                            alt=""
-                          />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                setCurrencyDropDown(
+                  currencyDropDown === "from" ? false : "from"
+                );
+              }}
+            >
+              <img src={selectedAsset?.image} alt="" className="w-5 h-5" />
+              <span className="uppercase text-sm">
+                {selectedAsset?.asset_code}
+              </span>
+              <IoChevronDown />
             </div>
           </div>
+        </div>
+
+        {currencyDropDown === "from" && (
+          <div className="absolute top-[21%] md:left-[39.5%] bg-black text-white mt-[-30px] rounded-md shadow-md py-2 px-3 max-h-[200px] overflow-y-auto">
+            {assets?.allWalletAssets?.map((asset, index) => (
+              <div
+                key={index}
+                className="flex items-center gap-3 py-2 cursor-pointer px-2 hover:bg-white/50 hover:text-black"
+                onClick={() => {
+                  if (loading) return;
+                  setSelectedAsset(asset);
+                  setCurrencyDropDown(false);
+                  setCurrentbalance(asset.balance || 0);
+                }}
+              >
+                <img src={asset.image} alt="" className="w-6 h-6" />
+                <div className="flex gap-2 items-center">
+                  <p className="font-medium text-sm">{asset.asset_name}</p>
+                  <p className="text-xs">({asset.asset_code})</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="flex justify-between mt-[-10px] items-center bg-white/10 rounded-xl p-4">
+          <div>
+            <p className="text-sm font-medium text-gray-400 text-left">
+              Recipient's&nbsp;Country
+            </p>
+            <p className="text-lg font-semibold text-left">
+              {country ? country : "Select country"}
+            </p>
+          </div>
+          <div
+            className="flex items-center gap-2 cursor-pointer px-3 py-2 bg-[#2A313D] rounded-lg"
+            onClick={() => {
+              setShowCountries(!showCountries);
+              setCurrencyDropDown(false);
+            }}
+          >
+            <span className="uppercase text-sm">
+              {country ? country : "Select"}
+            </span>
+            <IoChevronDown />
+          </div>
+        </div>
+
+        {showCountries && !loading && (
+          <div className="absolute top-[40%] md:left-[36.5%] bg-black text-white mt-[-30px] rounded-md shadow-md py-2 px-3 max-h-[200px] overflow-y-auto">
+            <input
+              type="text"
+              onChange={(e) => setSeacrhText(e.target.value)}
+              disabled={loading}
+              placeholder="Search Country"
+              className="border bg-white/2 text-white border-gray-300 w-full placeholder:text-[13px] text-[13px] outline-none px-[4px] rounded mb-1 py-[5px]"
+            />
+            <div>
+              {loader ? (
+                <div className="flex items-center justify-center flex-col gap-3 mt-[7rem]">
+                  <FiLoader className="text-[28px] animate-spin" />
+                  <p className="text-black text-[14px]">
+                    Fetching Countries Please Wait...
+                  </p>
+                </div>
+              ) : (
+                allCountries
+                  .filter((country) =>
+                    country.name
+                      .toLowerCase()
+                      .includes(searchText.toLowerCase())
+                  )
+                  .map((country, index) => (
+                    <div
+                      key={index}
+                      className="flex text-white items-center gap-2 hover:bg-gray-300/50 cursor-pointer p-[5px] text-[14px]"
+                      onClick={() => {
+                        setShowCountries(false);
+                        setCountry(country.name);
+                      }}
+                    >
+                      <p>{country.emoji}</p>
+                      <p>{country.name}</p>
+                    </div>
+                  ))
+              )}
+            </div>
+          </div>
+        )}
+
+        <div className="bg-white/10 rounded-xl p-4 mt-[-10px]">
+          <p className="text-sm mb-2 text-gray-400 text-left">Amount</p>
+          <input
+            type="number"
+            placeholder="Enter amount in your currency"
+            disabled={loading}
+            onChange={(e) => setAmount(e.target.value)}
+            className="w-full bg-transparent outline-none text-lg font-semibold"
+          />
+        </div>
+
+        <div className="bg-white/10 mt-[-10px] rounded-xl p-4">
+          <p className="text-sm mb-2 text-gray-400 text-left">Anchor</p>
+          <div className="flex justify-between items-center cursor-pointer">
+            <span className="font-light">LinkIO</span>
+            <IoChevronDown />
+          </div>
+          <p className="mt-2 text-xs text-gray-400 text-left">
+            Automatically linked to linkio
+          </p>
+        </div>
+
+        <div className="flex mt-[-70px] items-center justify-center mx-3">
+          <button
+            className="flex border border-[#FFFFFF]/50 w-full cursor-pointer bg-[#0E7BB2] rounded-md justify-center items-center py-2  mx-auto text-white mb-3 mt-[4rem]"
+            onClick={handleInitiateWithdrawal}
+            disabled={loading}
+          >
+            <span>Proceed</span>
+            {loading && (
+              <img src="./image/loader.gif" className="w-[20px] mx-2" alt="" />
+            )}
+          </button>
         </div>
       </div>
 
       {modal === "withdraw" && url && (
-        <div className="fixed inset-0  z-50 bg-black/70 flex items-center justify-center">
-          <div className="relative mt-3 w-[95%] max-w-[600px] h-[90vh] md:h-[85vh] bg-black border border-white/50 rounded-lg overflow-hidden">
+        <div className="fixed w-[50%]  bg-black/10 inset-0 z-50 flex items-center justify-center">
+          <div className="relative w-[100%] max-w-[600px] h-[700px] md:h-[65vh] bg-black border border-white/50 rounded-lg">
             {isIframeLoading && (
               <div className="absolute inset-0 flex items-center justify-center z-10 bg-black/80">
                 <div className="text-white text-[20px] animate-pulse">
@@ -379,10 +475,10 @@ const WithdrawProvider: React.FC = () => {
               src={url}
               onLoad={() => setIsIframeLoading(false)}
               title="Withdrawal Process"
-              className="w-full h-full bg-black"
+              className="w-full absolute h-full overflow-hidden bg-black"
             ></iframe>
             <button
-              className="absolute cursor-pointer top-2 right-2 border border-white/50 bg-[#B3261E] text-white px-3 py-1 rounded hover:bg-red-600"
+              className="absolute cursor-pointer top-[10%] right-[5%] border border-white/50 bg-[#B3261E] text-white px-3 py-1 rounded hover:bg-red-600"
               onClick={() => {
                 setModal(false);
                 setUrl(null);
@@ -478,20 +574,12 @@ const WithdrawProvider: React.FC = () => {
               </div>
 
               <div className="md:w-[80%] w-[90%] mx-auto text-white">
-                {/* <div className="flex justify-between">
-                                <p>Amount Fee</p>
-                                <div className='flex items-center justify-between'>
-                                    <TbCurrencyNaira/>
-                                    <p>{transactionInfo?.amount_fee}</p> 
-                                </div>
-                            </div> */}
                 <div className="flex justify-between mt-3">
                   <p>Amount In</p>
                   <div className="flex items-center justify-between">
                     <TbCurrencyNaira />
                     <p>{transactionInfo?.amount_in}</p>
                   </div>
-                  {/* <p>{transactionInfo?.amount_fee}</p> */}
                 </div>
                 <div className="flex justify-between mt-3 border-t pt-3 font-[500]">
                   <p>Total</p>
@@ -521,6 +609,7 @@ const WithdrawProvider: React.FC = () => {
           </div>
         </>
       )}
+
       {msg && <Alert msg={msg} setMsg={setMsg} alertType={alertType} />}
     </div>
   );
