@@ -45,135 +45,121 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
   };
 
   return (
-    <div className=" mt-5 ">
-      <div className="md:flex block items-center md:justify-between mb-10">
-        <p className="text-[#ffffff] sm:text-[20px]">{name}</p>
-        <div className="flex items-center gap-2 border rounded-full py-[6px] px-3">
-          <BiSearch />
-          <input
-            onChange={(e) => setSearchText(e.target.value)}
-            type="text"
-            className="bg-white outline-none w-[200px] p-2 rounded-md text-[12px] text-[black]"
-            placeholder="Filter Transactions by ID"
-          />
-        </div>
-      </div>
-      <div className="border border-[#B2B2B27A] rounded-[4px]">
-        <div className="relative overflow-auto">
-          {loadingTx ? (
-            <ArrayTableLoader number={7} />
-          ) : (
-            <table className="w-full text-sm text-left">
-              <thead className="text-[12px] text-[#ffffff]">
-                <tr>
-                  <th className="px-6 py-3">S/N</th>
-                  <th className="px-6 py-3">Transaction ID</th>
-                  <th className="px-6 py-3">Amount</th>
-                  <th className="px-6 py-3">Transaction Type</th>
-                  <th className="px-6 py-3">
-                    {tableType === "fiat" ? "From/To" : "Asset Code"}
-                  </th>
-
-                  <th className="px-6 py-3">View</th>
-                  {tableType !== "fiat" && <th className="px-6 py-3">Date</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {!currentTransactions.length ? (
-                  <tr>
-                    <td className="px-6 py-4 text-white">No transaction.</td>
-                  </tr>
-                ) : (
-                  currentTransactions.map((transaction: any, index: number) => (
-                    <tr
-                      key={index}
-                      className="text-[12px] text-white border-t border-[#FFFFFF]/50"
-                    >
-                      <td className="px-6 py-4">
-                        {(currentPage - 1) * itemsPerPage + index + 1}.
-                      </td>
-                      <td className="px-6 py-4">
-                        [{tableType === "fiat"
-                          ? `${transaction?.id?.slice(
-                              0,
-                              6
-                            )}......${transaction?.id?.slice(-6)}`
-                          : `${transaction?.transaction_hash?.slice(
-                              0,
-                              6
-                            )}......${transaction?.transaction_hash?.slice(
-                              -6
-                            )}`}]
-                      </td>
-                      <td className="px-6 py-4">
-                        {tableType === "fiat"
-                          ? formateDecimal(Number(transaction?.amount_in)) || "N/A"
-                          : formateDecimal(Number(transaction?.amount)) || "N/A"}
-                      </td>
-                      <td className="px-6 py-4 capitalize">
-                        {tableType === "fiat"
-                          ? transaction?.kind
-                          : transaction?.type}
-                      </td>
-                      <td className="px-6 py-4 capitalize">
-                        {tableType === "fiat"
-                          ? transaction?.kind === "deposit"
-                            ? `${transaction?.to.slice(
-                                0,
-                                6
-                              )}......${transaction?.to.slice(-6)}`
-                            : transaction.to || "N/A"
-                          : transaction?.asset_code || "N/A"}
-                      </td>
-
-                      <td className="px-6 py-4">
-                        <a
-                          href={
-                            tableType === "fiat"
-                              ? transaction?.more_info_url
-                              : `https://stellar.expert/explorer/public/tx/${transaction?.transaction_hash}`
-                          }
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-white underline"
-                        >
-                          View Details
-                        </a>
-                      </td>
-                      {tableType !== "fiat" && (
-                        <td className="px-6 py-4">
-                          {new Date(transaction?.created_at).toDateString()}
-                        </td>
-                      )}
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </div>
-
-      <div className="flex justify-between mt-4">
-        <button
-          onClick={handlePrevPage}
-          disabled={currentPage === 1}
-          className="px-4 py-2 bg-gray-700 text-white rounded disabled:opacity-50"
-        >
-          Previous
-        </button>
-        <span className="text-white">
-          Page {currentPage} of {totalPages}
-        </span>
-        <button
-          onClick={handleNextPage}
-          disabled={currentPage === totalPages}
-          className="px-4 py-2 bg-gray-700 text-white rounded disabled:opacity-50"
-        >
-          Next
-        </button>
+    <div className="mt-10 space-y-6">
+    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <h2 className="text-white text-2xl font-semibold">{name}</h2>
+      <div className="relative w-full max-w-sm">
+        <BiSearch className="absolute top-1/2 left-3 transform -translate-y-1/2 text-gray-500 text-lg" />
+        <input
+          onChange={(e) => setSearchText(e.target.value)}
+          type="text"
+          placeholder="Search by Transaction ID"
+          className="pl-10 pr-4 py-2 w-full text-sm rounded-lg bg-[#171b2d] text-white placeholder:text-gray-400 border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
       </div>
     </div>
+  
+    <div className="rounded-xl border border-white/10 overflow-hidden">
+      <table className="min-w-full text-sm text-white bg-[#050d2a]">
+        <thead className="bg-[#050d2a] text-left text-gray-300 text-xs uppercase tracking-wider">
+          <tr>
+            <th className="px-6 py-4">#</th>
+            <th className="px-6 py-4">Transaction ID</th>
+            <th className="px-6 py-4">Amount</th>
+            <th className="px-6 py-4">Type</th>
+            <th className="px-6 py-4">{tableType === "fiat" ? "From/To" : "Asset"}</th>
+            <th className="px-6 py-4">View</th>
+            {tableType !== "fiat" && <th className="px-6 py-4">Date</th>}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-white/10">
+          {loadingTx ? (
+            <tr>
+              <td colSpan={7}>
+                <ArrayTableLoader number={7} />
+              </td>
+            </tr>
+          ) : currentTransactions.length === 0 ? (
+            <tr>
+              <td colSpan={7} className="px-6 py-6 text-center text-gray-400">
+                No transactions found.
+              </td>
+            </tr>
+          ) : (
+            currentTransactions.map((tx: any, index: number) => (
+              <tr
+                key={index}
+                className="hover:bg-[#171b2d] transition-all duration-200"
+              >
+                <td className="px-6 py-4 text-gray-400">
+                  {(currentPage - 1) * itemsPerPage + index + 1}.
+                </td>
+                <td className="px-6 py-4 break-all">
+                  [
+                  {tableType === "fiat"
+                    ? `${tx?.id?.slice(0, 6)}...${tx?.id?.slice(-6)}`
+                    : `${tx?.transaction_hash?.slice(0, 6)}...${tx?.transaction_hash?.slice(-6)}`}
+                  ]
+                </td>
+                <td className="px-6 py-4">{formateDecimal(Number(tableType === "fiat" ? tx?.amount_in : tx?.amount)) || "N/A"}</td>
+                <td className="px-6 py-4 capitalize">
+                  {tableType === "fiat" ? tx?.kind : tx?.type}
+                </td>
+                <td className="px-6 py-4">
+                  {tableType === "fiat"
+                    ? tx?.kind === "deposit"
+                      ? `${tx?.to?.slice(0, 6)}...${tx?.to?.slice(-6)}`
+                      : tx.to || "N/A"
+                    : tx?.asset_code || "N/A"}
+                </td>
+                <td className="px-6 py-4">
+                  <a
+                    href={
+                      tableType === "fiat"
+                        ? tx?.more_info_url
+                        : `https://stellar.expert/explorer/public/tx/${tx?.transaction_hash}`
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 underline hover:text-blue-600 transition"
+                  >
+                    View
+                  </a>
+                </td>
+                {tableType !== "fiat" && (
+                  <td className="px-6 py-4 text-gray-400">
+                    {new Date(tx?.created_at).toLocaleDateString()}
+                  </td>
+                )}
+              </tr>
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  
+    <div className="flex items-center justify-between">
+      <button
+        onClick={handlePrevPage}
+        disabled={currentPage === 1}
+        className="px-4 py-2 text-sm bg-gray-800 text-white rounded hover:bg-gray-700 disabled:opacity-40"
+      >
+        Previous
+      </button>
+      <span className="text-gray-300">
+        Page <span className="font-semibold">{currentPage}</span> of{" "}
+        <span className="font-semibold">{totalPages}</span>
+      </span>
+      <button
+        onClick={handleNextPage}
+        disabled={currentPage === totalPages}
+        className="px-4 py-2 text-sm bg-gray-800 text-white rounded hover:bg-gray-700 disabled:opacity-40"
+      >
+        Next
+      </button>
+    </div>
+  </div>
+  
   );
 };
 

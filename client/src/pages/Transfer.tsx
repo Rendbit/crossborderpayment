@@ -44,6 +44,7 @@ const Transfer: React.FC = () => {
   useEffect(() => {
     handleGetMyAssets();
   }, []);
+  
 
   useEffect(() => {
     const storedWalletAssets = localStorage.getItem("walletAssets");
@@ -173,7 +174,7 @@ const Transfer: React.FC = () => {
                 </p>
               )}
 
-              <div className="bg-white/5 border border-white/10 rounded-2xl shadow-lg md:p-6 p-2 md:mt-[50px] text-white">
+              <div className="bg-[#050d2a] border border-white/10 rounded-2xl shadow-lg md:p-6 p-2 md:mt-[50px] text-white">
                 <div className="text-center mb-8">
                   <div className="inline-block bg-[#0E7BB2] p-3 rounded-full shadow-md">
                     <RiBankLine className="text-white text-xl" />

@@ -151,7 +151,6 @@ const Swap: React.FC = () => {
         return;
       }
       const response = await getMyAssets(user, selectedAsset?.asset_code);
-      console.log({ response });
 
       if (!response.success) {
         if (
@@ -273,7 +272,7 @@ const Swap: React.FC = () => {
         successfully.`
       );
     } catch (error: any) {
-      // setMsg(error.message || "An error occurred. Please try again.");
+      setMsg(error.message || "An error occurred. Please try again.");
       console.log(error);
       setAlertType("error");
     } finally {
@@ -341,7 +340,7 @@ const Swap: React.FC = () => {
               } text-white sm:px-10 pb-5  overflow-hidden`}
             >
               <div className="max-w-6xl  mx-auto">
-                <div className="bg-white/5 border border-white/10 rounded-2xl shadow-lg md:p-6 px-4 md:mt-[50px] text-white">
+                <div className="bg-[#050d2a] border border-white/10 rounded-2xl shadow-lg md:p-6 px-4 md:mt-[50px] text-white">
                   <div className="text-center mb-8">
                     <div className="inline-block bg-[#0E7BB2] mt-4 p-3 rounded-full shadow-md">
                       <RiBankLine className="text-white text-xl" />
@@ -385,10 +384,10 @@ const Swap: React.FC = () => {
                           <p className="text-sm text-gray-400">
                             FROM&nbsp;AMOUNT
                           </p>
-                          <div className="flex justify-between bg-[#FFFFFF]/8 border border-[#FFFFFF]/50 rounded-md relative z-[12] p-2 items-center">
+                          <div className="flex justify-between bg-white/10 border border-[#FFFFFF]/50 rounded-md relative z-[12] p-2 items-center">
                             <div className="flex item-center gap-2">
                               <div
-                                className="flex items-center bg-[#FFFFFF]/8 rounded-md p-2 cursor-pointer"
+                                className="flex items-center bg-white/10 rounded-md p-2 cursor-pointer"
                                 onClick={() => {
                                   setCurrencyDropDown(
                                     currencyDropDown === "from" ? false : "from"
@@ -495,9 +494,9 @@ const Swap: React.FC = () => {
                       <div className="my-4">
                         <p className="text-sm text-gray-400">TO&nbsp;AMOUNT</p>
                         <div className="relative">
-                          <div className="flex justify-between bg-[#FFFFFF]/8 border border-[#FFFFFF]/50 rounded-md relative z-[10] px-2 items-center">
+                          <div className="flex justify-between bg-white/10 border border-[#FFFFFF]/50 rounded-md relative z-[10] px-2 items-center">
                             <div
-                              className="flex items-center bg-[#FFFFFF]/8 rounded-md p-2 cursor-pointer"
+                              className="flex items-center bg-white/10 rounded-md p-2 cursor-pointer"
                               onClick={() =>
                                 setCurrencyDropDown(
                                   currencyDropDown === "to" ? false : "to"

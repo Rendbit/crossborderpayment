@@ -37,7 +37,7 @@ const SideNav: React.FC = () => {
 
   return (
     <div
-      className=" z-[1] bg-[#0E7BB2]/10 fixed mt-[111.5px] h-screen scrollbar w-[18%] hidden lg:block"
+      className=" z-[1] bg-[#050d2a] fixed mt-[111.5px] h-screen scrollbar w-[18%] hidden lg:block"
     >
      
       <div className="h-screen">
@@ -72,7 +72,7 @@ const SideNav: React.FC = () => {
 
         <div className="mt-7 text-white">
           <p className="text-[12px] text-[#ffffff] mb-2 px-5">FINANCE</p>
-          <Link
+          {/* <Link
             to="/wallet"
             className={
               pathname.includes("/wallet") || pathname.includes("send")
@@ -96,7 +96,7 @@ const SideNav: React.FC = () => {
               )}
               <p className="ml-[10px]">Wallet</p>
             </div>
-          </Link>
+          </Link> */}
           <Link
             to="/deposit"
             className={

@@ -109,7 +109,7 @@ const Deposit: React.FC = () => {
         <div className="pb-[30px] md:mt-[70px] lg:mx-[30px] h-[100%] md:fixed lg:w-[84%] w-full">
           <main className="flex-grow px-4 text-white sm:px-10 py-10 mt-[70px] overflow-y-hidden">
             <div className="max-w-6xl mx-auto">
-              <div className="bg-white/5 border border-white/10 rounded-3xl shadow-xl md:p-8 p-2 backdrop-blur-md overflow-hidden">
+              <div className="bg-[#050d2a] border border-white/10 rounded-3xl shadow-xl md:p-8 p-2 backdrop-blur-md overflow-hidden">
                 <div className="text-center mb-8">
                   <div className="inline-block bg-[#0E7BB2] p-3 rounded-full shadow-md">
                     <RiExchange2Line className="text-white text-xl" />

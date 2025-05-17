@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import SideNav from "../components/side-nav/SideNav";
 import { getAllTrustLines, getMyAssets } from "../function/horizonQuery";
 import { getProfile } from "../function/user";
+import { createPortal } from "react-dom";
 import {
   addTrustLine,
   getTransactionHistory,
@@ -16,6 +17,8 @@ import {
 } from "../function/transaction";
 import { formateDecimal } from "../utils";
 import AssetProgressBar from "../components/progress-bar/AssetProgressBar";
+import TransactionGraph from "../components/TransactionGraph";
+import TokenHoldingsProgress from "../components/TokenHoldingsProgress";
 
 const Dashboard: React.FC = () => {
   const [userData, setUserData] = useState<any>();
@@ -32,7 +35,8 @@ const Dashboard: React.FC = () => {
   const [loadingPUBLIC_ASSETS, setLoadingPUBLIC_ASSETS] =
     useState<boolean>(false);
   const [convertCurrency, setConvertCurrency] = useState("USD");
-
+  const [showAddModal, setShowAddModal] = useState<boolean>(false);
+  const [showRemoveModal, setShowRemoveModal] = useState<boolean>(false);
   const assets = [
     { symbol: "NGNC", name: "Nigeria Naira", displaySymbol: "NGN" },
     { symbol: "USDC", name: "United State Dollars", displaySymbol: "USD" },
@@ -54,6 +58,7 @@ const Dashboard: React.FC = () => {
   const [activateWalletAlert, setActivateWalletAlert] = useState<string>("");
   const [isActivateWalletAlert, setIsActivateWalletAlert] =
     useState<boolean>(false);
+  const [address, setAddress] = useState<string>("");
 
   const navigate = useNavigate();
 
@@ -62,6 +67,9 @@ const Dashboard: React.FC = () => {
     if (!token) {
       navigate("/login");
     }
+    const storedUserData = localStorage.getItem("userData");
+    const parsedUserData = JSON.parse(storedUserData || "null");
+    setAddress(parsedUserData?.stellarPublicKey || "");
     handleGetProfile();
     handleGetMyAssets();
     handleGetAllTrustLines();
@@ -352,7 +360,7 @@ const Dashboard: React.FC = () => {
         <div className="w-full lg:w-[84%]  ml-auto">
           <TopNav />
           <div
-            className={`py-[10px] px-[15px] mt-[100px] lg:mx-[25px] lg:ml-[40px] mx-[10px] `}
+            className={`py-[10px] md:px-[15px] mt-[100px] lg:mx-[25px] lg:ml-[40px] md:mx-[10px] px-2 `}
           >
             <div className={`my-6 lg:block hidden`}>
               <p className="text-[white] md:text-[20px] text-[18px]">
@@ -433,7 +441,9 @@ const Dashboard: React.FC = () => {
                 </div>
 
                 <div className="mt-3 px-6">
-                  <AssetProgressBar />
+                  {/* <AssetProgressBar /> */}
+                  <TokenHoldingsProgress address={address} />
+
                 </div>
                 <div className={`flex px-6 gap-4 py-4 rounded-b-lg`}>
                   <button
@@ -453,253 +463,238 @@ const Dashboard: React.FC = () => {
               <div
                 className={`border border-[#FFFFFF]/20 pt-3 rounded-lg w-full mx-auto `}
               >
-                <div className={`flex justify-between items-start mb-16 px-3 `}>
-                  <div>
-                    <p className="md:text-4xl text-[22px] mt-5 mb-2 font-bold text-[white]">
-                      {userData?.points}
-                      <span className="text-[14px] font-[300] ml-1">
-                        {" "}
-                        Points{" "}
-                      </span>
-                    </p>
-                  </div>
-                </div>
-                <div className={`flex bg-[#99AAF961] px-6 py-4 rounded-b-lg `}>
-                  <button className="text-white bg-[#0E7BB2] py-[6px] px-4 rounded-md opacity-0">
-                    Explore Ecosystem
-                  </button>
-                </div>
+                <TransactionGraph address={address} />
               </div>
             </div>
-            <div
-              className={`flex flex-col md:flex-row items-center gap-3 mt-5 `}
-            >
-              <div
-                className={`w-full  rounded-[8px] bg-[#010014]  p-5 relative `}
-              >
-                <div className={`flex items-center justify-between`}>
-                  <p className="font-[500] text-[20px] text-white">Assets</p>
-                  <div className="flex gap-3 items-center">
-                    <button
-                      className="bg-[#0E7BB2] cursor-pointer py-[6px] px-6 text-[12px] text-white md:text-[16px] rounded-[8px]"
-                      onClick={() => {
-                        if (isActivateWalletAlert) {
-                          setAlertType("error");
-                          setMsg(
-                            "Fund your wallet with at least 5 XLM to activate your account."
-                          );
-                          return;
-                        }
-                        setDropDown(
-                          dropDown === "trustLine" ? false : "trustLine"
-                        );
-                        setRemoveDropDown(false);
-                      }}
-                    >
-                      Add Asset
-                    </button>
-                    <button
-                      className="bg-[#B3261E] cursor-pointer py-[6px] px-6 text-[12px] text-white md:text-[16px] rounded-[8px]"
-                      onClick={() => {
-                        if (isActivateWalletAlert) {
-                          setAlertType("error");
-                          setMsg(
-                            "Fund your wallet with at least 5 XLM to activate your account."
-                          );
-                          return;
-                        }
-                        setRemoveDropDown(
-                          removeDropDown === "trustLine" ? false : "trustLine"
-                        );
-                        setDropDown(false);
-                      }}
-                    >
-                      Remove Asset
-                    </button>
-                  </div>
-                </div>
-
-                {dropDown === "trustLine" && (
-                  <>
-                    <div
-                      className={`absolute w-full border h-[250px] rounded-[6px] bg-white z-[1] py-3 left-0 overflow-y-scroll mt-5 `}
-                    >
-                      {loadingPUBLIC_ASSETS ? (
-                        <ArrayItemLoader />
-                      ) : (
-                        (() => {
-                          const availableAssets = Object.keys(
-                            PUBLIC_ASSETS
-                          )?.filter(
-                            (key) =>
-                              !walletAssetCodes?.includes(
-                                PUBLIC_ASSETS[key]?.code?.toUpperCase()
-                              ) &&
-                              PUBLIC_ASSETS[key].code !== "native" &&
-                              !walletAssetCodes?.includes(
-                                PUBLIC_ASSETS[key]?.code
-                              )
-                          );
-
-                          return availableAssets?.length > 0 ? (
-                            availableAssets?.map((key, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center gap-2 py-3 hover:bg-gray-200 cursor-pointer px-3"
-                                onClick={() =>
-                                  setSelectedAsset(PUBLIC_ASSETS[key])
-                                }
-                              >
-                                <img
-                                  src={PUBLIC_ASSETS[key].image}
-                                  alt=""
-                                  className="w-[30px]"
-                                />
-                                <div>
-                                  <p className="text-[#1C1C1C]">
-                                    {PUBLIC_ASSETS[key].name}
-                                  </p>
-                                  <p className="text-[9px] text-[#0E0E0E]">
-                                    {PUBLIC_ASSETS[key].code === "native"
-                                      ? "XLM"
-                                      : PUBLIC_ASSETS[key].code}
-                                  </p>
-                                </div>
-                              </div>
-                            ))
-                          ) : (
-                            <p className="text-center text-gray-500 py-3">
-                              No more assets to add
-                            </p>
-                          );
-                        })()
-                      )}
-                    </div>
-                  </>
-                )}
-                {removeDropDown === "trustLine" && (
-                  <>
-                    <div
-                      className={`absolute w-full border rounded-[6px] bg-white z-[1] py-3 left-0 overflow-y-scroll mt-5 `}
-                      style={{ height: "100%", maxHeight: "330px" }}
-                    >
-                      {loadingWalletAssets ? (
-                        <ArrayItemLoader />
-                      ) : (
-                        (() => {
-                          const removableAssets =
-                            walletAssets?.allWalletAssets?.filter(
-                              (asset: any) => asset?.asset_code !== "NATIVE"
+            <div className="mt-5 w-full">
+              <div className="rounded-[12px] p-6 px-2 shadow-md text-white">
+                <>
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                    <h2 className="text-[22px] font-semibold text-white">
+                      Your Assets
+                    </h2>
+                    <div className="flex gap-3">
+                      <button
+                        className="bg-blue-600 cursor-pointer hover:bg-blue-500 transition px-5 py-2 rounded-[8px] text-sm md:text-base text-white"
+                        onClick={() => {
+                          if (isActivateWalletAlert) {
+                            setAlertType("error");
+                            setMsg(
+                              "Fund your wallet with at least 5 XLM to activate your account."
                             );
+                            return;
+                          }
+                          setShowAddModal(true);
+                        }}
+                      >
+                        + Add Asset
+                      </button>
+                      <button
+                        className="bg-red-600 cursor-pointer hover:bg-red-500 transition px-5 py-2 rounded-[8px] text-sm md:text-base text-white"
+                        onClick={() => {
+                          if (isActivateWalletAlert) {
+                            setAlertType("error");
+                            setMsg(
+                              "Fund your wallet with at least 5 XLM to activate your account."
+                            );
+                            return;
+                          }
+                          setShowRemoveModal(true);
+                        }}
+                      >
+                        − Remove Asset
+                      </button>
+                    </div>
+                  </div>
 
-                          return removableAssets?.length > 0 ? (
-                            removableAssets?.map(
-                              (asset: any, index: number) => (
+                  {isActivateWalletAlert && (
+                    <p className="bg-red-500 text-white p-4 rounded-lg text-center mb-4">
+                      {activateWalletAlert}
+                    </p>
+                  )}
+
+                  {/* Add Asset Modal */}
+                  {showAddModal && (
+                    <div className="fixed inset-0 bg-black/80 bg-opacity-50 flex items-center justify-center z-[100]">
+                      <div className="bg-[#010014]  mx-4 border border-white/20 text-white rounded-lg p-6 w-full max-w-md max-h-[80vh] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="text-lg font-semibold">Add Asset</h3>
+                          <button
+                            onClick={() => setShowAddModal(false)}
+                            className="text-gray-400 cursor-pointer hover:text-white"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                        {loadingPUBLIC_ASSETS ? (
+                          <ArrayItemLoader />
+                        ) : (
+                          (() => {
+                            const availableAssets = Object.keys(
+                              PUBLIC_ASSETS
+                            )?.filter(
+                              (key) =>
+                                !walletAssetCodes?.includes(
+                                  PUBLIC_ASSETS[key]?.code?.toUpperCase()
+                                ) && PUBLIC_ASSETS[key].code !== "native"
+                            );
+                            return availableAssets?.length > 0 ? (
+                              availableAssets.map((key, index) => (
                                 <div
                                   key={index}
-                                  className="flex items-center gap-2 py-3 hover:bg-gray-200 cursor-pointer px-3"
+                                  className="flex items-center gap-3 py-2 px-3 hover:bg-[#050d2a] cursor-pointer rounded-md"
                                   onClick={() => {
-                                    setSelectedTrustLine(asset);
+                                    setSelectedAsset(PUBLIC_ASSETS[key]);
+                                    setShowAddModal(false);
                                   }}
                                 >
                                   <img
-                                    src={asset?.image}
-                                    alt="assset"
-                                    className="w-[30px]"
-                                  />
-                                  <div>
-                                    <p className="text-[#1C1C1C]">
-                                      {asset?.asset_name}
-                                    </p>
-                                    <p className="text-[9px] text-[#0E0E0E]">
-                                      {asset.code === "NATIVE"
-                                        ? "XLM"
-                                        : asset?.asset_code}
-                                    </p>
-                                  </div>
-                                </div>
-                              )
-                            )
-                          ) : (
-                            <p className="text-center text-gray-500 py-3">
-                              No assets to remove
-                            </p>
-                          );
-                        })()
-                      )}
-                    </div>
-                  </>
-                )}
-
-                {isActivateWalletAlert ? (
-                  <p className="text-black tetx-center flex justify-center items-center align-middle text-[20px] p-5 bg-red-300 rounded-md my-2">
-                    {isActivateWalletAlert && activateWalletAlert}
-                  </p>
-                ) : (
-                  <div
-                    className="mt-10 overflow-y-scroll"
-                    style={{ height: "100%", maxHeight: "430px" }}
-                  >
-                    {loadingWalletAssets ? (
-                      <ArrayItemLoader />
-                    ) : (
-                      <>
-                        {walletAssets?.allWalletAssets?.map(
-                          (asset: any, index: number) => {
-                            return (
-                              <div
-                                key={index}
-                                className="flex items-center justify-between text-white border-b border-[#E4E7EC99] pb-2 mb-5 cursor-pointer"
-                              >
-                                <div className="flex items-center gap-2">
-                                  <img
-                                    src={asset?.image}
+                                    src={PUBLIC_ASSETS[key].image}
                                     alt=""
-                                    className="w-[30px]"
+                                    className="w-8 h-8"
                                   />
                                   <div>
-                                    <p className="text-[white]">
-                                      {asset?.asset_name}
+                                    <p className="font-medium">
+                                      {PUBLIC_ASSETS[key].name}
                                     </p>
-                                    <p className="text-[9px] text-[white]">
-                                      {asset?.asset_code === "NATIVE"
+                                    <p className="text-[10px] text-gray-400">
+                                      {PUBLIC_ASSETS[key].code === "native"
                                         ? "XLM"
-                                        : asset?.asset_code}
+                                        : PUBLIC_ASSETS[key].code}
                                     </p>
                                   </div>
                                 </div>
-                                <div className="flex flex-col items-end pr-3 ">
-                                  <p className="text-[20px]">
-                                    {formateDecimal(asset?.balance || 0)}
-                                  </p>
-                                  <div className="text-[16px] text-[white] flex items-center gap-[2px]">
-                                    <p>
-                                      $
-                                      {formateDecimal(
-                                        asset?.equivalentBalanceInUsd || 0
-                                      )}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
+                              ))
+                            ) : (
+                              <p className="text-center text-gray-500">
+                                No more assets to add
+                              </p>
                             );
-                          }
+                          })()
                         )}
-                      </>
-                    )}
-                  </div>
-                )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Remove Asset Modal */}
+                  {showRemoveModal && (
+                    <div className="fixed inset-0 bg-black/80 bg-opacity-50 flex items-center justify-center z-[100]">
+                      <div className="bg-[#010014]  mx-4 border border-white/20 text-white rounded-lg p-6 w-full max-w-md max-h-[80vh] overflow-y-auto">
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="text-lg font-semibold">
+                            Remove Asset
+                          </h3>
+                          <button
+                            onClick={() => setShowRemoveModal(false)}
+                            className="text-gray-400 cursor-pointer hover:text-white"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                        {loadingWalletAssets ? (
+                          <ArrayItemLoader />
+                        ) : (
+                          (() => {
+                            const removableAssets =
+                              walletAssets?.allWalletAssets?.filter(
+                                (asset: any) => asset?.asset_code !== "NATIVE"
+                              );
+                            return removableAssets?.length > 0 ? (
+                              removableAssets.map(
+                                (asset: any, index: number) => (
+                                  <div
+                                    key={index}
+                                    className="flex items-center gap-3 py-2 px-3 hover:bg-[#050d2a] cursor-pointer rounded-md"
+                                    onClick={() => {
+                                      setSelectedTrustLine(asset);
+                                      setShowRemoveModal(false);
+                                    }}
+                                  >
+                                    <img
+                                      src={asset?.image}
+                                      alt=""
+                                      className="w-8 h-8"
+                                    />
+                                    <div>
+                                      <p className="font-medium">
+                                        {asset?.asset_name}
+                                      </p>
+                                      <p className="text-[10px] text-gray-400">
+                                        {asset.code === "NATIVE"
+                                          ? "XLM"
+                                          : asset?.asset_code}
+                                      </p>
+                                    </div>
+                                  </div>
+                                )
+                              )
+                            ) : (
+                              <p className="text-center text-gray-500">
+                                No assets to remove
+                              </p>
+                            );
+                          })()
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </>
+
+                {/* Asset Cards Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4  overflow-y-auto">
+                  {loadingWalletAssets ? (
+                    <ArrayItemLoader />
+                  ) : (
+                    walletAssets?.allWalletAssets?.map(
+                      (asset: any, index: number) => (
+                        <div
+                          key={index}
+                          className="bg-[#050d2a] p-4 rounded-[10px] border border-white/20 hover:shadow-lg transition cursor-pointer"
+                        >
+                          <div className="flex items-center gap-3 mb-3">
+                            <img
+                              src={asset?.image}
+                              alt=""
+                              className="w-10 h-10"
+                            />
+                            <div>
+                              <p className="text-[white] text-[16px] font-semibold">
+                                {asset?.asset_name}
+                              </p>
+                              <p className="text-[11px] text-gray-400">
+                                {asset?.asset_code === "NATIVE"
+                                  ? "XLM"
+                                  : asset?.asset_code}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <p className="text-[20px] font-bold text-white">
+                              {formateDecimal(asset?.balance || 0)}
+                            </p>
+                            <p className="text-[16px] text-gray-300">
+                              $
+                              {formateDecimal(
+                                asset?.equivalentBalanceInUsd || 0
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      )
+                    )
+                  )}
+                </div>
               </div>
             </div>
 
-            <TransactionTable
+            {/* <TransactionTable
               name="Crypto Transaction History"
               tableType="crypto"
               loadingTx={loadingTx}
               transactionHistory={transactionHistory}
               setSearchText={setSearchText}
               searchText={searchText}
-            />
+            /> */}
           </div>
         </div>
       </div>

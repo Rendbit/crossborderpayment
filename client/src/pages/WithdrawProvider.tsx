@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { RiBankLine } from "react-icons/ri";
 import SideNav from "../components/side-nav/SideNav";
 import TopNav from "../components/top-nav/TopNav";
@@ -8,7 +8,7 @@ import Alert from "../components/alert/Alert";
 import { GoChevronDown } from "react-icons/go";
 import { initiateTransfer24, queryTransaction } from "../function/sep24";
 import { makeWithdrawal } from "../function/transaction";
-import { getMyAssets } from "../function/horizonQuery";
+import { getConversionRates, getMyAssets } from "../function/horizonQuery";
 import { formateDecimal } from "../utils";
 import { useNavigate } from "react-router-dom";
 import { IoChevronDown } from "react-icons/io5";
@@ -24,8 +24,11 @@ const WithdrawProvider: React.FC = () => {
     // { symbol: "GHSC", name: "Ghana Cedis", displaySymbol: "GHS" },
     // { symbol: "KESC", name: "Kenya Shillings", displaySymbol: "KES" },
   ];
-  const [amunt, setAmount] = useState<string>("0");
+  const [amount, setAmount] = useState<string>("0");
   const [currencyDropDown, setCurrencyDropDown] = useState<any>(false);
+  const [descAmount, setDescAmount] = useState<number | string>("");
+  const [processing, setProcessing] = useState<boolean>(false);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const [selectedCurrency, setSelectedCurrency] = useState<any>(fiatAssets[0]);
   const [transactionInfo, setTransactionInfo] = useState<any>();
@@ -185,6 +188,20 @@ const WithdrawProvider: React.FC = () => {
     return data;
   }
 
+  const handleInputCurrencyChange = (currencySymbol: string, value: number) => {
+    const currency = assets.allWalletAssets.find(
+      (cur: any) => cur.asset_code === currencySymbol
+    );
+    console.log({
+      inputAsset: currencySymbol,
+      amount: value,
+      outputAsset: selectedAsset.asset_code,
+    });
+    if (currency && amount) {
+      fetchXlmRate(value, currencySymbol, selectedAsset.asset_code);
+    }
+  };
+
   async function handleMakeWithdrawal(transactionInfo: any) {
     setLoading(true);
 
@@ -247,6 +264,47 @@ const WithdrawProvider: React.FC = () => {
       setLoading(false);
     }
   }
+
+  const fetchXlmRate = async (
+    amount: number,
+    inputAsset: string,
+    outputAsset: string
+  ) => {
+    if (amount) {
+      setProcessing(true);
+
+      try {
+        if (!user) {
+          setLoadingWalletAssets(false);
+          return;
+        }
+        // console.log({ amount, inputAsset, outputAsset });
+        const response = await getConversionRates(
+          user,
+          Number(amount),
+          inputAsset,
+          outputAsset
+        );
+        setDescAmount(response.data.convertedAmount);
+      } catch (error) {
+        console.error("Error fetching XLM conversion rate:", error);
+      } finally {
+        setProcessing(false);
+      }
+    } else {
+      setDescAmount("");
+    }
+  };
+
+  const handleCurrencyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (!isNaN(Number(value))) {
+      setAmount(value);
+    }
+    if (!value) {
+      setDescAmount("");
+    }
+  };
 
   async function handleGetMyAssets() {
     const storedWalletAssets = localStorage.getItem("walletAssets");
@@ -311,8 +369,13 @@ const WithdrawProvider: React.FC = () => {
           <div className="flex justify-between items-center bg-white/10 rounded-xl p-4">
             <div>
               <p className="text-sm font-medium text-gray-400">Balance</p>
-              <p className="text-lg font-semibold">
-                {currentBalance === 0 ? "0" : formateDecimal(currentBalance)}
+              <p className="text-lg font-semibold text-left">
+                {/* {currentBalance === 0 ? "0" : formateDecimal(currentBalance)} */}
+                {selectedAsset?.asset_code === "GHSC"
+                  ? 500
+                  : currentBalance === 0
+                  ? "0"
+                  : formateDecimal(currentBalance)}
               </p>
             </div>
             <div
@@ -343,6 +406,7 @@ const WithdrawProvider: React.FC = () => {
                 className="flex items-center gap-3 py-2 cursor-pointer px-2 hover:bg-white/50 hover:text-black"
                 onClick={() => {
                   if (loading) return;
+                  handleInputCurrencyChange(asset.asset_code, Number(amount));
                   setSelectedAsset(asset);
                   setCurrencyDropDown(false);
                   setCurrentbalance(asset.balance || 0);
@@ -429,10 +493,22 @@ const WithdrawProvider: React.FC = () => {
             type="number"
             placeholder="Enter amount in your currency"
             disabled={loading}
-            onChange={(e) => setAmount(e.target.value)}
+            onChange={(e) => {
+              handleCurrencyChange(e);
+              if (typingTimeoutRef.current)
+                clearTimeout(typingTimeoutRef.current);
+              typingTimeoutRef.current = setTimeout(() => {
+                fetchXlmRate(
+                  Number(e.target.value),
+                  selectedAsset?.asset_code,
+                  selectedCurrency
+                );
+              }, 500);
+            }}
             className="w-full bg-transparent outline-none text-lg font-semibold"
           />
         </div>
+        
 
         <div className="bg-white/10 mt-[-10px] rounded-xl p-4">
           <p className="text-sm mb-2 text-gray-400 text-left">Anchor</p>

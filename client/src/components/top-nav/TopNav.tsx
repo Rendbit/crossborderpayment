@@ -51,7 +51,7 @@ const TopNav: React.FC = () => {
 
   return (
     <div>
-      <div className="bg-[#0E7BB2]/10 mb-[50px] fixed hidden lg:flex items-center justify-center gap-[70px] w-[100%] py-[1.2rem] top-0 right-0 z-[99] mx-auto">
+      <div className="bg-[#050d2a] mb-[50px] fixed hidden lg:flex items-center justify-center gap-[70px] w-[100%] py-[1.2rem] top-0 right-0 z-[99] mx-auto">
         <div className="flex justify-between px-[3rem] w-full">
           <div className="p-5 cursor-pointer">
             <img
@@ -69,6 +69,7 @@ const TopNav: React.FC = () => {
           </div>
         </div>
       </div>
+      
       <div
         className={
           mobileNav === true
@@ -89,8 +90,8 @@ const TopNav: React.FC = () => {
       <div
         className={
           mobileNav === true
-            ? `py-4 px-6 flex items-center bg-white justify-between z-[9999] lg:hidden fixed w-full top-[62px]`
-            : `py-4 px-6 flex items-center justify-between lg:hidden relative`
+            ? `py-4 px-6 flex items-center  bg-white justify-between z-[9999] lg:hidden fixed w-full top-[62px]`
+            : `py-4 px-6 flex items-center mt-[-100px] justify-between lg:hidden relative`
         }
       >
         <div>
@@ -163,17 +164,6 @@ const TopNav: React.FC = () => {
                         <p className="ml-[10px]">Dashboard</p>
                       </div>
                     </Link>
-                    {/* <Link to='/earn-points' className={ pathname.includes('/earn-points') ? `flex items-center justify-between py-[10px] text-[#072AC8] px-5 bg-[#072AC81F]` :`px-5 flex items-center justify-between py-[10px] text-black`}>
-                      <div className="flex items-center">
-                        {
-                          pathname.includes('/earn-points') ?
-                          <img src="./images/cup-colored.svg" className="w-[20px] h-[20px]"  alt="cup image" />
-                          :
-                          <img src="./images/cup.svg" className="w-[20px] h-[20px]"  alt="cup image" />
-                        }
-                          <p className="ml-[10px]">Earn Points</p>
-                      </div>
-                    </Link> */}
                   </div>
                 )}
               </div>
@@ -192,7 +182,7 @@ const TopNav: React.FC = () => {
                 </div>
                 {selectedNav === "finance" && (
                   <div className="ml-2 my-3 text-[#2B2D36] grid gap-2 text-[14px] font-[400]">
-                    <Link
+                    {/* <Link
                       to="/wallet"
                       className={
                         pathname.includes("/wallet") ||
@@ -217,7 +207,7 @@ const TopNav: React.FC = () => {
                         )}
                         <p className="ml-[10px]">Wallet</p>
                       </div>
-                    </Link>
+                    </Link> */}
                     <Link
                       to="/deposit"
                       className={
