@@ -11,6 +11,7 @@ import {
   getTransactionHistory,
 } from "../function/transaction";
 import Alert from "../components/alert/Alert";
+import MobileNav from "../components/mobile-nav/MobileNav";
 
 const History: React.FC = () => {
   const [transactionHistory, setTransactionHistory] = useState<any>([]);
@@ -54,6 +55,11 @@ const History: React.FC = () => {
       const response = await getTransactionHistory(user);
 
       if (!response.success) {
+        if (response.message === "Login has expired") {
+          localStorage.clear();
+          Cookies.remove("token");
+          navigate("/login");
+        }
         if (
           response.message.includes(
             "Fund your wallet with at least 5 XLM to activate your account."
@@ -80,6 +86,11 @@ const History: React.FC = () => {
       );
       setTransactionHistory(uniqueTransactions);
     } catch (error: any) {
+      if (error.message === "Login has expired") {
+        localStorage.clear();
+        Cookies.remove("token");
+        navigate("/login");
+      }
       if (
         error.message.includes(
           "Fund your wallet with at least 5 XLM to activate your account."
@@ -117,11 +128,21 @@ const History: React.FC = () => {
         setMsg(response.message);
         setAlertType("error");
         setFiatLoading(false);
+        if (response.message === "Login has expired") {
+          localStorage.clear();
+          Cookies.remove("token");
+          navigate("/login");
+        }
         return;
       }
 
       setFiatTransactionHistory(response?.data?.json?.transactions);
-    } catch (error) {
+    } catch (error: any) {
+      if (error.message === "Login has expired") {
+        localStorage.clear();
+        Cookies.remove("token");
+        navigate("/login");
+      }
       console.error(error);
     } finally {
       setFiatLoading(false);
@@ -129,43 +150,39 @@ const History: React.FC = () => {
   }
 
   return (
-    <div>
-      <div className="flex items-start">
+    <div className="w-full md:grid grid-cols-12">
+      <div className="md:block hidden h-[100vh] sidebar p-4 pr-2 ">
         <SideNav />
-        <div className="lg:w-[84%] w-full ml-auto">
-          <TopNav />
-          <div className="lg:p-[20px] h-[100vh] lg:py-[20px] mt-5  mx-[10px] lg:mx-[25px]">
-            <div
-              className="lg:inline-flex items-center gap-1 cursor-pointer my-3 text-[white] hidden"
-              onClick={() => navigate("/dashboard")}
-            >
-              <IoIosArrowRoundBack className="text-[20px]" />
-              <p className="text-white">Back</p>
-            </div>
-            {isActivateWalletAlert ? (
-              <p className="text-black tetx-center flex justify-center items-center align-middle text-[20px] p-5 bg-red-300 rounded-md my-2">
-                {isActivateWalletAlert && activateWalletAlert}
-              </p>
-            ) : (
-              <TransactionTable
-                name="Crypto Transaction History"
-                tableType="crypto"
-                transactionHistory={transactionHistory}
-                loadingTx={loading}
-                setSearchText={setSearchText}
-                searchText={searchText}
-              />
-            )}
+      </div>
+      <div className="py-6 overflow-hidden h-[100px] w-full z-50 sticky md:top-[-2%] top-0">
+        <TopNav page="Transaction History" />
+      </div>
+      <div className="mt-[80px]  main-container md:pl-[60px] px-4 pl-2 w-full overflow-hidden md:col-span-10 col-span-12">
+        <main className="top-0 left-0 right-0 w-full">
+          {isActivateWalletAlert ? (
+            <p className="text-black tetx-center flex justify-center items-center align-middle text-[20px] p-5 bg-red-300 rounded-md my-2">
+              {isActivateWalletAlert && activateWalletAlert}
+            </p>
+          ) : (
             <TransactionTable
-              name="Fiat Transaction History"
-              tableType="fiat"
-              transactionHistory={fiatTransactionHistory}
-              loadingTx={fiatLoading}
-              setSearchText={setFiatSearchText}
-              searchText={fiatSearchText}
+              name="Crypto Transaction History"
+              tableType="crypto"
+              transactionHistory={transactionHistory}
+              loadingTx={loading}
+              setSearchText={setSearchText}
+              searchText={searchText}
             />
-          </div>
-        </div>
+          )}
+          <TransactionTable
+            name="Fiat Transaction History"
+            tableType="fiat"
+            transactionHistory={fiatTransactionHistory}
+            loadingTx={fiatLoading}
+            setSearchText={setFiatSearchText}
+            searchText={fiatSearchText}
+          />
+        </main>
+        <MobileNav />
       </div>
       {msg && <Alert msg={msg} setMsg={setMsg} alertType={alertType} />}
     </div>

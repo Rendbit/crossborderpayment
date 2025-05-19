@@ -1,248 +1,63 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
-import { Link, useNavigate } from "react-router-dom";
-import { getProfile } from "../../function/user";
+import {
+  RiDashboard2Fill,
+  RiExchangeDollarFill,
+  RiFileListFill,
+  RiMoneyDollarCircleFill,
+  RiSendPlaneFill,
+  RiSettings3Fill,
+} from "react-icons/ri";
 
 const SideNav: React.FC = () => {
-  const [userData, setUserData] = useState<any>({});
+  const { pathname } = useLocation();
   const navigate = useNavigate();
-  const pathname = window.location.pathname;
-  const user = Cookies.get("token");
 
-  function handleLogout() {
+  const handleLogout = () => {
     localStorage.clear();
     Cookies.remove("token");
     navigate("/login");
-  }
+  };
 
-  async function getUserInfo() {
-    try {
-      if (user) {
-        const respone = await getProfile(user);
-        setUserData(respone.data);
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  }
-
-  useEffect(() => {
-    const user = localStorage.getItem("userData") || "{}";
-    const parsedUser = JSON.parse(user);
-    if (parsedUser) {
-      setUserData(parsedUser);
-    }
-    getUserInfo();
-  }, []);
+  const navItems = [
+    { name: "Dashboard", path: "/dashboard", icon: RiDashboard2Fill },
+    { name: "Deposit", path: "/deposit", icon: RiMoneyDollarCircleFill },
+    { name: "Transfer", path: "/transfer", icon: RiSendPlaneFill },
+    { name: "Swap Assets", path: "/swap", icon: RiExchangeDollarFill },
+    { name: "History", path: "/history", icon: RiFileListFill },
+    { name: "Settings", path: "/settings", icon: RiSettings3Fill },
+  ];
 
   return (
-    <div
-      className=" z-[1] bg-[#050d2a] fixed mt-[111.5px] h-screen scrollbar w-[18%] hidden lg:block"
-    >
-     
-      <div className="h-screen">
-        <div className="mt-7 text-white ">
-          <p className="text-[12px] text-[#ffffff] mb-2 px-5">DASHBOARD</p>
-          <Link
-            to="/dashboard"
-            className={
-              pathname.includes("/dashboard")
-                ? `flex items-center justify-between py-[10px] text-[#ffffff] bg-[#ffffff1F] px-8`
-                : `px-8 flex items-center justify-between py-[10px] text-[#ffffff]`
-            }
-          >
-            <div className="flex items-center">
-              {pathname.includes("/dashboard") ? (
-                <img
-                  src="./images/element-3.svg"
-                  className="w-[20px] h-[20px]"
-                  alt="cup image"
-                />
-              ) : (
-                <img
-                  src="./images/element-3-color.svg"
-                  className="w-[20px] h-[20px]"
-                  alt="cup image"
-                />
-              )}
-              <p className="ml-[10px]">Dashboard</p>
-            </div>
-          </Link>
-        </div>
-
-        <div className="mt-7 text-white">
-          <p className="text-[12px] text-[#ffffff] mb-2 px-5">FINANCE</p>
-          {/* <Link
-            to="/wallet"
-            className={
-              pathname.includes("/wallet") || pathname.includes("send")
-                ? `flex items-center justify-between py-[10px] text-[#ffffff] bg-[#ffffff1F] px-8`
-                : `px-8 flex items-center justify-between py-[10px] text-[#ffffff]`
-            }
-          >
-            <div className="flex items-center">
-              {pathname.includes("/wallet") ? (
-                <img
-                  src="./images/wallet-colored.svg"
-                  className="w-[20px] h-[20px]"
-                  alt="cup image"
-                />
-              ) : (
-                <img
-                  src="./images/wallet.svg"
-                  className="w-[20px] h-[20px]"
-                  alt="cup image"
-                />
-              )}
-              <p className="ml-[10px]">Wallet</p>
-            </div>
-          </Link> */}
-          <Link
-            to="/deposit"
-            className={
-              pathname.includes("deposit")
-                ? `flex items-center justify-between py-[10px] text-[#ffffff] bg-[#ffffff1F] px-8`
-                : `px-8 flex items-center justify-between py-[10px] text-[#ffffff]`
-            }
-          >
-            <div className="flex items-center">
-              {pathname.includes("deposit") ? (
-                <img
-                  src="./images/money-recive-colored.svg"
-                  className="w-[20px] h-[20px]"
-                  alt="cup image"
-                />
-              ) : (
-                <img
-                  src="./images/money-recive.svg"
-                  className="w-[20px] h-[20px]"
-                  alt="cup image"
-                />
-              )}
-              <p className="ml-[10px]">Deposit</p>
-            </div>
-          </Link>
-
-          <Link
-            to="/transfer"
-            className={
-              pathname.includes("transfer")
-                ? `flex items-center justify-between py-[10px] text-[#ffffff] bg-[#ffffff1F] px-8`
-                : `px-8 flex items-center justify-between py-[10px] text-[#ffffff]`
-            }
-          >
-            <div className="flex items-center">
-              {pathname.includes("transfer") ? (
-                <img
-                  src="./images/money-send-colored.svg"
-                  className="w-[20px] h-[20px]"
-                  alt="cup image"
-                />
-              ) : (
-                <img
-                  src="./images/money-send.svg"
-                  className="w-[20px] h-[20px]"
-                  alt="cup image"
-                />
-              )}
-              <p className="ml-[10px]">Transfer</p>
-            </div>
-          </Link>
-          <Link
-            to="/swap"
-            className={
-              pathname.includes("/swap") || pathname.includes("swap")
-                ? `flex items-center justify-between py-[10px] text-[#ffffff] bg-[#ffffff1F] px-8`
-                : `px-8 flex items-center justify-between py-[10px] text-[#ffffff]`
-            }
-          >
-            <div className="flex items-center">
-              {pathname.includes("swap") ? (
-                <img
-                  src="./images/swap-colored.svg"
-                  className="w-[20px] h-[20px]"
-                  alt="cup image"
-                />
-              ) : (
-                <img
-                  src="./images/swap.svg"
-                  className="w-[20px] h-[20px]"
-                  alt="cup image"
-                />
-              )}
-              <p className="ml-[10px]">Swap Assets</p>
-            </div>
-          </Link>
-          <Link
-            to="/history"
-            className={
-              pathname.includes("/history") ||
-              pathname.includes("/transaction-info")
-                ? `flex items-center justify-between py-[10px] text-[#ffffff] px-8 bg-[#ffffff1F]`
-                : `px-8 flex items-center justify-between py-[10px] text-[#ffffff]`
-            }
-          >
-            <div className="flex items-center">
-              {pathname.includes("history") ? (
-                <img
-                  src="./images/receipt@3x-1.svg"
-                  className="w-[20px] h-[20px]"
-                  alt="cup image"
-                />
-              ) : (
-                <img
-                  src="./images/receipt@3x.svg"
-                  className="w-[20px] h-[20px]"
-                  alt="cup image"
-                />
-              )}
-              <p className="ml-[10px]">History</p>
-            </div>
-          </Link>
-        </div>
-
-        <div className="mt-7 text-white">
-          <p className="text-[12px] text-[#ffffff] mb-2 px-5">ACCOUNT</p>
-          <Link
-            to="/settings"
-            className={
-              pathname.includes("/settings")
-                ? `flex items-center justify-between py-[10px] text-[#ffffff] bg-[#ffffff1F] px-8`
-                : `px-8 flex items-center justify-between py-[10px] text-[#ffffff]`
-            }
-          >
-            <div className="flex items-center">
-              {pathname.includes("settings") ? (
-                <img
-                  src="./images/settings-colored.svg"
-                  className="w-[20px] h-[20px]"
-                  alt="cup image"
-                />
-              ) : (
-                <img
-                  src="./images/setting@3x.svg"
-                  className="w-[20px] h-[20px]"
-                  alt="cup image"
-                />
-              )}
-              <p className="ml-[10px]">Settings</p>
-            </div>
-          </Link>
-
-          <div
-            onClick={handleLogout}
-            className="cursor-pointer px-8 flex items-center justify-between py-[10px] text-[#ffffff]"
-          >
-            <div className="flex items-center">
-              <img
-                src="./images/logout@3x.svg"
-                className="w-[20px] h-[20px]"
-                alt="cup image"
-              />
-              <p className="ml-[10px]">Logout</p>
-            </div>
-          </div>
-        </div>
+    <div className="w-[18%] bg-[#050d2a] my-4 overflow-hidden col-span-2 fixed border border-white/10 rounded-2xl p-2 hidden lg:flex flex-col gap-6 top-0 h-[97vh] z-40 backdrop-blur-md">
+      <div className="mb-2 pb-1">
+        <img src="./images/rendbit-logo.svg" alt="RendBit" />
+      </div>
+      {navItems.map(({ name, path, icon: Icon }) => (
+        <Link
+          key={name}
+          to={path}
+          className={`flex items-center gap-3 p-3 rounded-xl transition-all ${
+            pathname.includes(path)
+              ? "bg-[#ffffff1F] text-white"
+              : "hover:bg-[#ffffff1F] text-white"
+          }`}
+        >
+          <Icon
+            className={`w-[20px] h-[20px] ${
+              pathname.includes(path) ? "text-[#0E7BB2]" : "text-text-gray-400"
+            }`}
+          />
+          <span className="text-sm">{name}</span>
+        </Link>
+      ))}
+      <div
+        onClick={handleLogout}
+        className="flex items-center gap-3 p-3 mt-auto rounded-xl text-white cursor-pointer hover:bg-[#ffffff1F] transition-all"
+      >
+        <img src="./images/logout@3x.svg" className="w-[20px] h-[20px]" alt="Logout" />
+        <span className="text-sm">Logout</span>
       </div>
     </div>
   );

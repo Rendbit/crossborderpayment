@@ -72,11 +72,21 @@ const AboutSelf: React.FC = () => {
         setMsg(response.message);
         setAlertType("error");
         setLoading(false);
+        if(response.message === "Login has expired"){
+          localStorage.clear();
+          Cookies.remove("token");
+          navigate("/login");
+        }
         return;
       }
 
       navigate("/dashboard");
     } catch (error: any) {
+      if(error.message === "Login has expired"){
+        localStorage.clear();
+        Cookies.remove("token");
+        navigate("/login");
+      }
       setMsg(error.message || "An error occurred during wallet creation.");
       setAlertType("error");
     } finally {

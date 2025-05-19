@@ -19,6 +19,7 @@ import { formateDecimal } from "../utils";
 import AssetProgressBar from "../components/progress-bar/AssetProgressBar";
 import TransactionGraph from "../components/TransactionGraph";
 import TokenHoldingsProgress from "../components/TokenHoldingsProgress";
+import MobileNav from "../components/mobile-nav/MobileNav";
 
 const Dashboard: React.FC = () => {
   const [userData, setUserData] = useState<any>();
@@ -220,9 +221,19 @@ const Dashboard: React.FC = () => {
       if (!response.success) {
         setMsg(response.message);
         setAlertType("error");
+        if (response.message === "Login has expired") {
+          localStorage.clear();
+          Cookies.remove("token");
+          navigate("/login");
+        }
       }
       setUserData(response.data);
     } catch (error: any) {
+      if (error.message === "Login has expired") {
+        localStorage.clear();
+        Cookies.remove("token");
+        navigate("/login");
+      }
       setMsg(error.message || "Failed to fetch profile details");
       setAlertType("error");
     } finally {
@@ -353,30 +364,25 @@ const Dashboard: React.FC = () => {
     walletAssets?.allWalletAssets?.map((asset: any) => asset?.asset_code) || [];
 
   return (
-    <div>
-      <div className="flex items-start">
+    <div className="w-full md:grid grid-cols-12">
+      <div className="md:block hidden h-[100vh] sidebar p-4 pr-2 ">
         <SideNav />
-
-        <div className="w-full lg:w-[84%]  ml-auto">
-          <TopNav />
-          <div
-            className={`py-[10px] md:px-[15px] mt-[100px] lg:mx-[25px] lg:ml-[40px] md:mx-[10px] px-2 `}
-          >
-            <div className={`my-6 lg:block hidden`}>
-              <p className="text-[white] md:text-[20px] text-[18px]">
-                Dashboard
-              </p>
-            </div>
-
+      </div>
+      <div className="py-6 overflow-hidden h-[100px] w-full z-50 sticky md:top-[-2%] top-0">
+        <TopNav page="Dashboard" />
+      </div>
+      <div className="mt-[100px]  main-container md:pl-[60px] px-4 pl-2 w-full overflow-hidden md:col-span-10 col-span-12">
+        <main className="top-0 left-0 right-0 w-full">
+          <div className="flex-1">
             <div className={`md:flex grid items-center gap-5`}>
               <div
-                className={`bg-gradient-to-b from-[#0E84B2] to-[#0F2267]/5 border  border-[#FFFFFF]/20 text-white pt-3 rounded-lg w-full mx-auto ${
+                className={`bg-gradient-to-b from-[#0E84B2] to-[#0F2267]/5 border  border-[#FFFFFF]/10 text-white pt-3 rounded-lg w-full mx-auto ${
                   loadingWalletAssets
                     ? "animate-pulse from-primary-color to-blue-400"
                     : ""
                 }`}
               >
-                <div className={`mb-4 px-6 `}>
+                <div className={`mb-4 px-6`}>
                   <div className="flex justify-between">
                     <h2 className="text-[#FFFFFF]/70 text-[18px]">
                       <b>BALANCE</b>
@@ -441,9 +447,7 @@ const Dashboard: React.FC = () => {
                 </div>
 
                 <div className="mt-3 px-6">
-                  {/* <AssetProgressBar /> */}
                   <TokenHoldingsProgress address={address} />
-
                 </div>
                 <div className={`flex px-6 gap-4 py-4 rounded-b-lg`}>
                   <button
@@ -467,7 +471,7 @@ const Dashboard: React.FC = () => {
               </div>
             </div>
             <div className="mt-5 w-full">
-              <div className="rounded-[12px] p-6 px-2 shadow-md text-white">
+              <div className="rounded-[12px] shadow-md text-white">
                 <>
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                     <h2 className="text-[22px] font-semibold text-white">
@@ -685,9 +689,8 @@ const Dashboard: React.FC = () => {
                   )}
                 </div>
               </div>
-            </div>
 
-            {/* <TransactionTable
+              {/* <TransactionTable
               name="Crypto Transaction History"
               tableType="crypto"
               loadingTx={loadingTx}
@@ -695,9 +698,12 @@ const Dashboard: React.FC = () => {
               setSearchText={setSearchText}
               searchText={searchText}
             /> */}
+            </div>
           </div>
-        </div>
+        </main>
+        <MobileNav />
       </div>
+
       {selectedTrustLine && (
         <div>
           <div
@@ -770,7 +776,6 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
       )}
-
       {selectedAsset && (
         <div>
           <div

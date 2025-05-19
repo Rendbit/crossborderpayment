@@ -69,6 +69,7 @@ const WithdrawProvider: React.FC = () => {
 
     return () => window.removeEventListener("message", handleMessage);
   }, []);
+  
   useEffect(() => {
     const storedWalletAssets = localStorage.getItem("walletAssets");
     const parsedWalletAssets = JSON.parse(storedWalletAssets || "null");

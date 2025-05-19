@@ -20,6 +20,10 @@ import {
   updateProfile,
   verifyMFACode,
 } from "../function/user";
+import { useNavigate } from "react-router-dom";
+import MobileNav from "../components/mobile-nav/MobileNav";
+import { RiSettings2Fill } from "react-icons/ri";
+import { IoChevronDown } from "react-icons/io5";
 
 const Settings: React.FC = () => {
   const [showCountries, setShowCountries] = useState<any>(false);
@@ -68,6 +72,7 @@ const Settings: React.FC = () => {
   const [verifyCodeLoader, setVerifyCodeLoader] = useState<any>(false);
 
   const user = Cookies.get("token");
+  const navigate = useNavigate();
 
   async function handleGetProfile() {
     const storedUserData = localStorage.getItem("userData");
@@ -95,9 +100,19 @@ const Settings: React.FC = () => {
         setMsg(response.message);
         setAlertType("error");
         setLoadingUserData(false);
+        if (response.message === "Login has expired") {
+          localStorage.clear();
+          Cookies.remove("token");
+          navigate("/login");
+        }
         return;
       }
     } catch (error: any) {
+      if (error.message === "Login has expired") {
+        localStorage.clear();
+        Cookies.remove("token");
+        navigate("/login");
+      }
       setMsg(error.message || "Failed to get profile details.");
       setAlertType("error");
     } finally {
@@ -243,7 +258,8 @@ const Settings: React.FC = () => {
     }
   }
 
-  async function handleUpdateProfile() {
+  async function handleUpdateProfile(e: any) {
+    e.preventDefault();
     setLoading(true);
     if (!username) {
       setMsg("Please enter your username");
@@ -430,95 +446,117 @@ const Settings: React.FC = () => {
   }
 
   return (
-    <div>
-      <div className="flex items-start">
+    <div className="w-full md:grid grid-cols-12">
+      <div className="md:block hidden h-[100vh] sidebar p-4 pr-2 ">
         <SideNav />
-        <div className="w-full lg:w-[84%] ml-auto mb-10">
-          <TopNav />
+      </div>
+      <div className="py-6 overflow-hidden h-[100px] w-full z-50 sticky md:top-[-2%] top-0">
+        <TopNav page="Settings" />
+      </div>
+      <div className="mt-[80px]  main-container  md:pl-[60px] px-4 pl-2 w-full overflow-hidden md:col-span-10 col-span-12">
+        <main className="top-0 md:px-[24%] px-0 left-0 right-0 w-full">
           {loadingUserData ? (
             <div className="flex items-center justify-center">
               <Loader />
             </div>
           ) : (
-            <div className="px-[15px] h-[100%] lg:pl-12 pb-[30px] pt-[30px] mt-[70px] overflow-y-hidden md:mx-[30px]">
-              <p className="text-[#ffffff] md:text-[25px] font-[500]">
-                Settings
-              </p>
-              <div className="flex items-center  mt-7">
+            <div className="bg-[#050d2a] overflow-hidden border border-white/10 rounded-2xl shadow-lg md:p-6 px-4 md:mt-[50px] text-white">
+              <div className="text-center mb-8">
+                <div className="inline-block bg-[#0E7BB2] p-3 rounded-full shadow-md">
+                  <RiSettings2Fill className="text-white text-xl" />
+                </div>
+                <h1 className="mt-4 text-2xl font-bold">{selectedTab}</h1>
+
+                {selectedTab === "Profile" && (
+                  <p className="text-gray-400 text-sm">
+                    Update your personal information to keep your profile up to
+                    date.
+                  </p>
+                )}
+                {selectedTab === "Password" && (
+                  <p className="text-gray-400 text-sm">
+                    Change your password to keep your account secure.
+                  </p>
+                )}
+                {selectedTab === "Privacy" && (
+                  <p className="text-gray-400 text-sm">
+                    Manage your privacy settings and access your keys securely.
+                  </p>
+                )}
+                {selectedTab === "Two Factor Authentication" && (
+                  <p className="text-gray-400 text-sm">
+                    Enhance your account security by setting up two-factor
+                    authentication.
+                  </p>
+                )}
+              </div>
+
+              <div className="flex overflow-x-auto md:justify-center justify-start mb-8 space-x-4 md:space-x-6 text-white scrollbar-hide">
                 {settingsTypeArray.map((item, index) => {
                   return (
-                    <p
+                    <button
                       key={index}
-                      className={`px-[.8rem] pb-[18px] font-[500] text-[#667085] cursor-pointer text-[14px] md:text-[16px] ${
-                        selectedTabIndex === index
-                          ? "text-white border-b border-white"
-                          : ""
-                      }`}
                       onClick={() => {
                         setSelectedTab(item);
                         setSelectedTabIndex(index);
                       }}
+                      className={`cursor-pointer md:px-6 px-4 md:py-2 py-1 rounded-full transition-all duration-300 font-semibold whitespace-nowrap ${
+                        selectedTabIndex === index
+                          ? "bg-[#0E7BB2] text-white shadow-lg"
+                          : "bg-white/10 hover:bg-white/20"
+                      }`}
                     >
                       {item}
-                    </p>
+                    </button>
                   );
                 })}
               </div>
               {selectedTab === "Profile" && (
-                <div className="border border-white/50 rounded-md p-3 mt-2 w-full md:w-[500px]">
-                  <div className="mt-7 pb-5">
-                    <p className="text-[#ffffff] font-[500] text-[18px] mb-1">
-                      Personal info
-                    </p>
-                    <p className="text-[#667085] font-[300]">
-                      Update your personal details here.
-                    </p>
-                  </div>
-
-                  {/* Username */}
-                  <div className="grid  gap-2 py-[1rem]">
-                    <div className="text-[#ffffff] font-[500] w-[180px]">
-                      Username
-                    </div>
-                    <div className="w-full">
-                      <input
-                        value={username}
-                        disabled={loading}
-                        onChange={(e) => setUsername(e.target.value)}
-                        type="text"
-                        placeholder="username"
-                        className="w-full bg-transparent border border-[#D0D5DD] px-[14px] py-[10px] rounded-[8px] shadow-sm outline-none text-[#ffffff]"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Country */}
-                  <div className="grid  gap-2 py-[1rem] relative">
-                    <div className="text-[#ffffff] font-[500] w-[180px]">
-                      Country
-                    </div>
-                    <div className="w-full">
-                      <div
-                        onClick={() => setShowCountries(!showCountries)}
-                        className="flex items-center justify-between border border-gray-300 p-2 rounded-[6px] cursor-pointer"
-                      >
+                <div className="p-3 mt-2 w-full">
+                  <div className="md:flex block w-full gap-2 items-center">
+                    <div className="w-full bg-white/10 my-3 rounded-xl p-4  gap-2 ">
+                      <div className="text-sm text-gray-400">Username</div>
+                      <div className="w-full">
                         <input
+                          value={username}
+                          disabled={loading}
+                          onChange={(e) => setUsername(e.target.value)}
                           type="text"
-                          disabled
-                          value={country}
-                          placeholder="Nigeria"
-                          className="outline-none bg-transparent w-full text-[white]"
+                          placeholder="username"
+                          className="w-full text-left py-1 outline-none text-[#ffffff]"
                         />
-                        <FaChevronDown className="text-white" />
+                      </div>
+                    </div>
+                    <div className="w-full">
+                      <div className="flex justify-between  items-center bg-white/10 rounded-xl p-4">
+                        <div>
+                          <p className="text-sm font-medium text-gray-400 text-left">
+                            Country
+                          </p>
+                          <p className="text-lg font-semibold text-left">
+                            {country ? country : "Select country"}
+                          </p>
+                        </div>
+                        <div
+                          className="flex items-center gap-2 cursor-pointer px-3 py-2 bg-[#2A313D] rounded-lg"
+                          onClick={() => {
+                            setShowCountries(!showCountries);
+                          }}
+                        >
+                          <span className="uppercase text-sm">
+                            {country ? country : "Select"}
+                          </span>
+                          <IoChevronDown />
+                        </div>
                       </div>
                       {showCountries && !loading && (
-                        <div className="bg-white w-full absolute z-10 top-[75px] rounded-[4px] border border-gray-300 h-[300px] overflow-y-scroll px-2 py-3">
+                        <div className="md:fixed md:w-[20%] right-[3%] mt-[5px] bg-black text-white rounded-md shadow-md py-2 px-3 max-h-[200px] overflow-y-auto">
                           <input
                             type="text"
                             onChange={(e) => setSeacrhText(e.target.value)}
                             disabled={loading}
                             placeholder="Search Country"
-                            className="border bg-white text-black border-gray-300 w-full placeholder:text-[13px] text-[13px] outline-none px-[4px] rounded mb-1 py-[5px]"
+                            className="border bg-white/2 text-white border-gray-300 w-full placeholder:text-[13px] text-[13px] outline-none px-[4px] rounded mb-1 py-[5px]"
                           />
                           <div>
                             {loader ? (
@@ -538,7 +576,7 @@ const Settings: React.FC = () => {
                                 .map((country, index) => (
                                   <div
                                     key={index}
-                                    className="flex text-black items-center gap-2 hover:bg-gray-300 cursor-pointer p-[5px] text-[14px]"
+                                    className="flex text-white items-center gap-2 hover:bg-gray-300/50 cursor-pointer p-[5px] text-[14px]"
                                     onClick={() => {
                                       setShowCountries(false);
                                       setCountry(country.name);
@@ -556,17 +594,15 @@ const Settings: React.FC = () => {
                   </div>
 
                   {/* Email */}
-                  <div className="grid  gap-2 py-[1rem]">
-                    <div className="text-[#ffffff] font-[500] w-[180px]">
-                      Email address
-                    </div>
+                  <div className="w-full bg-white/10 my-3 rounded-xl p-4  gap-2 ">
+                    <div className="text-sm text-gray-400">Email address</div>
                     <div className="w-full">
                       <input
                         value={email}
                         disabled
                         type="text"
                         placeholder="Enter your email"
-                        className="border bg-transparent border-[#D0D5DD] px-[14px] py-[10px] w-full rounded-[8px] shadow-sm outline-none text-[#ffffff] cursor-not-allowed"
+                        className="w-full text-left py-1 outline-none text-[#ffffff]"
                       />
                     </div>
                   </div>
@@ -595,54 +631,47 @@ const Settings: React.FC = () => {
               )}
 
               {selectedTab === "Password" && (
-                <div className="border border-white/50 rounded-md p-4 mt-2 w-full md:w-[500px]">
-                  <div className="mt-7 pb-5">
-                    <p className="text-white font-medium text-[18px] mb-1">
-                      Change password
-                    </p>
-                    <p className="text-[#667085] font-light">
-                      Update your password here.
-                    </p>
-                  </div>
-
+                <div className=" p-4 mt-2 w-full">
                   <div className="flex flex-col gap-6">
-                    <div>
-                      <label className="block text-white font-medium mb-1">
+                    <div className="w-full bg-white/10 rounded-xl p-4  gap-2 ">
+                      <label className="text-sm text-gray-400">
                         Current Password
                       </label>
                       <input
                         onChange={(e) => setOldPassword(e.target.value)}
                         type="password"
                         disabled={loading}
-                        placeholder="********"
-                        className="w-full bg-transparent border border-[#D0D5DD] px-4 py-2.5 rounded-md shadow-sm outline-none text-white"
+                        placeholder="Enter your current password ********"
+                        className="w-full text-left py-1 outline-none text-[#ffffff]"
                       />
                     </div>
 
-                    <div>
-                      <label className="block text-white font-medium mb-1">
-                        New Password
-                      </label>
-                      <input
-                        onChange={(e) => setPassword(e.target.value)}
-                        type="password"
-                        disabled={loading}
-                        placeholder="********"
-                        className="w-full bg-transparent border border-[#D0D5DD] px-4 py-2.5 rounded-md shadow-sm outline-none text-white"
-                      />
-                    </div>
+                    <div className="md:flex block w-full gap-2 items-center">
+                      <div className="w-full bg-white/10  rounded-xl p-4 gap-2 ">
+                        <label className="text-sm text-gray-400">
+                          New Password
+                        </label>
+                        <input
+                          onChange={(e) => setPassword(e.target.value)}
+                          type="password"
+                          disabled={loading}
+                          placeholder="Enter your new password ********"
+                          className="w-full text-left py-1 outline-none text-[#ffffff]"
+                        />
+                      </div>
 
-                    <div>
-                      <label className="block text-white font-medium mb-1">
-                        Confirm Password
-                      </label>
-                      <input
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        type="password"
-                        disabled={loading}
-                        placeholder="********"
-                        className="w-full bg-transparent border border-[#D0D5DD] px-4 py-2.5 rounded-md shadow-sm outline-none text-white"
-                      />
+                      <div className="w-full bg-white/10 my-3 rounded-xl p-4  gap-2 ">
+                        <label className="text-sm text-gray-400">
+                          Confirm Password
+                        </label>
+                        <input
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          type="password"
+                          disabled={loading}
+                          placeholder="Confirm your new password ********"
+                          className="w-full text-left py-1 outline-none text-[#ffffff]"
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -675,20 +704,11 @@ const Settings: React.FC = () => {
               )}
 
               {selectedTab === "Privacy" && (
-                <div className="border border-white/50 rounded-md p-4 mt-2 w-full md:w-[500px]">
-                  <div className="mt-7 pb-5">
-                    <p className="text-white font-medium text-[18px] mb-1">
-                      Privacy
-                    </p>
-                    <p className="text-[#667085] font-light">
-                      Access your public & private key
-                    </p>
-                  </div>
-
-                  <div className="flex flex-col gap-6">
+                <div className="p-4 mt-2 w-full">
+                  <div className="md:flex block w-full gap-2 items-center">
                     {/* Export Public Key */}
-                    <div>
-                      <label className="block text-white font-medium mb-2">
+                    <div className="w-full bg-white/10 my-3 rounded-xl p-4  gap-2 ">
+                      <label className="text-sm text-gray-400">
                         Export Public Key
                       </label>
                       <div className="flex items-center gap-4">
@@ -696,7 +716,7 @@ const Settings: React.FC = () => {
                           type="text"
                           value={address}
                           disabled
-                          className="w-full bg-transparent border border-[#D0D5DD] px-4 py-2.5 rounded-md shadow-sm outline-none text-white"
+                          className="w-full text-left py-1 outline-none text-[#ffffff]"
                         />
                         <BiCopy
                           className="text-white cursor-pointer"
@@ -710,8 +730,8 @@ const Settings: React.FC = () => {
                     </div>
 
                     {/* Export Private Key */}
-                    <div>
-                      <label className="block text-white font-medium mb-2">
+                    <div className="w-full bg-white/10 my-3 rounded-xl p-4  gap-2 ">
+                      <label className="text-sm text-gray-400">
                         Export Private Key
                       </label>
                       <div className="flex items-center gap-4">
@@ -724,10 +744,10 @@ const Settings: React.FC = () => {
                           onChange={(e) =>
                             !showPrivateKey && setPinCode(e.target.value)
                           }
-                          className="w-full bg-transparent border border-[#D0D5DD] px-4 py-2.5 rounded-md shadow-sm outline-none text-white"
+                          className="w-full text-left py-1 outline-none text-[#ffffff]"
                         />
-                        <BiCopy
-                          className="text-white cursor-pointer"
+                        <button
+                          className="text-white cursor-pointer bg-[#0E7BB2] rounded-md px-3 py-1"
                           onClick={() => {
                             if (!showPrivateKey) {
                               setRevealPrivateKey(true);
@@ -737,7 +757,9 @@ const Settings: React.FC = () => {
                               setAlertType("success");
                             }
                           }}
-                        />
+                        >
+                          Export
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -745,20 +767,17 @@ const Settings: React.FC = () => {
               )}
 
               {selectedTab === "Two Factor Authentication" && (
-                <div className="border border-white/50 rounded-md p-3 mt-2 w-full md:w-[500px]">
-                  <div className=" mt-7 pb-5">
-                    <p className="text-[#ffffff] font-[500] text-[18px] mb-1">
-                      Two Factor Authentication
-                    </p>
-                    <p className="text-[#667085] font-[300]">
-                      Set up your two factor authentication here.
-                    </p>
-                  </div>
+                <div className="p-3 mt-2 w-full">
                   <div className="w-full">
                     {/* Toggle Multifactor Authentication */}
-                    <div className="w-full md:flex grid py-[1.5rem] gap-4 items-center">
-                      <div className="text-[#ffffff] font-[500] md:py-[1.5rem] w-[280px]">
-                        Toggle Multifactor Authentication
+                    <div className="flex justify-between  items-center bg-white/10 rounded-xl p-4">
+                      <div>
+                        <p className="text-sm font-medium text-gray-400 text-left">
+                          Toggle Multifactor Authentication
+                        </p>
+                        <p className="text-lg font-semibold text-left">
+                          {multiFAInfo?.isEnabled ? "On" : "Off"}
+                        </p>
                       </div>
                       <div>
                         {multiFAInfo?.isEnabled ? (
@@ -791,21 +810,40 @@ const Settings: React.FC = () => {
                     </div>
 
                     {/* MFA Setup Status */}
-                    <div className="w-full md:flex grid py-[1.5rem] gap-4 items-center">
-                      <div className="text-[#ffffff] font-[500] md:py-[1.5rem] w-[280px]">
-                        Multifactor Authentication Setup?
+                    <div className="flex justify-between mt-2  items-center bg-white/10 rounded-xl p-4">
+                      <div>
+                        <p className="text-sm font-medium text-gray-400 text-left">
+                          Multifactor Authentication Setup?{" "}
+                        </p>
+                        <p className="text-lg font-semibold text-left">
+                          {multiFAInfo?.isSetup ? "Yes" : "No"}
+                        </p>
                       </div>
                       <div>
                         {multiFAInfo?.isSetup ? (
-                          <ImCheckboxChecked className="cursor-pointer text-primary-color" />
+                          <label className="inline-flex items-center cursor-pointer relative">
+                            <input
+                              type="checkbox"
+                              className="sr-only peer"
+                              disabled={loading}
+                              checked
+                            />
+                          </label>
                         ) : (
-                          <ImCheckboxUnchecked
-                            className="cursor-pointer text-primary-color"
-                            onClick={() => {
-                              setModal("multiFAQrModal");
-                              handleSetup2FA();
-                            }}
-                          />
+                          <label className="inline-flex items-center cursor-pointer relative">
+                            <input
+                              type="checkbox"
+                              className="sr-only peer"
+                              disabled
+                            />
+                            <div
+                              onClick={() => {
+                                setModal("multiFAQrModal");
+                                handleSetup2FA();
+                              }}
+                              className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"
+                            ></div>
+                          </label>
                         )}
                       </div>
                     </div>
@@ -835,7 +873,8 @@ const Settings: React.FC = () => {
               )}
             </div>
           )}
-        </div>
+        </main>
+        <MobileNav />
       </div>
 
       {modal === "verify-code" && (

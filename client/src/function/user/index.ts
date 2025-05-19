@@ -11,6 +11,7 @@ const getProfile = async (token: string) => {
     const data = await res.json();
 
     if (!res.ok) {
+      
       throw new Error(data.message || "Failed to fetch profile");
     }
     localStorage.setItem("userData", JSON.stringify(data.data));

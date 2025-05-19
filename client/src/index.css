@@ -30,3 +30,77 @@ select:-webkit-autofill:focus {
   background-color: none !important;
   transition: background-color 9999s ease-in-out 0s;
 }
+
+
+
+.topnav{
+  width: 83%;
+  left: 16%
+}
+
+@media (min-width: 1470px) {
+  .topnav {
+    width: 80%;
+    left: 18.5%;
+  }
+}
+@media (max-width: 1470px) {
+  .topnav {
+    width: 80%;
+    left: 18.5%;
+  }
+}
+@media (max-width: 1438px) {
+  .topnav {
+    width: 80%;
+    left: 19%;
+  }
+}
+@media (max-width: 1365px) {
+  .topnav {
+    width: 80%;
+    left: 19.5%;
+  }
+}
+@media (min-width: 1024px) {
+  .topnav {
+    width: 78%;
+    left: 21%;
+  }
+
+}
+
+@media (max-width: 1024px) {
+  .main-container{
+    width: 100%;
+    margin-top: -22px;
+    grid-column: span 12 / span 12;
+    padding: 10px;
+    padding-bottom: 80px;
+  }
+  .settings{
+    margin-top: -150px !important;
+  }
+
+  .sidebar{
+    display: none;
+  }
+
+  .topnav{
+    margin-top: -40px;
+  }
+}
+@media (min-width: 1076px) {
+  .topnav {
+    width: 79%;
+    left: 20%;
+  }
+}
+
+@media (max-width: 1023px) {
+  .topnav {
+    width: 98%;
+    left: 1%;
+    top: 5%;
+  }
+}
