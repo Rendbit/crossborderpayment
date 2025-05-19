@@ -283,7 +283,7 @@ const DepositCrypto: React.FC = () => {
                               />
                             </div>
                             <p className="text-xs text-gray-400 mt-2">
-                              0-fee internal transfer via Mammon ID:{" "}
+                              0-fee internal transfer via RendBit ID:{" "}
                               <span className="text-white">****</span>
                             </p>
                           </div>
