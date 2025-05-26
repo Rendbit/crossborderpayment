@@ -176,7 +176,6 @@ export const getStats = async (req: any, res: any) => {
     const from = req.query.from ? new Date(req.query.from as string) : null;
     const to = req.query.to ? new Date(req.query.to as string) : null;
     users = await getFormattedUsers();
-    console.log(users);
     if (!cachedStats || !lastUpdated || now - lastUpdated > CACHE_TTL_MS) {
       cachedStats = await generateStats();
       lastUpdated = now;
