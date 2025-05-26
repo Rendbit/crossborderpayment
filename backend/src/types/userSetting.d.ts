@@ -12,4 +12,5 @@ export interface IUserSetting extends Document {
   insightsTips: boolean;
   networkFeeAlert: boolean;
   screenPreference: MODES;
+  currencyType: string;
 }

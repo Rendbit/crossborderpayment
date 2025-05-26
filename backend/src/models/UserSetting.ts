@@ -33,6 +33,10 @@ const UserSettingSchema: Schema = new Schema<IUserSetting>({
     enum: Object.values(MODES),
     default: MODES.LIGHT,
   },
+  currencyType: {
+    type: String,
+    default: "Fiat",
+  },
 });
 
 export const UserSetting = mongoose.model<IUserSetting>(

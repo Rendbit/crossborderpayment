@@ -86,7 +86,7 @@ const CreateAccount: React.FC = () => {
   return (
     <div className="relative">
       <AuthNav />
-      <div className="sm:mt-[10rem] h-[100%] mx-3">
+      <div className="sm:mt-[10rem]  mt-[30px] mx-3 md:px-24">
         <div className="flex flex-col justify-center items-center relative z-[11]">
           <h2 className="text-[24px] text-white  font-semibold mb-2">
             Create Account
@@ -156,7 +156,7 @@ const CreateAccount: React.FC = () => {
                     placeholder="********"
                     disabled={loading}
                     autoComplete="off"
-                    className="outline-none w-full bg-transparent autofill:bg-transparent autofill:shadow-[0_0_0px_1000px_rgba(0,0,0,0)]"
+                    className="outline-none w-full text-white bg-transparent autofill:bg-transparent autofill:shadow-[0_0_0px_1000px_rgba(0,0,0,0)]"
                   />
                   <div>
                     {passwordType === "password" ? (

@@ -4,7 +4,6 @@ import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Deposit from "./pages/Deposit";
 import Transfer from "./pages/Transfer";
-import Withdraw from "./pages/Transfer";
 import Wallet from "./pages/Wallet";
 import Swap from "./pages/Swap";
 import History from "./pages/History";
@@ -14,6 +13,7 @@ import ConfirmEmail from "./pages/ConfirmEmail";
 import AboutSelf from "./pages/AboutSelf";
 import ForgotPassword from "./pages/ForgotPassword";
 import PasswordReset from "./pages/PasswordReset";
+import TransactionDashboard from "./pages/TransactionDashboard";
 
 const App: React.FC = () => {
   return (
@@ -21,11 +21,11 @@ const App: React.FC = () => {
       <Routes>
         <Route path="/" element={<Navigate to="/dashboard" />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/traction" element={<TransactionDashboard />} />
         <Route path="/wallet" element={<Wallet />} />
         <Route path="/swap" element={<Swap />} />
         <Route path="/deposit" element={<Deposit />} />
         <Route path="/transfer" element={<Transfer />} />
-        <Route path="/withdraw" element={<Withdraw />} />
         <Route path="/history" element={<History />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="/login" element={<Login />} />

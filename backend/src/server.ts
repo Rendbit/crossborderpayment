@@ -10,6 +10,7 @@ import authRoute from "./routes/auth";
 import userRoute from "./routes/user";
 import mfaRoute from "./routes/mfa";
 import sep24Route from "./routes/sep24";
+import statsRoute from "./routes/stats";
 import horizonQueryRoute from "./routes/horizonQueries";
 import transactionRoute from "./routes/transaction";
 import swaggerUi from "swagger-ui-express";
@@ -48,6 +49,7 @@ async function bootstrap() {
     app.use("/crossborderpayment/api/sep24", sep24Route);
     app.use("/crossborderpayment/api/horizonQueries", horizonQueryRoute);
     app.use("/crossborderpayment/api/transaction", transactionRoute);
+    app.use("/crossborderpayment/api/stats", statsRoute);
 
     // Swagger Docs
     app.use(

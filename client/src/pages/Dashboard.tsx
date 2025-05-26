@@ -457,10 +457,10 @@ const Dashboard: React.FC = () => {
                     Deposit
                   </button>
                   <button
-                    onClick={() => navigate("/withdraw")}
+                    onClick={() => navigate("/transfer")}
                     className="border cursor-pointer border-[#B2B2B27A] text-white py-[6px] px-6 text-[12px] md:text-[16px] rounded-[8px]"
                   >
-                    Withdraw
+                    Transfer
                   </button>
                 </div>
               </div>
