@@ -43,13 +43,13 @@ async function bootstrap() {
     app.use(apiKeyValidator);
 
     // Routes
-    app.use("/crossborderpayment/api/auth", authRoute);
-    app.use("/crossborderpayment/api/user", userRoute);
-    app.use("/crossborderpayment/api/mfa", mfaRoute);
-    app.use("/crossborderpayment/api/sep24", sep24Route);
-    app.use("/crossborderpayment/api/horizonQueries", horizonQueryRoute);
-    app.use("/crossborderpayment/api/transaction", transactionRoute);
-    app.use("/crossborderpayment/api/stats", statsRoute);
+    app.use("/api/auth", authRoute);
+    app.use("/api/user", userRoute);
+    app.use("/api/mfa", mfaRoute);
+    app.use("/api/sep24", sep24Route);
+    app.use("/api/horizonQueries", horizonQueryRoute);
+    app.use("/api/transaction", transactionRoute);
+    app.use("/api/stats", statsRoute);
 
     // Swagger Docs
     app.use(
