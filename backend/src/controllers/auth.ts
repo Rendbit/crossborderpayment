@@ -63,47 +63,47 @@ export const login = async (req: any, res: any) => {
         data: null,
       });
     }
-    if (process.env.NODE_ENV === "production") {
-      if (user && !user.isCaptchaVerified) {
-        const response = await fetch(
-          `${process.env.RECAPTCHA_BASE}?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${captcha}`,
-          {
-            headers: {
-              "Content-Type": "application/x-www-form-urlencode;charset=utf-8",
-            },
-            method: "POST",
-          }
-        );
+    // if (process.env.NODE_ENV === "production") {
+    //   if (user && !user.isCaptchaVerified) {
+    //     const response = await fetch(
+    //       `${process.env.RECAPTCHA_BASE}?secret=${process.env.RECAPTCHA_SECRET_KEY}&response=${captcha}`,
+    //       {
+    //         headers: {
+    //           "Content-Type": "application/x-www-form-urlencode;charset=utf-8",
+    //         },
+    //         method: "POST",
+    //       }
+    //     );
 
-        if (!response.ok)
-          return res.status(httpStatus.EXPECTATION_FAILED).json({
-            message: "Failed to verify recaptcha. Try again",
-            status: httpStatus.EXPECTATION_FAILED,
-            success: false,
-            data: null,
-          });
+    //     if (!response.ok)
+    //       return res.status(httpStatus.EXPECTATION_FAILED).json({
+    //         message: "Failed to verify recaptcha. Try again",
+    //         status: httpStatus.EXPECTATION_FAILED,
+    //         success: false,
+    //         data: null,
+    //       });
 
-        const resp = await response.json();
+    //     const resp = await response.json();
 
-        if (!resp.success)
-          return res.status(httpStatus.EXPECTATION_FAILED).json({
-            message: "Recaptcha failed. Try again",
-            status: httpStatus.EXPECTATION_FAILED,
-            success: false,
-            data: null,
-          });
+    //     if (!resp.success)
+    //       return res.status(httpStatus.EXPECTATION_FAILED).json({
+    //         message: "Recaptcha failed. Try again",
+    //         status: httpStatus.EXPECTATION_FAILED,
+    //         success: false,
+    //         data: null,
+    //       });
 
-        await User.findOneAndUpdate(
-          { primaryEmail: email },
-          {
-            $set: {
-              isCaptchaVerified: true,
-            },
-          },
-          { new: true }
-        ).lean();
-      }
-    }
+    //     await User.findOneAndUpdate(
+    //       { primaryEmail: email },
+    //       {
+    //         $set: {
+    //           isCaptchaVerified: true,
+    //         },
+    //       },
+    //       { new: true }
+    //     ).lean();
+    //   }
+    // }
 
     // If user not found, throw BadRequestException
     if (!user) {
