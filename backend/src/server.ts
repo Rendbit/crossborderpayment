@@ -89,7 +89,7 @@ async function bootstrap() {
     // Start server
     const PORT = process.env.PORT || 8005;
     app.listen(PORT, () => {
-      console.log(`🚀 Server is running on http://localhost:${PORT}`);
+      console.log(`🚀 Server is running on ${process.env.BASE_URL}:${PORT}`);
       console.log(`🚀 View docs on ${process.env.BASE_URL}/api/docs`);
     });
   } catch (err: any) {
