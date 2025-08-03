@@ -212,14 +212,14 @@ const Login: React.FC = () => {
           )}
         </div>
       ) : (
-        <div className="relative">
+        <div className="relative bg-gradient-to-b from-[#02001C] via-[#02001C] via-85% to-[#0E7BB2]">
           <AuthNav />
           <div className="sm:mt-[5rem] md:mt-[7rem] mt-[50px] mx-3 md:px-24">
             <div className="flex flex-col h-[70vh] justify-center items-center relative z-[11]">
-              <h2 className="text-[24px] text-white font-semibold mb-2">
+              <h2 className="text-[28px] text-white mb-4 font-[600]">
                 Login
               </h2>
-              <div className="border border-[#FFFFFF]/50 px-4 sm:px-8 pt-8 pb-5 rounded-md w-full sm:w-[488px]">
+              <div className="border border-[#999999]/50 px-4 sm:px-8 pt-8 pb-5 rounded-md w-full sm:w-[650px]">
                 <div className="hidden top-bg relative top-[50px] sm:flex items-center justify-center w-[300px] mx-auto">
                   <img
                     src="./images/favicon.svg"
@@ -235,11 +235,11 @@ const Login: React.FC = () => {
                 </div>
                 <form
                   onSubmit={handleSignIn}
-                  className="flex flex-col sm:w-[400px] mx-auto"
+                  className="flex flex-col sm:w-[450px] mx-auto"
                 >
-                  <div>
-                    <label className="text-[#ffffff] font-[500] text-[14px] mb-1 block">
-                      Email
+                  <div className="w-[100%]">
+                    <label className="text-[#ffffff] font-[500] text-[14px] mb-2 ml-1 block">
+                      EMAIL
                     </label>
                     <input
                       type="text"
@@ -248,15 +248,15 @@ const Login: React.FC = () => {
                       placeholder="Enter your email"
                       autoComplete="off"
                       name="email-field"
-                      className="border border-[#FFFFFF]/50 bg-[#FFFFFF]/8 text-[#ffffff] p-2 rounded-[6px] outline-none w-full"
+                      className="border border-transparent bg-[#17132e] text-[#ffffff] px-2 py-[13px] rounded-[6px] outline-none w-full"
                     />
                   </div>
 
-                  <div className="mt-5">
-                    <label className="text-[#ffffff] font-[500] text-[14px] mb-1 block">
-                      Password
+                  <div className="mt-8">
+                    <label className="text-[#ffffff] font-[500] text-[14px] mb-2 ml-1 block">
+                      PASSWORD
                     </label>
-                    <div className="flex items-center justify-between border border-[#FFFFFF]/50 bg-[#FFFFFF]/8 p-2 rounded-[6px] w-full">
+                    <div className="flex items-center justify-between border border-transparent bg-[#17132e] text-[#ffffff] px-2 py-[13px] rounded-[6px] w-full">
                       <input
                         type={passwordType}
                         onChange={(e) => setPassword(e.target.value)}
@@ -292,7 +292,7 @@ const Login: React.FC = () => {
                   <button
                     onClick={handleSignIn}
                     disabled={loading}
-                    className="flex justify-center cursor-pointer items-center bg-[#0E7BB2] border border-[#FFFFFF]/50 text-white py-2 px-4 rounded-[8px] text-[14px] mt-5"
+                    className="flex justify-center cursor-pointer bg-[#0E7BB2] border border-[#FFFFFF]/50 items-center  text-white py-[14px] px-4 rounded-[8px] mt-7 text-[14px]"
                   >
                     <span>Login</span>
                     {loading && (

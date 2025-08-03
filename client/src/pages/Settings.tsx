@@ -453,14 +453,14 @@ const Settings: React.FC = () => {
       <div className="py-6 overflow-hidden h-[100px] w-full z-50 sticky md:top-[-2%] top-0">
         <TopNav page="Settings" />
       </div>
-      <div className="mt-[80px]  main-container  md:pl-[60px] px-4 pl-2 w-full overflow-hidden md:col-span-10 col-span-12">
+      <div className="mt-[80px] main-container   px-4 pl-2 w-full overflow-hidden md:col-span-10 col-span-12">
         <main className="top-0 md:px-[24%] px-0 left-0 right-0 w-full">
           {loadingUserData ? (
             <div className="flex items-center justify-center">
               <Loader />
             </div>
           ) : (
-            <div className="bg-[#050d2a] overflow-hidden border border-white/10 rounded-2xl shadow-lg md:p-6 px-4 md:mt-[50px] text-white">
+            <div className="bg-[#050d2a] overflow-hidden md:w-[700px] mx-auto border border-white/10 rounded-2xl shadow-lg md:p-6 px-4 md:mt-[50px] text-white">
               <div className="text-center mb-8">
                 <div className="inline-block bg-[#0E7BB2] p-3 rounded-full shadow-md">
                   <RiSettings2Fill className="text-white text-xl" />

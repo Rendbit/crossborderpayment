@@ -84,14 +84,14 @@ const CreateAccount: React.FC = () => {
   };
 
   return (
-    <div className="relative">
+    <div className="relative bg-gradient-to-b from-[#02001C] via-[#02001C] via-80% to-[#0E7BB2]">
       <AuthNav />
       <div className="sm:mt-[10rem]  mt-[30px] mx-3 md:px-24">
         <div className="flex flex-col justify-center items-center relative z-[11]">
-          <h2 className="text-[24px] text-white  font-semibold mb-2">
+          <h2 className="text-[28px] text-white mb-4 font-[600]">
             Create Account
           </h2>
-          <div className="border border-[#FFFFFF]/50 px-4 sm:px-8 pt-8 pb-5 rounded-[16px]  w-full sm:w-[588px]">
+          <div className="border border-[#999999]/50 px-4 sm:px-8 pt-8 pb-[55px] rounded-[16px]  w-full sm:w-[650px]">
             <div className="top-bg relative top-[50px] sm:flex items-center justify-center w-[300px] mx-auto hidden">
               <img
                 src="./images/favicon.svg"
@@ -101,13 +101,12 @@ const CreateAccount: React.FC = () => {
             </div>
             <div className="text-center mb-12 mt-[-30px] relative z-[100]">
               <h2 className="text-[24px] text-white mb-2">RendBit</h2>
-              <p className="text-[#ffffff] sm:text-[14px] text-[14px]">
-                Welcome to the world of premium features and explore the endless
-                possibilities that await.
+              <p className="text-[#ffffff] sm:text-[14px] text-[13px]">
+                  Welcome to the world of premium features and explore the endless possibilities that await.
               </p>
             </div>
 
-            <form className="flex flex-col sm:w-[400px] mx-auto">
+            <form className="flex flex-col sm:w-[450px] mx-auto">
               {/* <div className="w-full flex flex-col gap-3 mb-[20px]">
                 <button
                   onClick={handleGoogleLogin}
@@ -128,12 +127,12 @@ const CreateAccount: React.FC = () => {
                 <div className="h-[1px] bg-[#ffffff] w-full"></div>
               </div> */}
 
-              <div>
+              <div className="w-[100%]">
                 <label
                   htmlFor="email"
-                  className="text-[#ffffff] gont-[500] text-[14px] mb-1 block"
+                  className="text-[#ffffff] gont-[500] text-[14px] mb-2 ml-1 block"
                 >
-                  Email
+                  EMAIL
                 </label>
                 <input
                   type="email"
@@ -141,22 +140,22 @@ const CreateAccount: React.FC = () => {
                   placeholder="Enter your email"
                   disabled={loading}
                   autoComplete="off"
-                  className="border autofill:bg-transparent autofill:shadow-[0_0_0px_1000px_rgba(0,0,0,0)] border-[#FFFFFF]/50 bg-transparent text-[#ffffff] p-2 rounded-[8px] outline-none w-full"
+                  className="border autofill:bg-transparent autofill:shadow-[0_0_0px_1000px_rgba(0,0,0,0)] border-transparent bg-[#17132e] text-[#ffffff] px-2 py-[13px] rounded-[8px] outline-none w-full"
                 />
               </div>
 
-              <div className="my-5">
-                <label className="text-[#ffffff] gont-[500] text-[14px] mb-1 block">
-                  Password
+              <div className="my-8">
+                <label className="text-[#ffffff] gont-[500] text-[14px] mb-2 ml-1 block">
+                  PASWORD
                 </label>
-                <div className="flex items-center justify-between border border-[#FFFFFF]/50 p-2 rounded-[6px] w-full">
+                <div className="flex items-center justify-between border-transparent bg-[#17132e] p-2 rounded-[6px] w-full">
                   <input
                     type={passwordType}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="********"
                     disabled={loading}
                     autoComplete="off"
-                    className="outline-none w-full text-white bg-transparent autofill:bg-transparent autofill:shadow-[0_0_0px_1000px_rgba(0,0,0,0)]"
+                    className="outline-none w-full text-white autofill:bg-transparent autofill:shadow-[0_0_0px_1000px_rgba(0,0,0,0)] border-transparent bg-transparent px-2 py-[6px]"
                   />
                   <div>
                     {passwordType === "password" ? (
@@ -175,17 +174,17 @@ const CreateAccount: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-[#ffffff] gont-[500] text-[14px] mb-1 block">
-                  Confirm Password
+                <label className="text-[#ffffff] gont-[500] text-[14px] mb-2 ml-1 block">
+                  CONFIRM PASSWORD
                 </label>
-                <div className="flex items-center justify-between border border-[#FFFFFF]/50 p-2 rounded-[6px] w-full">
+                <div className="flex items-center justify-between border-transparent bg-[#17132e] p-2 rounded-[6px] w-full">
                   <input
                     type={confirmPasswordType}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     disabled={loading}
                     placeholder="********"
                     autoComplete="off"
-                    className="outline-none w-full bg-transparent text-white autofill:bg-transparent autofill:shadow-[0_0_0px_1000px_rgba(0,0,0,0)]"
+                    className="outline-none w-full text-white autofill:bg-transparent autofill:shadow-[0_0_0px_1000px_rgba(0,0,0,0)] border-transparent bg-transparent px-2 py-[6px]"
                   />
                   <div>
                     {confirmPasswordType === "password" ? (
@@ -204,7 +203,7 @@ const CreateAccount: React.FC = () => {
               </div>
               <button
                 onClick={handleAccountCreation}
-                className="flex justify-center cursor-pointer bg-[#0E7BB2] border border-[#FFFFFF]/50 items-center  text-white py-2 px-4 rounded-[8px] mt-5 text-[14px]"
+                className="flex justify-center cursor-pointer bg-[#0E7BB2] border border-[#FFFFFF]/50 items-center  text-white py-[14px] px-4 rounded-[8px] mt-7 text-[14px]"
                 disabled={loading}
               >
                 <span>Create Account</span>
@@ -218,10 +217,11 @@ const CreateAccount: React.FC = () => {
               </button>
             </form>
             <div className="text-[white] text-[14px] flex items-center gap-1 mt-2 justify-center">
-              <p className="text-center">
+              <p className="text-center mt-2">
+                By joining, you agree to our
                 <Link
                   to="#"
-                  className="inline-flex items-center gap-[2px] text-[#0E7BB2]"
+                  className="inline-flex items-center gap-[2px] text-[#0E7BB2] ml-1"
                 >
                   Privacy Policy <FiExternalLink />
                 </Link>{" "}

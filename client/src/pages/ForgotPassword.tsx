@@ -43,14 +43,14 @@ const ForgotPassword: React.FC = () => {
   }
 
   return (
-    <div className="relative">
+    <div className="relative bg-gradient-to-b from-[#02001C] via-[#02001C] via-85% to-[#0E7BB2]">
       <AuthNav />
       <div className="sm:mt-[10rem] h-[60vh] mt-[5rem] mx-3">
-        <h2 className="text-[24px] font-semibold mb-2 text-center text-white">
+        <h2 className="text-[28px] text-white mb-4 font-[600] text-center">
           Forgot Password
         </h2>
         <div className="mt-5 flex flex-col justify-center items-center relative z-[11]">
-          <div className="border border-[white]/50 px-4 sm:px-8 pt-8 pb-5 rounded-[16px] w-full sm:w-[588px]">
+          <div className="border border-[#999999]/50 px-4 sm:px-8 pt-8 pb-5 rounded-[16px] w-full sm:w-[650px]">
             <div className="top-bg relative top-[50px] sm:flex items-center justify-center w-[300px] mx-auto">
               <img
                 src="./images/favicon.svg"
@@ -66,24 +66,24 @@ const ForgotPassword: React.FC = () => {
             </div>
             <form
               onSubmit={handleForgotPassword}
-              className="flex flex-col sm:w-[400px] mx-auto"
+              className="flex flex-col sm:w-[450px] mx-auto"
             >
-              <div>
-                <label className="text-[#ffffff] gont-[500] text-[14px] mb-1 block">
-                  Email
+              <div className="w-full">
+                <label className="text-[#ffffff] gont-[500] text-[14px] mb-2 ml-1 block">
+                  EMAIL
                 </label>
                 <input
                   type="text"
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={loading}
                   placeholder="Enter your email"
-                  className="border border-[white]/50 bg-transparent text-[#ffffff] p-2 rounded-[6px] outline-none w-full"
+                  className="border autofill:bg-transparent autofill:shadow-[0_0_0px_1000px_rgba(0,0,0,0)] border-transparent bg-[#17132e] text-[#ffffff] px-2 py-[13px] rounded-[8px] outline-none w-full"
                 />
               </div>
 
               <button
                 disabled={loading}
-                className="flex bg-[#0E7BB2] cursor-pointer border border-white/50 justify-center items-center bg-primary-color text-white py-2 px-4 rounded-[8px] mt-5"
+                className="flex justify-center cursor-pointer bg-[#0E7BB2] border border-[#FFFFFF]/50 items-center  text-white py-[14px] px-4 rounded-[8px] mt-7 text-[14px]"
               >
                 <span>Proceed</span>
                 {loading && (
