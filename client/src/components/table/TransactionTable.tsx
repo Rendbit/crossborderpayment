@@ -23,6 +23,9 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
+  console.log("Transaction History: ", transactionHistory?.data);
+  
+
   const filteredTransactions = transactionHistory?.filter((transaction: any) =>
     (tableType === "fiat"
       ? transaction?.id

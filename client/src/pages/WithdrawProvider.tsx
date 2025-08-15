@@ -367,10 +367,10 @@ const WithdrawProvider: React.FC = () => {
       )}
       <div className="space-y-8 text-center text-gray-300">
         <div className="grid gap-6">
-          <div className="flex justify-between items-center bg-white/10 rounded-xl p-4">
-            <div>
-              <p className="text-sm font-medium text-gray-400">Balance</p>
-              <p className="text-lg font-semibold text-left">
+          <div className="flex justify-between gap-3 items-end bg-white/10 rounded-xl p-4">
+            <div className="w-full">
+              <p className="text-sm font-medium text-gray-400 text-left mb-2">Balance</p>
+              <p className="text-lg font-semibold text-left border px-3 py-2 rounded-[7px] w-full">
                 {/* {currentBalance === 0 ? "0" : formateDecimal(currentBalance)} */}
                 {selectedAsset?.asset_code === "GHSC"
                   ? 500
@@ -380,7 +380,7 @@ const WithdrawProvider: React.FC = () => {
               </p>
             </div>
             <div
-              className="flex items-center gap-2 cursor-pointer px-3 py-2 bg-[#2A313D] rounded-lg"
+              className="flex items-center gap-2 cursor-pointer px-3 py-3 bg-[#2A313D] rounded-lg"
               onClick={() => {
                 if (isActivateWalletAlert) return;
                 setShowCountries(false);
@@ -400,7 +400,7 @@ const WithdrawProvider: React.FC = () => {
         </div>
 
         {currencyDropDown === "from" && (
-          <div className="absolute top-[21%] md:left-[39.5%] bg-black text-white mt-[-30px] rounded-md shadow-md py-2 px-3 max-h-[200px] overflow-y-auto">
+          <div className="absolute top-[21%] md:left-[32.5%] bg-black text-white mt-[-30px] rounded-md shadow-md py-2 px-3 max-h-[200px] overflow-y-auto">
             {assets?.allWalletAssets?.map((asset, index) => (
               <div
                 key={index}
@@ -423,17 +423,17 @@ const WithdrawProvider: React.FC = () => {
           </div>
         )}
 
-        <div className="flex justify-between mt-[-10px] items-center bg-white/10 rounded-xl p-4">
-          <div>
-            <p className="text-sm font-medium text-gray-400 text-left">
+        <div className="flex justify-between mt-[-10px] items-end gap-3 bg-white/10 rounded-xl p-4">
+          <div className="w-full">
+            <p className="text-sm font-medium text-gray-400 text-left mb-2">
               Recipient's&nbsp;Country
             </p>
-            <p className="text-lg font-semibold text-left">
+            <p className="text-lg font-semibold text-left border border-gray-300 px-3 py-2 rounded-[7px] w-full">
               {country ? country : "Select country"}
             </p>
           </div>
           <div
-            className="flex items-center gap-2 cursor-pointer px-3 py-2 bg-[#2A313D] rounded-lg"
+            className="flex items-center gap-2 cursor-pointer px-3 py-3 bg-[#2A313D] rounded-lg"
             onClick={() => {
               setShowCountries(!showCountries);
               setCurrencyDropDown(false);
@@ -506,14 +506,14 @@ const WithdrawProvider: React.FC = () => {
                 );
               }, 500);
             }}
-            className="w-full bg-transparent outline-none text-lg font-semibold"
+            className="w-full bg-transparent outline-none text-lg font-semibold border border-gray-300 text-gray-400 p-2 rounded-md"
           />
         </div>
         
 
         <div className="bg-white/10 mt-[-10px] rounded-xl p-4">
           <p className="text-sm mb-2 text-gray-400 text-left">Anchor</p>
-          <div className="flex justify-between items-center cursor-pointer">
+          <div className="flex justify-between items-center cursor-pointer border border-gray-300 px-3 py-2 rounded-[7px]">
             <span className="font-light">LinkIO</span>
             <IoChevronDown />
           </div>

@@ -270,6 +270,15 @@ const SideNav: React.FC = () => {
             </div>
           ))}
 
+          <div className="mt-4">
+            <button
+              onClick={handleLogout}
+              className="cursor-pointer text-left w-full py-2 pl-5 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
+            >
+              Logout
+            </button>
+          </div>
+
           {/* Theme Toggle for mobile */}
           <div className="block dark:text-gray-300 lg:hidden mt-4">
             <ThemeToggle />

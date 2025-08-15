@@ -265,7 +265,7 @@ const WithdrawCrypto: React.FC = () => {
 
               <div className="bg-[#1C222D] rounded-xl p-4">
                 <p className="text-sm mb-2 text-gray-400">Network</p>
-                <div className="flex justify-between items-center cursor-pointer">
+                <div className="flex justify-between items-center cursor-pointer border border-gray-300 px-3 py-2 rounded-[7px]">
                   <span className="font-light">Stellar</span>
                   <IoChevronDown />
                 </div>
