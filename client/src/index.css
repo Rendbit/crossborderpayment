@@ -1,17 +1,17 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
 * {
   box-sizing: border-box;
   scroll-behavior: smooth;
   font-family: "Red Hat Display";
 }
 
-body {
-  background: #02001C;
+/* body {
   font-family: 'Red Hat Display', sans-serif;
-}
+} */
 
-input[type="number"]::-webkit-inner-spin-button, 
+input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
@@ -34,9 +34,13 @@ select:-webkit-autofill:focus {
 
 
 
-.topnav{
+.topnav {
   width: 83%;
-  left: 16%
+  left: 16%;
+}
+
+button {
+  cursor: pointer;
 }
 
 @media (min-width: 1470px) {
@@ -68,26 +72,25 @@ select:-webkit-autofill:focus {
     width: 78%;
     left: 21%;
   }
-
 }
 
 @media (max-width: 1024px) {
-  .main-container{
+  .main-container {
     width: 100%;
     margin-top: -22px;
     grid-column: span 12 / span 12;
     padding: 10px;
     padding-bottom: 80px;
   }
-  .settings{
+  .settings {
     margin-top: -150px !important;
   }
 
-  .sidebar{
+  .sidebar {
     display: none;
   }
 
-  .topnav{
+  .topnav {
     margin-top: -40px;
   }
 }
