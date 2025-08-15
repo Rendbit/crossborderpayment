@@ -182,7 +182,7 @@ const Transfer: React.FC = () => {
   }
 
   return (
-    <div className="w-full md:grid grid-cols-12">
+    <div className="w-full md:grid grid-cols-12 bg-white">
       <div className="md:block hidden h-[100vh] sidebar p-4 pr-2 ">
         <SideNav />
       </div>
@@ -199,12 +199,12 @@ const Transfer: React.FC = () => {
               </p>
             )}
 
-            <div className="bg-[#050d2a] border border-white/10 rounded-2xl shadow-lg md:p-6 p-2 md:mt-[50px] text-white">
+            <div className="border border-white/10 rounded-2xl shadow-lg md:p-6 p-2 md:mt-[50px] text-white">
               <div className="text-center mb-8">
                 <div className="inline-block bg-[#0E7BB2] p-3 rounded-full shadow-md">
                   <RiBankLine className="text-white text-xl" />
                 </div>
-                <h1 className="mt-4 text-2xl font-bold">
+                <h1 className="mt-4 text-2xl font-bold text-black">
                   {segment === "fiat"
                     ? "Send Money Securely"
                     : "Send Crypto Securely"}
@@ -221,27 +221,26 @@ const Transfer: React.FC = () => {
                 )}
               </div>
 
-              <div className="flex justify-center mb-8 space-x-6 text-white">
+              <div className="flex justify-center mb-8 space-x-6 text-black">
+                <button
+                  onClick={() => setSegment("crypto")}
+                  className={`border cursor-pointer px-6 py-2 rounded-full transition-colors duration-300 font-semibold ${
+                    segment === "crypto"
+                      ? "bg-[#0E7BB2] text-white shadow-lg"
+                      : "bg-white/10 hover:bg-white/20 border"
+                  }`}
+                >
+                  Crypto
+                </button>
                 <button
                   onClick={() => setSegment("fiat")}
-                  className={`cursor-pointer px-6 py-2 rounded-full transition-colors duration-300 font-semibold ${
+                  className={`border cursor-pointer px-6 py-2 rounded-full transition-colors duration-300 font-semibold ${
                     segment === "fiat"
                       ? "bg-[#0E7BB2] text-white shadow-lg"
                       : "bg-white/10 hover:bg-white/20"
                   }`}
                 >
                   Fiat
-                </button>
-
-                <button
-                  onClick={() => setSegment("crypto")}
-                  className={`cursor-pointer px-6 py-2 rounded-full transition-colors duration-300 font-semibold ${
-                    segment === "crypto"
-                      ? "bg-[#0E7BB2] text-white shadow-lg"
-                      : "bg-white/10 hover:bg-white/20"
-                  }`}
-                >
-                  Crypto
                 </button>
               </div>
 
@@ -261,19 +260,19 @@ const Transfer: React.FC = () => {
                   </section>
                   <section className="w-1/2 md:px-4 px-2">
                     <div className="grid gap-6">
-                      <div className="flex justify-between items-center bg-white/10 rounded-xl p-4">
-                        <div>
-                          <p className="text-sm font-medium text-gray-400">
+                      <div className="flex justify-between items-end gap-3 bg-white/10 rounded-xl p-4">
+                        <div className="w-full">
+                          <p className="text-sm font-medium text-gray-400 mb-2">
                             Balance
                           </p>
-                          <p className="text-lg font-semibold">
+                          <p className="text-lg font-semibold border border-gray-300 w-full text-black px-3 py-2 rounded-[7px]">
                             {currentBalance === 0
                               ? "0"
                               : formateDecimal(currentBalance)}
                           </p>
                         </div>
                         <div
-                          className="flex items-center gap-2 cursor-pointer px-3 py-2 bg-[#2A313D] rounded-lg"
+                          className="flex items-center gap-2 cursor-pointer px-3 bg-[#2A313D] rounded-lg py-3"
                           onClick={() => {
                             if (isActivateWalletAlert) return;
                             setCurrencyDropDown(
@@ -295,7 +294,7 @@ const Transfer: React.FC = () => {
                     </div>
 
                     {currencyDropDown === "from" && (
-                      <div className="absolute md:top-[21%] lg:top-[10%] sm:top-[50%] right-2 bg-black text-white rounded-md shadow-md py-2 px-3 max-h-[200px] overflow-y-auto">
+                      <div className="absolute md:top-[21%] lg:top-[15%] sm:top-[50%] right-2 bg-black text-white rounded-md shadow-md py-2 px-3 max-h-[200px] overflow-y-auto">
                         {assets?.allWalletAssets?.map((asset, index) => (
                           <div
                             key={index}
@@ -326,7 +325,7 @@ const Transfer: React.FC = () => {
                         placeholder="Enter amount"
                         disabled={loading}
                         onChange={(e) => setSourceAmount(e.target.value)}
-                        className="w-full bg-transparent outline-none text-lg font-semibold"
+                        className="w-full bg-transparent outline-none text-lg font-semibold border border-gray-300 text-gray-400 p-2 rounded-md"
                       />
                     </div>
 
@@ -339,7 +338,7 @@ const Transfer: React.FC = () => {
                         placeholder="Paste wallet address"
                         disabled={loading}
                         onChange={(e) => setAddress(e.target.value)}
-                        className="w-full bg-transparent outline-none text-base"
+                        className="w-full bg-transparent outline-none text-base border border-gray-300 p-2 text-gray-400 rounded-md"
                       />
                       <p className="mt-2 text-xs text-gray-400">
                         Rendbit address supported{" "}
@@ -349,8 +348,8 @@ const Transfer: React.FC = () => {
 
                     <div className="bg-white/10 my-3 rounded-xl p-4">
                       <p className="text-sm mb-2 text-gray-400">Network</p>
-                      <div className="flex justify-between items-center cursor-pointer">
-                        <span className="font-light">Stellar</span>
+                      <div className="flex justify-between items-center cursor-pointer border border-gray-300 px-3 py-2 rounded-[7px]">
+                        <span className="font-light text-gray-700">Stellar</span>
                         <IoChevronDown />
                       </div>
                       <p className="mt-2 text-xs text-gray-400">

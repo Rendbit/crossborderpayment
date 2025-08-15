@@ -8,6 +8,9 @@ import { FiExternalLink } from "react-icons/fi";
 import OTPInput from "react-otp-input";
 import { Link, useNavigate } from "react-router-dom";
 import { signIn } from "../function/auth";
+import { MdEmail } from "react-icons/md";
+import { Key, Lock } from "lucide-react";
+import { BsLock } from "react-icons/bs";
 
 const Login: React.FC = () => {
   const [msg, setMsg] = useState("");
@@ -212,51 +215,65 @@ const Login: React.FC = () => {
           )}
         </div>
       ) : (
-        <div className="relative bg-gradient-to-b from-[#02001C] via-[#02001C] via-85% to-[#0E7BB2]">
-          <AuthNav />
-          <div className="sm:mt-[5rem] md:mt-[7rem] mt-[50px] mx-3 md:px-24">
+        <div className="relative bg-[#F9F9F9] min-h-screen">
+          <div className="flex items-center justify-between w-full md:pr-[100px] pr-[20px]">
+            <AuthNav />
+            <div className="text-center text-[14px]">
+              Don&apos;t have an account?{" "}
+              <Link to="/create-account" className="text-[#0E7BB2] underline ml-1">
+                Register
+              </Link>
+            </div>
+          </div>
+          <div className="sm:mt-[5rem] md:mt-[7rem] mt-[50px] mx-3 md:px-24 relative">
+            <img
+              src="./image/Pattern.svg"
+              className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+              alt=""
+            />
             <div className="flex flex-col h-[70vh] justify-center items-center relative z-[11]">
-              <h2 className="text-[28px] text-white mb-4 font-[600]">
-                Login
-              </h2>
-              <div className="border border-[#999999]/50 px-4 sm:px-8 pt-8 pb-5 rounded-md w-full sm:w-[650px]">
-                <div className="hidden top-bg relative top-[50px] sm:flex items-center justify-center w-[300px] mx-auto">
+              <div className="bg-white shadow shadow-[#585C5F1A] px-4 sm:px-6 pt-8 pb-5 rounded-[18px] w-full sm:w-[450px]">
+                <div className="top-bg relative top-[50px] sm:flex items-center justify-center w-[300px] mx-auto">
                   <img
-                    src="./images/favicon.svg"
+                    src="./image/Custom-Icon.svg"
                     alt="RendBit Logo"
-                    className="mx-auto mb-4 relative top-[-65px]"
+                    className="mx-auto mb-4 relative top-[-65px] mt-5"
                   />
                 </div>
                 <div className="text-center mb-12 mt-[-30px] relative z-[100]">
-                  <h2 className="text-[24px] text-white mb-2">RendBit</h2>
-                  <p className="text-[#ffffff] text-[14px]">
-                    Login to access your dashboard
+                  <h2 className="text-[18px] md:text-[24px] text-[#0A0D14] mb-2">Login to your account</h2>
+                  <p className="text-[#525866] text-[14px]">
+                    Enter your details to login.
                   </p>
                 </div>
                 <form
                   onSubmit={handleSignIn}
-                  className="flex flex-col sm:w-[450px] mx-auto"
+                  className="flex flex-col mx-auto"
                 >
                   <div className="w-[100%]">
-                    <label className="text-[#ffffff] font-[500] text-[14px] mb-2 ml-1 block">
-                      EMAIL
+                    <label className="text-[#0A0D14] font-[500] text-[14px] mb-2 ml-1 block">
+                      Email Address
                     </label>
-                    <input
-                      type="text"
-                      onChange={(e) => setEmail(e.target.value)}
-                      disabled={loading}
-                      placeholder="Enter your email"
-                      autoComplete="off"
-                      name="email-field"
-                      className="border border-transparent bg-[#17132e] text-[#ffffff] px-2 py-[13px] rounded-[6px] outline-none w-full"
-                    />
+                    <div className="border border-[#E2E4E9] text-[#868C98] px-2 py-[7px] rounded-[6px] gap-2 flex items-center justify-between w-full">
+                      <MdEmail />
+                      <input
+                        type="text"
+                        onChange={(e) => setEmail(e.target.value)}
+                        disabled={loading}
+                        placeholder="hello@rendbit.com"
+                        autoComplete="off"
+                        name="email-field"
+                        className="outline-none w-full"
+                      />
+                    </div>
                   </div>
 
                   <div className="mt-8">
-                    <label className="text-[#ffffff] font-[500] text-[14px] mb-2 ml-1 block">
-                      PASSWORD
+                    <label className="text-[#0A0D14] font-[500] text-[14px] mb-2 ml-1 block">
+                      Password
                     </label>
-                    <div className="flex items-center justify-between border border-transparent bg-[#17132e] text-[#ffffff] px-2 py-[13px] rounded-[6px] w-full">
+                    <div className="border border-[#E2E4E9] text-[#868C98] px-2 py-[7px] rounded-[6px] gap-2 flex items-center justify-between w-full">
+                      <Key />
                       <input
                         type={passwordType}
                         onChange={(e) => setPassword(e.target.value)}
@@ -264,17 +281,17 @@ const Login: React.FC = () => {
                         placeholder="********"
                         autoComplete="new-password"
                         name="password-field"
-                        className="outline-none w-full  text-white"
+                        className="outline-none w-full"
                       />
                       <div>
                         {passwordType === "password" ? (
                           <GoEye
-                            className="cursor-pointer text-white"
+                            className="cursor-pointer text-[#868C98]"
                             onClick={() => setPasswordType("text")}
                           />
                         ) : (
                           <GoEyeClosed
-                            className="cursor-pointer text-white"
+                            className="cursor-pointer text-[#868C98]"
                             onClick={() => setPasswordType("password")}
                           />
                         )}
@@ -283,7 +300,7 @@ const Login: React.FC = () => {
                   </div>
 
                   <p
-                    className="text-white cursor-pointer text-end mt-2 text-[14px]"
+                    className="text-[#525866] cursor-pointer text-end mt-2 text-[14px] underline"
                     onClick={() => navigate("/forgot-password")}
                   >
                     Forgot Password?
@@ -292,7 +309,7 @@ const Login: React.FC = () => {
                   <button
                     onClick={handleSignIn}
                     disabled={loading}
-                    className="flex justify-center cursor-pointer bg-[#0E7BB2] border border-[#FFFFFF]/50 items-center  text-white py-[14px] px-4 rounded-[8px] mt-7 text-[14px]"
+                    className="flex justify-center cursor-pointer bg-[#0E7BB2] border border-[#FFFFFF]/50 items-center  text-white py-[10px] px-4 rounded-[8px] mt-7 text-[14px]"
                   >
                     <span>Login</span>
                     {loading && (
@@ -303,13 +320,6 @@ const Login: React.FC = () => {
                       />
                     )}
                   </button>
-
-                  <div className="text-center text-white mt-5 sm:mt-[40px] text-[14px]">
-                    Don&apos;t have an account?{" "}
-                    <Link to="/create-account" className="text-[#0E7BB2]">
-                      Register
-                    </Link>
-                  </div>
                 </form>
               </div>
             </div>
@@ -326,11 +336,11 @@ const Login: React.FC = () => {
             </div> */}
           </div>
           <div className="mt-[50px] mb-5 sm:mx-10 flex sm:flex-row flex-col sm:gap-0 gap-3 items-center justify-between">
-            <p className="text-[white] text-[14px]">
+            <p className="text-[#525866] text-[14px]">
               &copy; {new Date().getFullYear()} RendBit. All rights
               reserved.
             </p>
-            <div className="text-[white] text-[14px] flex items-center gap-4">
+            <div className="text-[#525866] text-[14px] flex items-center gap-4">
               <Link to="#" className="flex items-center gap-[2px]">
                 Privacy Policy <FiExternalLink />
               </Link>

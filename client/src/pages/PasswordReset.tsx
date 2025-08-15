@@ -5,6 +5,7 @@ import { GoEye, GoEyeClosed } from "react-icons/go";
 import Cookies from "js-cookie";
 import { Link, useNavigate } from "react-router-dom";
 import { passwordReset, resendForgotPasswordOtp } from "../function/auth";
+import { FiExternalLink } from "react-icons/fi";
 
 const PasswordReset: React.FC = () => {
   const [otp, setOtp] = useState("");
@@ -46,7 +47,7 @@ const PasswordReset: React.FC = () => {
     }
 
     try {
-      const response = await passwordReset(otp, password, email);
+      const response = await passwordReset(otp, email, password);
 
       if (!response.success) {
         setMsg(response.message);
@@ -91,23 +92,33 @@ const PasswordReset: React.FC = () => {
   }
 
   return (
-    <div className="relative">
-      <AuthNav />
-      <div className="sm:mt-[10rem] h-[100%] mt-[5rem] mx-3">
-        <h2 className="text-[24px] font-semibold text-center text-white">
-          Reset your password
-        </h2>
+    <div className="relative bg-[#F9F9F9] min-h-screen">
+      <div className="flex items-center justify-between w-full md:pr-[100px] pr-[20px]">
+        <AuthNav />
+        <div className="text-center text-[14px]">
+          Changed your mind?
+          <Link to="/login" className="text-[#0E7BB2] underline ml-1">
+            Go Back
+          </Link>
+        </div>
+      </div>
+      <div className="sm:mt-[5rem] md:mt-[7rem] mt-[50px] mx-3 md:px-24 relative">
+        <img
+          src="./image/Pattern.svg"
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+          alt=""
+        />
         <div className="mt-5 flex flex-col justify-center items-center relative z-[11]">
-          <div className="px-4 border-[#FFFFFF]/50 sm:px-8 pt-8 pb-5 rounded-[16px] border w-full sm:w-[588px]">
-            <div className="top-bg relative top-[50px] hidden sm:flex items-center justify-center w-[300px] mx-auto">
+          <div className="bg-white shadow shadow-[#585C5F1A] px-4 sm:px-6 pt-8 pb-5 rounded-[18px] w-full sm:w-[450px]">
+            <div className="top-bg relative top-[50px] sm:flex items-center justify-center w-[300px] mx-auto">
               <img
-                src="./images/favicon.svg"
+                src="./image/CustomPasswordResetIcon.svg"
                 alt="RendBit Logo"
-                className="mx-auto mb-4 relative top-[-65px]"
+                className="mx-auto mb-4 relative top-[-65px] mt-5"
               />
             </div>
             <div className="text-center mb-12 mt-[-30px] relative z-[100]">
-              <h2 className="text-[24px] text-white">RendBit</h2>
+              <h2 className="text-[24px] text-[#0A0D14] mb-2">Reset Password</h2>
               <p className="text-[#667085] text-[14px] mt-3">
                 Please input the OTP sent to {email}
               </p>
@@ -116,7 +127,7 @@ const PasswordReset: React.FC = () => {
               <div>
                 <label
                   htmlFor="otp"
-                  className="text-[#ffffff] gont-[500] text-[14px] mb-1 block"
+                  className="text-[#0A0D14] gont-[500] text-[14px] mb-1 block"
                 >
                   OTP
                 </label>
@@ -125,7 +136,7 @@ const PasswordReset: React.FC = () => {
                   onChange={(e) => setOtp(e.target.value)}
                   disabled={loading}
                   placeholder="123456"
-                  className="border border-gray-300 text-[#707070] p-2 rounded-[8px] outline-none w-full"
+                  className="border border-gray-300  text-[#667085] p-2 rounded-[8px] outline-none w-full"
                 />
                 <p className="text-[#667085] text-[12px] text-end">
                   Please check your email inbox for an OTP code
@@ -133,7 +144,7 @@ const PasswordReset: React.FC = () => {
               </div>
 
               <div className="my-5">
-                <label className="text-[#ffffff] gont-[500] text-[14px] mb-1 block">
+                <label className="text-[#0A0D14] gont-[500] text-[14px] mb-1 block">
                   Password
                 </label>
                 <div className="flex items-center justify-between border border-gray-300 p-2 rounded-[6px] w-full">
@@ -141,7 +152,7 @@ const PasswordReset: React.FC = () => {
                     type={passwordType}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="********"
-                    className="outline-none w-full"
+                    className="outline-none w-full text-[#667085]"
                     disabled={loading}
                   />
                   <div>
@@ -161,7 +172,7 @@ const PasswordReset: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-[#ffffff] gont-[500] text-[14px] mb-1 block">
+                <label className="text-[#0A0D14] gont-[500] text-[14px] mb-1 block">
                   Confirm Password
                 </label>
                 <div className="flex items-center justify-between border border-gray-300 p-2 rounded-[6px] w-full">
@@ -169,7 +180,7 @@ const PasswordReset: React.FC = () => {
                     type={passwordType}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="********"
-                    className="outline-none w-full"
+                    className="outline-none w-full text-[#667085]"
                     disabled={loading}
                   />
                   <div>
@@ -187,13 +198,6 @@ const PasswordReset: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <p
-                className="text-[white] cursor-pointer text-center mt-2 text-[14px]"
-                onClick={resendOtp}
-              >
-                Click to resend code?
-              </p>
-
               <button
                 onClick={handlePasswordReset}
                 disabled={loading}
@@ -208,26 +212,30 @@ const PasswordReset: React.FC = () => {
                   />
                 )}
               </button>
-              <div className="text-center text-[white] mt-5 sm:mt-[70px] text-[14px]">
-                <p className="text-center">
-                  Already have an account?{" "}
-                  <Link to="/login" className="text-[#0E7BB2]">
-                    Log in
-                  </Link>
+              <div className="mt-2 text-[14px] text-center">
+                <p className="text-[#525866]">Experiencing issues receiving the code?</p>
+                <p
+                  className="text-[#0A0D14] cursor-pointer text-center block underline mt-1"
+                  onClick={resendOtp}
+                >
+                  Resend code
                 </p>
               </div>
             </div>
           </div>
         </div>
       </div>
-      <div className="mt-[100px] mb-5 sm:mx-10 flex sm:flex-row flex-col sm:gap-0 gap-3 items-center justify-between">
-        <p className="text-[white] text-[12px]">
-          &copy; {new Date().getFullYear()} RendBit. All rights reserved.
+      <div className="mt-[50px] mb-5 sm:mx-10 flex sm:flex-row flex-col sm:gap-0 gap-3 items-center justify-between">
+        <p className="text-[#525866] text-[14px]">
+          &copy; {new Date().getFullYear()} RendBit. All rights
+          reserved.
         </p>
-        <div className="text-[white] text-[12px] flex items-center gap-4">
-          <Link to="#">Privacy Policy</Link>
-          <Link to="#" className="mr-4">
-            Terms of Use
+        <div className="text-[#525866] text-[14px] flex items-center gap-4">
+          <Link to="#" className="flex items-center gap-[2px]">
+            Privacy Policy <FiExternalLink />
+          </Link>
+          <Link to="#" className="mr-4 flex items-center gap-[2px]">
+            Terms of Use <FiExternalLink />
           </Link>
         </div>
       </div>
