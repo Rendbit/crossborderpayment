@@ -24,65 +24,6 @@ router.use(apiKeyValidator);
 
 /**
  * @swagger
- * /api/horizonQueries/getConversionRates:
- *   post:
- *     summary: Get conversion rates between XLM and a fiat currency
- *     description: Fetches conversion rates for XLM to a given currency and vice versa using CoinMarketCap API.
- *     tags:
- *       - Horizon-Query
- *     security:
- *       - bearerAuth: []
- *       - apiKey: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - inputAmount
- *               - symbol
- *             properties:
- *               inputAmount:
- *                 type: number
- *                 example: 50
- *               symbol:
- *                 type: string
- *                 example: NGN
- *     responses:
- *       200:
- *         description: Conversion rates fetched successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 data:
- *                   type: object
- *                   properties:
- *                     xlmToCurrency:
- *                       type: number
- *                     currencyToXlm:
- *                       type: number
- *                     usdToCurrencyRate:
- *                       type: number
- *                     currencyToUsd:
- *                       type: number
- *                 status:
- *                   type: number
- *                   example: 200
- *                 success:
- *                   type: boolean
- *                   example: true
- *       417:
- *         description: Expectation failed - Conversion API error
- *       500:
- *         description: Internal server error
- */
-router.post("/getConversionRates", getConversionRates);
-
-/**
- * @swagger
  * /api/horizonQueries/getAllWalletAssets:
  *   get:
  *     summary: Get all wallet assets for a user from Stellar Horizon

@@ -34,23 +34,22 @@ export const getConversionRates = async (req: any, res: any): Promise<any> => {
   try {
     const { inputAmount, inputSymbol, outputSymbol }: ConversionRequest =
       ConversionRequestSchema.parse(req.body);
-      const fiatList = ["NGN", "GHS", "KHS"]; // Updated to match cleaned symbols
+    const fiatList = ["NGN", "GHS", "KHS"]; // Updated to match cleaned symbols
 
-      const cleanSymbol = (symbol: string) => {
-        let upperSymbol = symbol.toUpperCase();
-        if (upperSymbol === "NATIVE") return "XLM";
-      
-        if (upperSymbol.startsWith("Y")) upperSymbol = upperSymbol.slice(1);
-        if (upperSymbol.endsWith("C")) upperSymbol = upperSymbol.slice(0, -1); // remove ending C
-      
-        return fiatList.includes(upperSymbol) ? upperSymbol : symbol.toUpperCase();
-      };
-      
-      
-      const input = cleanSymbol(inputSymbol);
-      const output = cleanSymbol(outputSymbol);
-      
-      
+    const cleanSymbol = (symbol: string) => {
+      let upperSymbol = symbol.toUpperCase();
+      if (upperSymbol === "NATIVE") return "XLM";
+
+      if (upperSymbol.startsWith("Y")) upperSymbol = upperSymbol.slice(1);
+      if (upperSymbol.endsWith("C")) upperSymbol = upperSymbol.slice(0, -1); // remove ending C
+
+      return fiatList.includes(upperSymbol)
+        ? upperSymbol
+        : symbol.toUpperCase();
+    };
+
+    const input = cleanSymbol(inputSymbol);
+    const output = cleanSymbol(outputSymbol);
 
     const url = `https://pro-api.coinmarketcap.com/v1/tools/price-conversion?amount=${inputAmount}&symbol=${input}&convert=${output}`;
 
@@ -342,89 +341,120 @@ export const getAllWalletAssets = async (req: any, res: any) => {
     const user = req.user;
     const { currencyType }: GetAllWalletAssets =
       AllWalletAssetsQuerySchema.parse(req.query);
-    // Construct the URL to fetch wallet assets from the Horizon API based on the network
+
     const url: string = `${
       process.env.STELLAR_NETWORK == "public"
         ? process.env.HORIZON_MAINNET_URL
         : process.env.HORIZON_TESTNET_URL
     }/accounts/${user.stellarPublicKey}`;
 
-    // Fetch wallet assets data from the Horizon API
     const resp = await fetch(url);
     const walletAssets = await resp.json();
+
     if (walletAssets.status === 404) {
-      throw new Error(
-        "Fund your wallet with at least 5 XLM to activate your account."
-      );
-    }
-    if (!resp.ok) {
-      throw new Error(
-        walletAssets.details || "Failed to fetch all wallet assets"
-      );
+      return res.status(httpStatus.NOT_FOUND).json({
+        message: "Wallet not found",
+        success: false,
+      });
     }
 
-    // Process the fetched data and format the response
+    if (!resp.ok) {
+      return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+        message: walletAssets.details || "Failed to fetch all wallet assets",
+        success: false,
+      });
+    }
+
     const data = walletAssets.balances;
     const resData: any[] = [];
 
-    // Iterate through the fetched wallet assets and process each asset
     for (let i = 0; i < data.length; i++) {
-      const assetCode: keyof typeof PUBLIC_ASSETS =
-        data[i].asset_code || "NATIVE"; // Default to "NATIVE" if asset_code is not provided
-      const assetIssuer = data[i].asset_issuer || "native"; // Default to "native" if asset_issuer is not provided
+      const assetCode = data[i].asset_code || "NATIVE";
+      const assetIssuer = data[i].asset_issuer || "native";
+
+      // Skip if asset is not in PUBLIC_ASSETS
+      if (
+        assetIssuer !== "native" &&
+        !PUBLIC_ASSETS[assetCode as keyof typeof PUBLIC_ASSETS]
+      ) {
+        continue;
+      }
 
       let image: string;
       let assetName: string;
       let symbolId: string;
 
-      // Determine the asset details (image, name, symbolId) based on whether it's a native asset or not
       if (assetIssuer === "native") {
         image = PUBLIC_ASSETS["NATIVE"].image;
         assetName = PUBLIC_ASSETS["NATIVE"].name;
         symbolId = PUBLIC_ASSETS["NATIVE"].symbolId;
       } else {
-        image = PUBLIC_ASSETS[assetCode].image;
-        assetName = PUBLIC_ASSETS[assetCode].name;
-        symbolId = PUBLIC_ASSETS[assetCode].symbolId;
+        const publicAsset =
+          PUBLIC_ASSETS[assetCode as keyof typeof PUBLIC_ASSETS];
+        // Additional check in case assetCode exists but issuer doesn't match
+        if (!publicAsset || publicAsset.issuer !== assetIssuer) {
+          continue;
+        }
+        image = publicAsset.image;
+        assetName = publicAsset.name;
+        symbolId = publicAsset.symbolId;
       }
 
-      // Push the processed asset details into the response data array
       resData.push({
         asset_code: assetCode,
         asset_name: assetName,
         asset_issuer: assetIssuer,
         symbol_id: symbolId,
-        balance: Number(data[i].balance), // Convert balance to a number
-        trust_limit: Number(data[i].limit || 0), // Convert trust limit to a number, default to 0 if not provided
+        balance: Number(data[i].balance),
+        trust_limit: Number(data[i].limit || 0),
         image: image,
       });
     }
 
-    // Fetch conversion rates for the processed wallet assets
+    if (resData.length === 0) {
+      return res.status(httpStatus.OK).json({
+        data: {
+          currencyType: currencyType.trim().toUpperCase(),
+          allWalletTotalBalanceInSelectedCurrency: 0,
+          allWalletTotalBalanceInUsd: 0,
+          allWalletTotalBalanceInNgn: 0,
+          yieldWalletTotalBalanceInSelectedCurrency: 0,
+          yieldWalletTotalBalanceInUsd: 0,
+          yieldWalletTotalBalanceInNgn: 0,
+          nonYieldWalletTotalBalanceInSelectedCurrency: 0,
+          nonYieldWalletTotalBalanceInUsd: 0,
+          nonYieldWalletTotalBalanceInNgn: 0,
+          allWalletAssets: [],
+          yieldWalletAssets: [],
+          nonYieldWalletAssets: [],
+        },
+        status: httpStatus.OK,
+        success: true,
+        message: "No supported assets found in wallet",
+      });
+    }
+
     const allAssets = await getConversionRate({
       tokenList: resData,
-      currencyType: currencyType.trim().toLowerCase(), // Use the provided currency type
+      currencyType: currencyType.trim().toLowerCase(),
     });
 
-    // Separate the assets into yield and non-yield categories
     const yieldAssets = allAssets.data.tokenList.filter(
-      (asset: { asset_code: string }) => asset.asset_code.startsWith("y") // Yield assets start with "y"
+      (asset: { asset_code: string }) => asset.asset_code.startsWith("y")
     );
     const nonYieldAssets = allAssets.data.tokenList.filter(
-      (asset: { asset_code: string }) => !asset.asset_code.startsWith("y") // Non-yield assets do not start with "y"
+      (asset: { asset_code: string }) => !asset.asset_code.startsWith("y")
     );
 
-    // Sort all wallet assets based on balance and asset type
     const sortedAllWalletAssets = allAssets.data.tokenList.sort(
       (
         a: { balance: number; asset_code: string; asset_name: string },
         b: { balance: number; asset_code: string; asset_name: string }
       ) => {
         if (a.balance !== b.balance) {
-          return b.balance - a.balance; // Sort by balance in descending order
+          return b.balance - a.balance;
         }
 
-        // Prioritize specific asset types (e.g., Bitcoin, Ethereum, Lumens, Naira)
         const aIsBitcoin = a.asset_code.toLowerCase() === "btc";
         const bIsBitcoin = b.asset_code.toLowerCase() === "btc";
         const aIsEthereum = a.asset_code.toLowerCase() === "eth";
@@ -443,21 +473,19 @@ export const getAllWalletAssets = async (req: any, res: any) => {
         if (aIsNaira) return aIsBitcoin ? -1 : 1;
         if (bIsNaira) return bIsBitcoin ? 1 : -1;
 
-        return a.asset_name.localeCompare(b.asset_name); // Sort alphabetically by asset name
+        return a.asset_name.localeCompare(b.asset_name);
       }
     );
 
-    // Sort yield assets based on balance and asset type
     const sortedYieldAssets = yieldAssets.sort(
       (
         a: { balance: number; asset_code: string; asset_name: string },
         b: { balance: number; asset_code: string; asset_name: string }
       ) => {
         if (a.balance !== b.balance) {
-          return b.balance - a.balance; // Sort by balance in descending order
+          return b.balance - a.balance;
         }
 
-        // Prioritize specific asset types (e.g., Bitcoin, Ethereum, Lumens, Naira)
         const aIsBitcoin = a.asset_code.toLowerCase() === "btc";
         const bIsBitcoin = b.asset_code.toLowerCase() === "btc";
         const aIsEthereum = a.asset_code.toLowerCase() === "eth";
@@ -476,21 +504,19 @@ export const getAllWalletAssets = async (req: any, res: any) => {
         if (aIsNaira) return aIsBitcoin ? -1 : 1;
         if (bIsNaira) return bIsBitcoin ? 1 : -1;
 
-        return a.asset_name.localeCompare(b.asset_name); // Sort alphabetically by asset name
+        return a.asset_name.localeCompare(b.asset_name);
       }
     );
 
-    // Sort non-yield assets based on balance and asset type
     const sortedNonYieldAssets = nonYieldAssets.sort(
       (
         a: { balance: number; asset_code: string; asset_name: string },
         b: { balance: number; asset_code: string; asset_name: string }
       ) => {
         if (a.balance !== b.balance) {
-          return b.balance - a.balance; // Sort by balance in descending order
+          return b.balance - a.balance;
         }
 
-        // Prioritize specific asset types (e.g., Bitcoin, Ethereum, Lumens, Naira)
         const aIsBitcoin = a.asset_code.toLowerCase() === "btc";
         const bIsBitcoin = b.asset_code.toLowerCase() === "btc";
         const aIsEthereum = a.asset_code.toLowerCase() === "eth";
@@ -509,7 +535,7 @@ export const getAllWalletAssets = async (req: any, res: any) => {
         if (aIsNaira) return aIsBitcoin ? -1 : 1;
         if (bIsNaira) return bIsBitcoin ? 1 : -1;
 
-        return a.asset_name.localeCompare(b.asset_name); // Sort alphabetically by asset name
+        return a.asset_name.localeCompare(b.asset_name);
       }
     );
 
@@ -538,6 +564,7 @@ export const getAllWalletAssets = async (req: any, res: any) => {
       },
       status: httpStatus.OK,
       success: true,
+      message: "All wallet assets fetched successfully",
     });
   } catch (error: any) {
     console.log("Error fetching all wallet assets. ", error);
@@ -563,6 +590,7 @@ export const getAllTrustLines = async (req: any, res: any): Promise<any> => {
     return res.status(httpStatus.OK).json({
       data: { trustLines: PUBLIC_ASSETS },
       status: httpStatus.OK,
+      message: "Trust lines retrieved successfully",
       success: true,
     });
   } catch (error: any) {
@@ -624,6 +652,7 @@ export const getPath = async (req: any, res: any): Promise<any> => {
     return res.status(httpStatus.OK).json({
       data: paths.data,
       status: httpStatus.OK,
+      message: "Path retrieved successfully",
       success: true,
     });
   } catch (error: any) {
@@ -679,9 +708,12 @@ export const fetchAssets = async (req: any, res: any): Promise<any> => {
 
     // Extract and return the asset records from the API response
     const records = json._embedded?.records;
-    return res
-      .status(httpStatus.OK)
-      .json({ data: { records }, status: httpStatus.OK, success: true });
+    return res.status(httpStatus.OK).json({
+      data: { records },
+      message: "Assets fetched successfully",
+      status: httpStatus.OK,
+      success: true,
+    });
   } catch (error: any) {
     console.log("Error fetching assets. ", error);
     return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({

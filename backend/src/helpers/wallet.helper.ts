@@ -19,6 +19,7 @@
  */
 import StellarSdk from "@stellar/stellar-sdk";
 import StellarBase from "stellar-base";
+import { STELLAR_ERRORS } from "../common/messages/stellarErrors";
 
 const reasonMap: Record<string, Record<string, string>> = {
   // Common Operations
@@ -103,70 +104,219 @@ export class WalletHelper {
    * @throws Will catch and log any errors encountered during the transaction execution process.
    */
   static async execTranst(transaction: any, keypair: any, type: string) {
-    // Check if the transaction is not an empty string
-    if (transaction !== "") {
-      // Initialize the Stellar Soroban RPC server based on the network environment
-      const server = await new StellarSdk.SorobanRpc.Server(
-        process.env.STELLAR_NETWORK === "public"
-          ? process.env.STELLAR_PUBLIC_SERVER
-          : process.env.STELLAR_TESTNET_SERVER
-      );
+    if (!transaction) {
+      return {
+        status: false,
+        msg: "No transaction provided",
+        userMessage: "Transaction failed: No transaction data provided",
+        details: { type: "validation" },
+      };
+    }
+
+    const server = new StellarSdk.SorobanRpc.Server(
+      process.env.STELLAR_NETWORK === "public"
+        ? process.env.STELLAR_PUBLIC_SERVER
+        : process.env.STELLAR_TESTNET_SERVER
+    );
+
+    // Helper to extract asset code from XDR
+    const getAssetCode = (asset: any): string => {
+      if (!asset) return "unknown asset";
       try {
-        // Sign the transaction with the provided keypair
-        transaction.sign(keypair);
-
-        // Send the transaction to the Stellar network
-        const sendResponse = await server.sendTransaction(transaction);
-
-        // Extract the transaction hash from the response
-        const hsh = sendResponse.hash;
-        // Check if the transaction status is "PENDING"
-        if (sendResponse.status === "PENDING") {
-          // Poll the transaction status until it is no longer "NOT_FOUND"
-          let getResponse = await server.getTransaction(sendResponse.hash);
-          while (getResponse.status === "NOT_FOUND") {
-            getResponse = await server.getTransaction(sendResponse.hash);
-            await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait for 1 second before retrying
-          }
-
-          // If the transaction is successful, return the result
-          if (getResponse.status === "SUCCESS") {
-            if (!getResponse.resultMetaXdr) {
-              return { status: true, msg: "" }; // No additional metadata available
-            }
-            const returnValue = getResponse.returnValue; // Extract the return value
-            return { status: true, value: returnValue, hash: hsh }; // Return success with value and hash
-          } else {
-            // console.log({ getResponse });
-
-            const result = StellarSdk.xdr.TransactionResult.fromXDR(
-              getResponse.resultXdr.toXDR(),
-              "base64"
-            );
-            const opResult = result.result().results()[0].value();
-            // console.log({ opResult });
-            const code = opResult.switch().name;
-
-            // console.log({ code });
-
-            const error = this.decodeError(opResult, code);
-            return error;
-          }
-        } else {
-          // Unable to submit the transaction
-          return { status: false, msg: "Unable to submit transaction" };
-        }
-      } catch (err: any) {
-        // Log and return the error message in case of an exception
-        console.log("execTranst error.", err);
-        return { status: false, msg: err.message };
+        if (asset.isNative()) return "XLM";
+        const code = asset.alphaNum4()?.code || asset.alphaNum12()?.code;
+        return code || "unknown asset";
+      } catch (e) {
+        return "unknown asset";
       }
+    };
+
+    // Enhanced asset message formatter
+    const formatAssetMessage = (details: any, baseMsg: string): string => {
+      if (!details) return baseMsg;
+
+      let assetCode = "unknown asset";
+
+      if (details.noTrust) {
+        const asset = details.noTrust?.asset || details.noTrust();
+        assetCode = getAssetCode(asset);
+      } else if (details.underfunded) {
+        const asset = details.underfunded?.asset || details.underfunded();
+        assetCode = getAssetCode(asset);
+      } else if (details.lineFull) {
+        const asset = details.lineFull?.asset || details.lineFull();
+        assetCode = getAssetCode(asset);
+      } else if (details.asset) {
+        assetCode = getAssetCode(details.asset);
+      }
+
+      return baseMsg.replace(/{asset}/g, assetCode);
+    };
+
+    try {
+      transaction.sign(keypair);
+      const sendResponse = await server.sendTransaction(transaction);
+      const hsh = sendResponse.hash;
+
+      if (sendResponse.status === "PENDING") {
+        let getResponse = await server.getTransaction(hsh);
+        let retries = 30;
+
+        while (getResponse.status === "NOT_FOUND" && retries-- > 0) {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+          getResponse = await server.getTransaction(hsh);
+        }
+
+        if (retries <= 0) {
+          return {
+            status: false,
+            msg: "Transaction timeout",
+            userMessage:
+              STELLAR_ERRORS["txTOO_LATE"] || "Transaction timed out",
+            details: {
+              hash: hsh,
+              lastStatus: getResponse.status,
+              timeout: true,
+            },
+          };
+        }
+
+        // Parse XDR safely
+        const parseXDR = (xdr: any, type: any) => {
+          try {
+            if (!xdr) return null;
+            if (xdr._attributes || xdr._switch) return xdr;
+            const base64 =
+              typeof xdr === "string" ? xdr : xdr.toString("base64");
+            return type.fromXDR(base64, "base64");
+          } catch (e) {
+            console.warn("XDR parse error:", e);
+            return null;
+          }
+        };
+
+        const resultXdr = parseXDR(
+          getResponse.resultXdr,
+          StellarSdk.xdr.TransactionResult
+        );
+
+        if (getResponse.status === "SUCCESS") {
+          return {
+            status: true,
+            hash: hsh,
+            msg: "Transaction succeeded",
+            userMessage: "Transaction completed successfully",
+            details: {
+              resultXdr,
+              meta: parseXDR(
+                getResponse.resultMetaXdr,
+                StellarSdk.xdr.TransactionMeta
+              ),
+              envelope: parseXDR(
+                getResponse.envelopeXdr,
+                StellarSdk.xdr.TransactionEnvelope
+              ),
+            },
+          };
+        } else {
+          // Extract detailed operation information
+          const operations =
+            resultXdr
+              ?.result()
+              ?.results()
+              ?.map((op: any) => {
+                const operationType = op.tr().switch().name;
+                const operationResult = op.tr().value();
+                const errorResult = operationResult.switch();
+                return {
+                  operationType,
+                  errorCode: errorResult.name,
+                  fullErrorCode: `${operationType}${errorResult.name}`,
+                  details: operationResult.value(),
+                };
+              }) || [];
+
+          const firstOp = operations[0] || {};
+          const errorCode = firstOp.errorCode || getResponse.status;
+          const fullErrorCode = firstOp.fullErrorCode || errorCode;
+
+          // Get and format error message
+          let userMessage =
+            STELLAR_ERRORS[fullErrorCode] ||
+            STELLAR_ERRORS[errorCode] ||
+            STELLAR_ERRORS["default"];
+
+          userMessage = formatAssetMessage(firstOp.details, userMessage);
+
+          return {
+            status: false,
+            msg: `Transaction failed: ${fullErrorCode}`,
+            userMessage,
+            details: {
+              hash: hsh,
+              status: getResponse.status,
+              operationType: firstOp.operationType,
+              errorCode,
+              fullErrorCode,
+              operations,
+              resultXdr,
+              network: process.env.STELLAR_NETWORK,
+              timestamp: new Date().toISOString(),
+            },
+          };
+        }
+      } else {
+        return {
+          status: false,
+          msg: "Transaction submission failed",
+          userMessage:
+            STELLAR_ERRORS["txBAD_AUTH"] || "Failed to submit transaction",
+          details: {
+            submitResponse: sendResponse,
+            status: sendResponse.status,
+            error: sendResponse.error,
+          },
+        };
+      }
+    } catch (err: any) {
+      console.error("Transaction processing error:", {
+        message: err.message,
+        stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
+      });
+
+      let userMessage = STELLAR_ERRORS["default"];
+
+      // Enhanced error handling with asset details
+      if (err.message.includes("minimum amount")) {
+        userMessage = "Amount below minimum limit (0.0000001).";
+      } else if (err.message.includes("asset not found")) {
+        const assetMatch = err.message.match(/asset: ([^\s]+)/);
+        const asset = assetMatch ? assetMatch[1] : "unknown asset";
+        userMessage = `Unsupported asset (${asset}) - check asset details.`;
+      } else if (err.message.includes("no trustline")) {
+        const assetMatch = err.message.match(/asset: ([^\s]+)/);
+        const asset = assetMatch ? assetMatch[1] : "unknown asset";
+        userMessage = `Missing trustline for ${asset}. Please add it to your wallet first.`;
+      } else if (err.message.includes("insufficient balance")) {
+        const assetMatch = err.message.match(/for asset: ([^\s]+)/);
+        const asset = assetMatch ? assetMatch[1] : "unknown asset";
+        userMessage = `Insufficient balance of ${asset}. Please deposit more funds.`;
+      }
+
+      return {
+        status: false,
+        msg: err.message,
+        userMessage,
+        details: {
+          name: err.name,
+          stack: process.env.NODE_ENV === "development" ? err.stack : undefined,
+        },
+      };
     }
   }
 
   static decodeError(opResult: any, code: string) {
     const switchType = opResult._switch;
-    console.log({switchType});
     if (switchType === code) {
       const errorCondition = opResult._value._arm;
 
@@ -280,6 +430,7 @@ export class WalletHelper {
       // Make the API request to fetch the payment path
       const resp = await fetch(url);
       if (!resp.ok) {
+        console.log("Error receiving payment path.", resp);
         throw new Error("Error receiving payment path."); // Handle non-OK responses
       }
 

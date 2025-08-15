@@ -9,6 +9,7 @@ import { WalletHelper } from "../helpers/wallet.helper";
 import { PUBLIC_ASSETS, TESTNET_ASSETS } from "../common/assets";
 import { WalletDecryption } from "../helpers/encryption-decryption.helper";
 import { WithdrawalEnum } from "../common/enums";
+import { generateConfirmationToken } from "../utils/token";
 
 const server = new StellarSdk.SorobanRpc.Server(
   process.env.STELLAR_NETWORK === "public"
@@ -19,7 +20,6 @@ const server = new StellarSdk.SorobanRpc.Server(
 export const addTrustline = async (req: any, res: any) => {
   try {
     let { assetCode } = req.body;
-    console.log({ assetCode });
     const user = req.user;
     // Create the asset object using the provided asset code and the corresponding issuer.
     const asset = new StellarSdk.Asset(
@@ -71,7 +71,11 @@ export const addTrustline = async (req: any, res: any) => {
     );
 
     if (!signedTransaction.status) {
-      throw new Error(signedTransaction.msg || "Failed to add assest.");
+      return res.status(httpStatus.BAD_REQUEST).json({
+        message: signedTransaction.msg || "Failed to add asset.",
+        status: httpStatus.BAD_REQUEST,
+        success: false,
+      });
     }
     // Return the transaction details, network passphrase, and signed transaction.
     return res.status(httpStatus.OK).json({
@@ -150,7 +154,11 @@ export const removeTrustline = async (req: any, res: any) => {
     );
 
     if (!signedTransaction.status) {
-      throw new Error(signedTransaction.msg || "Failed to remove assest.");
+      return res.status(httpStatus.BAD_REQUEST).json({
+        message: signedTransaction.msg || "Failed to remove asset.",
+        status: httpStatus.BAD_REQUEST,
+        success: false,
+      });
     }
 
     // Return the transaction details, network passphrase, and signed transaction.
@@ -177,6 +185,138 @@ export const removeTrustline = async (req: any, res: any) => {
   }
 };
 
+export const paymentPreview = async (req: any, res: any) => {
+  try {
+    let {
+      assetCode,
+      address,
+      amount,
+      transactionDetails,
+      currencyType,
+      accountNumber,
+      accountName,
+      bankName,
+    } = req.body;
+    const user = req.user;
+
+    // Validate input parameters
+    if (!assetCode || !address || !amount) {
+      return res.status(httpStatus.BAD_REQUEST).json({
+        message: "Missing required parameters",
+        status: httpStatus.BAD_REQUEST,
+        success: false,
+      });
+    }
+
+    assetCode = assetCode.toUpperCase();
+
+    // Validate addresses
+    if (address === user.stellarPublicKey) {
+      return res.status(httpStatus.BAD_REQUEST).json({
+        message: "Sender and receiver address cannot be the same.",
+        status: httpStatus.BAD_REQUEST,
+        success: false,
+      });
+    }
+
+    if (!WalletHelper.isValidStellarAddress(address)) {
+      return res.status(httpStatus.BAD_REQUEST).json({
+        message: "Invalid Stellar address",
+        status: httpStatus.BAD_REQUEST,
+        success: false,
+      });
+    }
+
+    // Determine asset details
+    const asset =
+      assetCode !== "NATIVE"
+        ? {
+            code: assetCode,
+            issuer:
+              process.env.STELLAR_NETWORK === "public"
+                ? PUBLIC_ASSETS[assetCode as keyof typeof PUBLIC_ASSETS].issuer
+                : TESTNET_ASSETS[assetCode as keyof typeof TESTNET_ASSETS]
+                    .issuer,
+          }
+        : { code: "XLM", issuer: "", type: "native" };
+
+    // Get current balance for validation
+    const sourceAccount = await server.getAccount(user.stellarPublicKey);
+    const balance = sourceAccount.balances.find(
+      (b: any) =>
+        (assetCode === "NATIVE" && b.asset_type === "native") ||
+        (b.asset_code === assetCode && b.asset_issuer === asset.issuer)
+    );
+
+    if (!balance) {
+      return res.status(httpStatus.BAD_REQUEST).json({
+        message: `No balance found for ${assetCode}`,
+        status: httpStatus.BAD_REQUEST,
+        success: false,
+      });
+    }
+
+    const availableBalance = parseFloat(balance.balance);
+    const paymentAmount = parseFloat(amount);
+    const fee = parseFloat(process.env.FEE || "0.00001");
+
+    // Check sufficient balance
+    if (availableBalance < paymentAmount + fee) {
+      return res.status(httpStatus.BAD_REQUEST).json({
+        message: "Insufficient balance for payment and fee",
+        status: httpStatus.BAD_REQUEST,
+        success: false,
+      });
+    }
+
+    // Prepare transaction details
+    const paymentDetails = {
+      sourceAddress: user.stellarPublicKey,
+      destinationAddress: address,
+      asset: {
+        code: assetCode === "NATIVE" ? "XLM" : assetCode,
+        issuer: asset.issuer,
+        type: assetCode === "NATIVE" ? "native" : "credit_alphanum",
+      },
+      amount: amount,
+      fee: fee.toString(),
+      totalDebit: (paymentAmount + fee).toFixed(7),
+      availableBalance: availableBalance.toFixed(7),
+      network: process.env.STELLAR_NETWORK,
+      memo: transactionDetails,
+      timestamp: new Date().toISOString(),
+      expiration: new Date(Date.now() + 5 * 60 * 1000).toISOString(), // 5 minutes expiration
+      fiatDetails:
+        currencyType === WithdrawalEnum.FIAT
+          ? {
+              accountNumber,
+              accountName,
+              bankName,
+            }
+          : undefined,
+    };
+
+    // Generate confirmation token
+    const confirmationToken = generateConfirmationToken(paymentDetails);
+
+    return res.status(httpStatus.OK).json({
+      data: {
+        paymentDetails,
+        confirmationToken,
+      },
+      status: httpStatus.OK,
+      success: true,
+    });
+  } catch (error: any) {
+    console.log("Error generating payment preview:", error);
+    return res.status(httpStatus.BAD_REQUEST).json({
+      message: error.message || "Error generating payment preview",
+      status: httpStatus.BAD_REQUEST,
+      success: false,
+    });
+  }
+};
+
 export const payment = async (req: any, res: any) => {
   try {
     let {
@@ -194,10 +334,20 @@ export const payment = async (req: any, res: any) => {
     assetCode = assetCode.toUpperCase();
 
     // Validate the destination Stellar address.
-    if (address === user.stellarPublicKey)
-      throw new Error("Sender and receiver address cannot be the same.");
-    if (!WalletHelper.isValidStellarAddress(address))
-      throw new Error("Invalid address");
+    if (address === user.stellarPublicKey) {
+      return res.status(httpStatus.BAD_REQUEST).json({
+        message: "Sender and receiver address cannot be the same.",
+        status: httpStatus.BAD_REQUEST,
+        success: false,
+      });
+    }
+    if (!WalletHelper.isValidStellarAddress(address)) {
+      return res.status(httpStatus.BAD_REQUEST).json({
+        message: "Invalid Stellar address",
+        status: httpStatus.BAD_REQUEST,
+        success: false,
+      });
+    }
 
     // Extract the hashed password from the account object.
     const hashedPassword = user.password;
@@ -324,6 +474,165 @@ export const payment = async (req: any, res: any) => {
   }
 };
 
+function getRouteDetails(
+  paths: any[],
+  sourceAssetCode: string,
+  desAssetCode: string
+): any[] {
+  try {
+    if (!paths || paths.length === 0) return [];
+
+    // Get the best path (first one)
+    const bestPath = paths[0];
+
+    // Extract all assets in the path
+    const route = [];
+
+    // Add source asset
+    route.push({
+      asset: sourceAssetCode,
+      type: sourceAssetCode === "XLM" ? "native" : "credit_alphanum",
+      issuer: sourceAssetCode === "XLM" ? "" : bestPath.source_asset_issuer,
+    });
+
+    // Add intermediate assets
+    if (bestPath.path && bestPath.path.length > 0) {
+      bestPath.path.forEach((asset: any) => {
+        route.push({
+          asset: asset.asset_code || "XLM",
+          type: asset.asset_type === "native" ? "native" : "credit_alphanum",
+          issuer: asset.asset_issuer || "",
+        });
+      });
+    }
+
+    // Add destination asset
+    route.push({
+      asset: desAssetCode,
+      type: desAssetCode === "XLM" ? "native" : "credit_alphanum",
+      issuer: desAssetCode === "XLM" ? "" : bestPath.destination_asset_issuer,
+    });
+
+    // Simplify route by merging consecutive duplicates
+    const simplifiedRoute = [];
+    let lastAsset = null;
+
+    for (const asset of route) {
+      if (
+        !lastAsset ||
+        asset.asset !== lastAsset.asset ||
+        asset.issuer !== lastAsset.issuer
+      ) {
+        simplifiedRoute.push(asset);
+        lastAsset = asset;
+      }
+    }
+
+    return simplifiedRoute;
+  } catch (error) {
+    console.error("Error extracting route details:", error);
+    return []; // Return empty array on error
+  }
+}
+
+function calculatePriceImpact(
+  paths: any[],
+  sourceAmount: string,
+  desAmount: string
+): string {
+  try {
+    if (!paths || paths.length === 0) return "0%";
+
+    // Get the best path (first one in Stellar's path payment results)
+    const bestPath = paths[0];
+
+    // Get the ideal price without slippage (from the first path)
+    const idealPrice =
+      parseFloat(bestPath.destination_amount) /
+      parseFloat(bestPath.source_amount);
+
+    // Get the actual price with slippage
+    const actualPrice = parseFloat(desAmount) / parseFloat(sourceAmount);
+
+    // Calculate price impact percentage
+    const priceImpact = ((idealPrice - actualPrice) / idealPrice) * 100;
+
+    // Format to 2 decimal places and ensure it's not negative
+    const formattedImpact = Math.max(0, priceImpact).toFixed(2);
+
+    return `${formattedImpact}%`;
+  } catch (error) {
+    console.error("Error calculating price impact:", error);
+    return "0%"; // Fallback to 0% on error
+  }
+}
+export const swapPreview = async (req: any, res: any) => {
+  try {
+    let { slippage, sourceAssetCode, desAssetCode, sourceAmount } = req.body;
+    slippage *= 1;
+
+    const sourceAssetIssuer =
+      process.env.STELLAR_NETWORK === "public"
+        ? PUBLIC_ASSETS[sourceAssetCode as keyof typeof PUBLIC_ASSETS].issuer
+        : TESTNET_ASSETS[sourceAssetCode as keyof typeof TESTNET_ASSETS].issuer;
+
+    const desAssetIssuer =
+      process.env.STELLAR_NETWORK === "public"
+        ? PUBLIC_ASSETS[desAssetCode as keyof typeof PUBLIC_ASSETS].issuer
+        : TESTNET_ASSETS[desAssetCode as keyof typeof TESTNET_ASSETS].issuer;
+
+    const _paths: any = await WalletHelper.sendPaymentPath({
+      sourceAssetCode: sourceAssetCode,
+      sourceAssetIssuer,
+      desAssetCode: desAssetCode,
+      desAssetIssuer,
+      amount: sourceAmount,
+    });
+
+    const paths = _paths.data.sendPaymentPath;
+    const desAmount = paths?.filter(
+      (pth: any) =>
+        pth.destination_asset_type === desAssetIssuer ||
+        desAssetCode.startsWith(pth.destination_asset_code)
+    )[0].destination_amount;
+
+    const destMin = (((100 - slippage) * parseFloat(desAmount)) / 100).toFixed(
+      7
+    );
+
+    // Return the swap details for confirmation
+    return res.status(httpStatus.OK).json({
+      data: {
+        swapDetails: {
+          sourceAsset: sourceAssetCode,
+          destinationAsset: desAssetCode,
+          sourceAmount: sourceAmount,
+          expectedDestinationAmount: desAmount,
+          minimumReceived: destMin,
+          slippage: slippage + "%",
+          fee: process.env.FEE,
+          network: process.env.STELLAR_NETWORK,
+          exchangeRate: (
+            parseFloat(desAmount) / parseFloat(sourceAmount)
+          ).toFixed(7),
+          priceImpact: calculatePriceImpact(paths, sourceAmount, desAmount),
+          route: getRouteDetails(paths, sourceAssetCode, desAssetCode),
+        },
+      },
+      message: "Swap preview generated successfully.",
+      status: httpStatus.OK,
+      success: true,
+    });
+  } catch (error: any) {
+    console.log("Error generating swap preview.", error);
+    return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+      message: error.message || "Error generating swap preview.",
+      status: httpStatus.INTERNAL_SERVER_ERROR,
+      success: false,
+    });
+  }
+};
+
 export const swap = async (req: any, res: any) => {
   try {
     let { slippage, sourceAssetCode, desAssetCode, sourceAmount } = req.body;
@@ -407,7 +716,7 @@ export const swap = async (req: any, res: any) => {
           sendAmount: sourceAmount.toString(), // Set the source amount.
           destination: user.stellarPublicKey, // Set the destination address.
           destAsset: desAsset, // Set the destination asset.
-          destMin: "0.0000001", // Set the minimum destination amount.
+          destMin: destMin, // Set the minimum destination amount.
         })
       )
       .setTimeout(process.env.TIMEOUT) // Set the transaction timeout.
@@ -418,11 +727,20 @@ export const swap = async (req: any, res: any) => {
       StellarSdk.Keypair.fromSecret(decryptedPrivateKey),
       "swap"
     );
-    if (!resp.status) throw new Error(resp.msg);
 
-    // Return the transaction hash.
+    if (!resp.status) {
+      return res.status(httpStatus.BAD_REQUEST).json({
+        data: { hash: resp.details.hash },
+        message: resp.userMessage || resp.msg,
+        status: httpStatus.BAD_REQUEST,
+        success: false,
+      });
+    }
+
+    // Return the transaction response.
     return res.status(httpStatus.OK).json({
       data: { hash: resp.hash },
+      message: resp.userMessage || resp.msg,
       status: httpStatus.OK,
       success: true,
     });
@@ -436,48 +754,119 @@ export const swap = async (req: any, res: any) => {
   }
 };
 
+export const strictSendPreview = async (req: any, res: any) => {
+  try {
+    let { desAddress, slippage, assetCode, amount, desAmount } = req.body;
+
+    slippage *= 1;
+
+    if (!WalletHelper.isValidStellarAddress(desAddress)) {
+      return res.status(httpStatus.BAD_REQUEST).json({
+        message: "Invalid Address",
+        status: httpStatus.BAD_REQUEST,
+        success: false,
+      });
+    }
+
+    const sourceAssetIssuer =
+      process.env.STELLAR_NETWORK === "public"
+        ? PUBLIC_ASSETS[assetCode as keyof typeof PUBLIC_ASSETS].issuer
+        : TESTNET_ASSETS[assetCode as keyof typeof TESTNET_ASSETS].issuer;
+
+    const desAssetIssuer =
+      process.env.STELLAR_NETWORK === "public"
+        ? PUBLIC_ASSETS[assetCode as keyof typeof PUBLIC_ASSETS].issuer
+        : TESTNET_ASSETS[assetCode as keyof typeof TESTNET_ASSETS].issuer;
+
+    const _paths: any = await WalletHelper.sendPaymentPath({
+      sourceAssetCode: assetCode,
+      sourceAssetIssuer,
+      desAssetCode: assetCode,
+      desAssetIssuer,
+      amount: amount.toString(),
+    });
+    const paths = _paths.data.sendPaymentPath;
+    const _desAmount: any =
+      desAmount ||
+      paths.filter(
+        (pth: any) =>
+          pth.destination_asset_type === desAssetIssuer ||
+          assetCode.startsWith(pth.destination_asset_code)
+      )[0].destination_amount;
+
+    const destMin = (((100 - slippage) * parseFloat(_desAmount)) / 100).toFixed(
+      7
+    );
+
+    // Return the transaction details for confirmation
+    return res.status(httpStatus.OK).json({
+      data: {
+        transactionDetails: {
+          sourceAsset: assetCode,
+          destinationAsset: assetCode,
+          sourceAmount: amount,
+          estimatedDestinationAmount: _desAmount,
+          minimumDestinationAmount: destMin,
+          destinationAddress: desAddress,
+          slippage: slippage,
+          fee: process.env.FEE,
+          network: process.env.STELLAR_NETWORK,
+        },
+      },
+      message: "Strict send preview generated successfully.",
+      status: httpStatus.OK,
+      success: true,
+    });
+  } catch (error: any) {
+    console.log("Error generating strict send preview.", error);
+    return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+      message: error.message || "Error generating strict send preview.",
+      status: httpStatus.INTERNAL_SERVER_ERROR,
+      success: false,
+    });
+  }
+};
+
 export const strictSend = async (req: any, res: any) => {
   try {
     const user = req.user;
-    let {
-      desAddress,
-      slippage,
-      sourceAssetCode,
-      desAssetCode,
-      sourceAmount,
-      desAmount,
-    } = req.body;
+    let { desAddress, slippage, assetCode, amount } = req.body;
     // Ensure the slippage value is a number.
     slippage *= 1;
 
     // Validate the destination Stellar address.
-    if (!WalletHelper.isValidStellarAddress(desAddress))
-      throw new Error("Invalid Address");
+    if (!WalletHelper.isValidStellarAddress(desAddress)) {
+      return res.status(httpStatus.BAD_REQUEST).json({
+        message: "Invalid Address",
+        status: httpStatus.BAD_REQUEST,
+        success: false,
+      });
+    }
 
     // Determine the source asset issuer based on the network configuration.
     const sourceAssetIssuer =
       process.env.STELLAR_NETWORK === "public"
-        ? PUBLIC_ASSETS[sourceAssetCode as keyof typeof PUBLIC_ASSETS].issuer
-        : TESTNET_ASSETS[sourceAssetCode as keyof typeof TESTNET_ASSETS].issuer;
+        ? PUBLIC_ASSETS[assetCode as keyof typeof PUBLIC_ASSETS].issuer
+        : TESTNET_ASSETS[assetCode as keyof typeof TESTNET_ASSETS].issuer;
 
     // Determine the destination asset issuer based on the network configuration.
     const desAssetIssuer =
       process.env.STELLAR_NETWORK === "public"
-        ? PUBLIC_ASSETS[desAssetCode as keyof typeof PUBLIC_ASSETS].issuer
-        : TESTNET_ASSETS[desAssetCode as keyof typeof TESTNET_ASSETS].issuer;
+        ? PUBLIC_ASSETS[assetCode as keyof typeof PUBLIC_ASSETS].issuer
+        : TESTNET_ASSETS[assetCode as keyof typeof TESTNET_ASSETS].issuer;
 
     // Find the payment path from the source asset to the destination asset.
-    const paths: any = await WalletHelper.sendPaymentPath({
-      sourceAssetCode: sourceAssetCode,
+    const _paths: any = await WalletHelper.sendPaymentPath({
+      sourceAssetCode: assetCode,
       sourceAssetIssuer,
-      desAssetCode: desAssetCode,
+      desAssetCode: assetCode,
       desAssetIssuer,
-      amount: sourceAmount,
+      amount: amount.toString(),
     });
 
     // Extract the hashed password from the account object.
     const hashedPassword = user.password;
-
+    const paths = _paths.data.sendPaymentPath;
     // Decrypt the user's private key using their encrypted private key,
     // primary email, hashed password, and pin code.
     const decryptedPrivateKey = WalletDecryption.decryptPrivateKey(
@@ -487,23 +876,23 @@ export const strictSend = async (req: any, res: any) => {
 
     // Calculate the destination amount based on the provided amount or the paths.
     const _desAmount: any =
-      desAmount ||
+      amount ||
       paths.filter(
         (pth: any) =>
           pth.destination_asset_type === desAssetIssuer ||
-          desAssetCode.startsWith(pth.destination_asset_code)
-      )[0].payload.desAmount;
+          assetCode.startsWith(pth.destination_asset_code)
+      )[0].destination_amount;
 
     // Create the source asset object.
     const sourceAsset =
-      sourceAssetCode !== "NATIVE"
-        ? new StellarSdk.Asset(sourceAssetCode, sourceAssetIssuer)
+      assetCode !== "NATIVE"
+        ? new StellarSdk.Asset(assetCode, sourceAssetIssuer)
         : StellarSdk.Asset.native();
 
     // Create the destination asset object.
     const desAsset =
-      desAssetCode !== "NATIVE"
-        ? new StellarSdk.Asset(desAssetCode, desAssetIssuer)
+      assetCode !== "NATIVE"
+        ? new StellarSdk.Asset(assetCode, desAssetIssuer)
         : StellarSdk.Asset.native();
 
     // Calculate the minimum destination amount considering the slippage.
@@ -527,10 +916,10 @@ export const strictSend = async (req: any, res: any) => {
         // Add the path payment strict send operation to the transaction.
         StellarSdk.Operation.pathPaymentStrictSend({
           sendAsset: sourceAsset, // Set the source asset.
-          sendAmount: sourceAmount.toString(), // Set the source amount.
+          sendAmount: amount.toString(), // Set the source amount.
           destination: desAddress, // Set the destination address.
           destAsset: desAsset, // Set the destination asset.
-          destMin: "0.0000001", // Set the minimum destination amount.
+          destMin: destMin, // Set the minimum destination amount.
         })
       )
       .setTimeout(process.env.TIMEOUT) // Set the transaction timeout.
@@ -542,11 +931,19 @@ export const strictSend = async (req: any, res: any) => {
       StellarSdk.Keypair.fromSecret(decryptedPrivateKey),
       "strictSend"
     );
-    if (!resp.status) throw new Error(resp.msg);
+    if (!resp.status) {
+      return res.status(httpStatus.BAD_REQUEST).json({
+        data: { hash: resp.details.hash },
+        message: resp.userMessage || resp.msg,
+        status: httpStatus.BAD_REQUEST,
+        success: false,
+      });
+    }
 
-    // Return the transaction hash.
+    // Return the transaction response.
     return res.status(httpStatus.OK).json({
       data: { hash: resp.hash },
+      message: resp.userMessage || resp.msg,
       status: httpStatus.OK,
       success: true,
     });
@@ -554,6 +951,86 @@ export const strictSend = async (req: any, res: any) => {
     console.log("Error handling strict send.", error);
     return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
       message: error.message || "Error handling strict send.",
+      status: httpStatus.INTERNAL_SERVER_ERROR,
+      success: false,
+    });
+  }
+};
+
+export const strictReceivePreview = async (req: any, res: any) => {
+  try {
+    let {
+      slippage,
+      desAddress,
+      sourceAssetCode,
+      desAssetCode,
+      sourceAmount,
+      desAmount,
+    } = req.body;
+    slippage *= 1;
+
+    if (!WalletHelper.isValidStellarAddress(desAddress)) {
+      return res.status(httpStatus.BAD_REQUEST).json({
+        message: "Invalid Address",
+        status: httpStatus.BAD_REQUEST,
+        success: false,
+      });
+    }
+
+    const sourceAssetIssuer =
+      process.env.STELLAR_NETWORK === "public"
+        ? PUBLIC_ASSETS[sourceAssetCode as keyof typeof PUBLIC_ASSETS].issuer
+        : TESTNET_ASSETS[sourceAssetCode as keyof typeof TESTNET_ASSETS].issuer;
+
+    const desAssetIssuer =
+      process.env.STELLAR_NETWORK === "public"
+        ? PUBLIC_ASSETS[desAssetCode as keyof typeof PUBLIC_ASSETS].issuer
+        : TESTNET_ASSETS[desAssetCode as keyof typeof TESTNET_ASSETS].issuer;
+
+    const _paths: any = await WalletHelper.receivePaymentPath({
+      sourceAssetCode: sourceAssetCode,
+      sourceAssetIssuer,
+      desAssetCode: desAssetCode,
+      desAssetIssuer,
+      amount: desAmount,
+    });
+    const paths = _paths.data.receivePaymentPath;
+    const _sourceAmount =
+      sourceAmount ||
+      paths.filter(
+        (pth: any) =>
+          pth.source_asset_type === sourceAssetIssuer ||
+          sourceAssetCode.startsWith(pth.source_asset_code)
+      )[0].source_amount;
+
+    const sendMax = (
+      (100 * parseFloat(_sourceAmount)) /
+      (100 - slippage)
+    ).toFixed(7);
+
+    // Return the transaction details for confirmation
+    return res.status(httpStatus.OK).json({
+      data: {
+        transactionDetails: {
+          sourceAsset: sourceAssetCode,
+          destinationAsset: desAssetCode,
+          sourceAmount: _sourceAmount,
+          destinationAmount: desAmount,
+          destinationAddress: desAddress,
+          slippage: slippage,
+          estimatedSendMax: sendMax,
+          fee: process.env.FEE,
+          network: process.env.STELLAR_NETWORK,
+        },
+      },
+      messsage: "Strict receive preview generated successfully.",
+      status: httpStatus.OK,
+      success: true,
+    });
+  } catch (error: any) {
+    console.log("Error generating strict receive preview.", error);
+    return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+      message: error.message || "Error generating strict receive preview.",
       status: httpStatus.INTERNAL_SERVER_ERROR,
       success: false,
     });
@@ -575,8 +1052,13 @@ export const strictReceive = async (req: any, res: any) => {
     slippage *= 1;
 
     // Validate the destination Stellar address.
-    if (!WalletHelper.isValidStellarAddress(desAddress))
-      throw new Error("Invalid Address");
+    if (!WalletHelper.isValidStellarAddress(desAddress)) {
+      return res.status(httpStatus.BAD_REQUEST).json({
+        message: "Invalid Address",
+        status: httpStatus.BAD_REQUEST,
+        success: false,
+      });
+    }
 
     const sourceAssetIssuer =
       process.env.STELLAR_NETWORK === "public"
@@ -599,7 +1081,7 @@ export const strictReceive = async (req: any, res: any) => {
     );
 
     // Find the payment path from the source asset to the destination asset.
-    const paths: any = await WalletHelper.receivePaymentPath({
+    const _paths: any = await WalletHelper.receivePaymentPath({
       sourceAssetCode: sourceAssetCode,
       sourceAssetIssuer,
       desAssetCode: desAssetCode,
@@ -607,6 +1089,7 @@ export const strictReceive = async (req: any, res: any) => {
       amount: desAmount,
     });
 
+    const paths = _paths.data.receivePaymentPath;
     // Calculate the source amount based on the provided amount or the paths.
     const _sourceAmount =
       sourceAmount ||
@@ -614,7 +1097,7 @@ export const strictReceive = async (req: any, res: any) => {
         (pth: any) =>
           pth.source_asset_type === sourceAssetIssuer ||
           sourceAssetCode.startsWith(pth.source_asset_code)
-      )[0].payload.sourceAmount;
+      )[0].source_amount;
 
     // Create the source asset object.
     const sourceAsset =
@@ -650,7 +1133,7 @@ export const strictReceive = async (req: any, res: any) => {
         // Add the path payment strict receive operation to the transaction.
         StellarSdk.Operation.pathPaymentStrictReceive({
           sendAsset: sourceAsset, // Set the source asset.
-          sendMax: "0.0000001", // Set the maximum amount to send.
+          sendMax: sendMax, // Set the maximum amount to send.
           destination: desAddress, // Set the destination address.
           destAsset: desAsset, // Set the destination asset.
           destAmount: desAmount.toString(), // Set the destination amount.
@@ -666,11 +1149,19 @@ export const strictReceive = async (req: any, res: any) => {
       "strictReceive"
     );
 
-    if (!resp.status) throw new Error(resp.msg);
+    if (!resp.status) {
+      return res.status(httpStatus.BAD_REQUEST).json({
+        data: { hash: resp.details.hash },
+        message: resp.userMessage || resp.msg,
+        status: httpStatus.BAD_REQUEST,
+        success: false,
+      });
+    }
 
     // Return the transaction response.
     return res.status(httpStatus.OK).json({
       data: { hash: resp.hash },
+      message: resp.userMessage || resp.msg,
       status: httpStatus.OK,
       success: true,
     });
@@ -687,53 +1178,83 @@ export const strictReceive = async (req: any, res: any) => {
 export const getTransactions = async (req: any, res: any) => {
   try {
     const user = req.user;
-    // Fetch transactions for the given Stellar account from the Horizon server
-    const response = await fetch(
-      `${
-        process.env.STELLAR_NETWORK === "public"
-          ? process.env.HORIZON_MAINNET_URL
-          : process.env.HORIZON_TESTNET_URL
-      }/accounts/${user.stellarPublicKey}/transactions`
-    );
-
-    // Check if the response is successful, otherwise throw an exception
-    const data = await response.json();
-    if (data.status === 404) {
-      throw new Error(
-        "Fund your wallet with at least 5 XLM to activate your account."
-      );
-    }
-    if (!response.ok) {
-      throw new Error(data.details || "Failed to fetch transactions");
-    }
-
-    // Parse the JSON response to get transaction data
-    const transactions = data._embedded.records;
-
-    // Initialize the Stellar SDK server
+    const { cursor, limit, order } = req.query;
     const server = new Server(
       `${process.env.STELLAR_NETWORK}` === "public"
         ? `${process.env.HORIZON_MAINNET_URL}`
         : `${process.env.HORIZON_TESTNET_URL}`
     );
-    const allOperations: any = [];
-
-    // Iterate through each transaction to fetch its operations
-    for (const tx of transactions) {
-      const operationsResponse = await server
-        .operations()
-        .forTransaction(tx.id)
-        .call();
-      const operations = operationsResponse.records;
-
-      // Collect all operations into a single array
-      operations.forEach(() => {
-        allOperations.push(...operations);
+    // First, check if the account exists
+    try {
+      const account = await server.loadAccount(user.stellarPublicKey);
+    } catch (error) {
+      return res.status(httpStatus.NOT_FOUND).json({
+        message:
+          "Fund your wallet with at least 5 XLM to activate your account.",
+        status: httpStatus.NOT_FOUND,
+        success: false,
       });
     }
 
+    // Set up the initial call builder with query parameters
+    let callBuilder = server
+      .transactions()
+      .forAccount(user.stellarPublicKey)
+      .order(order === "asc" ? "asc" : "desc") // Default to descending
+      .limit(Math.min(parseInt(limit) || 10, 200)); // Default 10, max 200
+
+    // If cursor is provided, start from that point
+    if (cursor) {
+      callBuilder.cursor(cursor);
+    }
+
+    // Get the page of transactions
+    const page = await callBuilder.call();
+    const transactions = page.records;
+
+    // Process operations for the fetched transactions
+    const BATCH_SIZE = 5;
+    const allOperations: any[] = [];
+
+    for (let i = 0; i < transactions.length; i += BATCH_SIZE) {
+      const batch = transactions.slice(i, i + BATCH_SIZE);
+      const batchOperations = await Promise.all(
+        batch.map(async (tx: any) => {
+          try {
+            const operationsResponse = await server
+              .operations()
+              .forTransaction(tx.id)
+              .limit(200)
+              .call();
+            return operationsResponse.records;
+          } catch (error) {
+            console.error(`Error fetching operations for tx ${tx.id}:`, error);
+            return [];
+          }
+        })
+      );
+      allOperations.push(...batchOperations.flat());
+    }
+
     return res.status(httpStatus.OK).json({
-      data: { transactions: allOperations },
+      data: {
+        paging: {
+          next: page.next
+            ? page.next().then((p: any) => p.records.length)
+            : null,
+          prev: page.prev
+            ? page.prev().then((p: any) => p.records.length)
+            : null,
+          count: transactions.length,
+          cursor:
+            page.records.length > 0
+              ? page.records[page.records.length - 1].paging_token
+              : null,
+        },
+        transactions,
+        operations: allOperations,
+      },
+      message: "Transactions fetched successfully",
       status: httpStatus.OK,
       success: true,
     });
@@ -746,7 +1267,6 @@ export const getTransactions = async (req: any, res: any) => {
     });
   }
 };
-
 export const getFiatTransactions = async (req: any, res: any) => {
   try {
     const user = req.user;
@@ -762,9 +1282,12 @@ export const getFiatTransactions = async (req: any, res: any) => {
       .limit(limit)
       .lean();
 
-    return res
-      .status(httpStatus.OK)
-      .json({ data: fiatTransactions, status: httpStatus.OK, success: true });
+    return res.status(httpStatus.OK).json({
+      data: fiatTransactions,
+      message: "Fiat transactions fetched successfully",
+      status: httpStatus.OK,
+      success: true,
+    });
   } catch (error: any) {
     return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
       message: error.message || "Error fetching fiat transactions",

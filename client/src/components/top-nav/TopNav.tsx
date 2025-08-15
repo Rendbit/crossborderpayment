@@ -2,7 +2,9 @@ import React, { useEffect, useState } from "react";
 import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
 import { getProfile } from "../../function/user";
-import { BiChevronRight } from "react-icons/bi";
+import { Menu } from "lucide-react";
+import ThemeToggle from "../theme-toggle";
+import { useAppContext } from "../../context/useContext";
 interface TopNavProps {
   page?: string;
 }
@@ -10,7 +12,7 @@ interface TopNavProps {
 const TopNav: React.FC<TopNavProps> = ({ page }) => {
   const [userData, setUserData] = useState<any>(null);
   const token = Cookies.get("token");
-  const navigate = useNavigate();
+  const { setSidebarOpen } = useAppContext();
 
   useEffect(() => {
     const localUser = localStorage.getItem("userData") || "{}";
@@ -19,18 +21,33 @@ const TopNav: React.FC<TopNavProps> = ({ page }) => {
   }, [token]);
 
   return (
-    <div className="p-4 fixed  flex justify-between items-center topnav rounded-2xl border border-white/10 backdrop-blur-md">
-      <div className="mb-2 lg:hidden pb-1">
-        <img src="./images/rendbit-logo.svg" className="w-[200px] h-[100%]" alt="RendBit" />
+    <>
+      {/* Topbar for Mobile */}
+      <div className="flex items-center justify-between mb-4 lg:hidden">
+        <h2 className="text-lg font-semibold">{page}</h2>
+        <button
+          className="text-gray-600 dark:text-gray-300"
+          onClick={() => setSidebarOpen(true)}
+        >
+          <Menu size={24} />
+        </button>
       </div>
-      <div className="md:block hidden font-[500] underline">
-        <p className="text-[#000000] md:text-[20px] text-[18px]">{page}</p>
+
+      {/* Greeting */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-xl font-semibold mb-2">
+            Hello {userData?.username}, <span className="wave">👋</span>
+          </h2>
+          <p className="text-gray-500 dark:text-gray-400 text-sm sm:text-base">
+            Send, save and receive funds in various currencies
+          </p>
+        </div>
+        <div className="md:block hidden">
+          <ThemeToggle />
+        </div>
       </div>
-      <div className="text-[#000000] font-semibold capitalize flex items-center gap-2">
-        <p>{userData?.username}</p>
-        <BiChevronRight className="text-[20px] cursor-pointer" onClick={() => navigate('/settings')}/>
-      </div>
-    </div>
+    </>
   );
 };
 

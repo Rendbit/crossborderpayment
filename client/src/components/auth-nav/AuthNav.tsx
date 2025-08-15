@@ -10,8 +10,8 @@ const AuthNav: React.FC = () => {
       <div className="flex items-center gap-10">
         <a href="https://rendbit.com" className="block">
           <img
-            src="./images/rendbit-logo.svg"
-            className="w-[250px]"
+            src="./images/favicon.svg"
+            className="md:w-[80px] w-[45px]"
             alt="Logo"
           />
         </a>
