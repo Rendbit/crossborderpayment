@@ -100,11 +100,11 @@ const TransactionGraph: React.FC<Props> = ({ address }) => {
 
   if (loading)
     return <p className="text-white">Loading transaction graph...</p>;
-  if (!data.length) return <p className="text-white">No transactions found.</p>;
+  if (!data.length) return <p className="text-black">No transactions found.</p>;
 
   return (
-    <div className="p-4 rounded-lg shadow-md">
-      <h2 className="text-white text-lg mb-4">Transaction History</h2>
+    <div className="p-4 rounded-lg shadow-[#0000001A] shadow-lg border border-gray-100">
+      <h2 className="text-black text-lg mb-4">Transaction History</h2>
       <ResponsiveContainer width="100%" height={170}>
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="#333" />

@@ -46,7 +46,7 @@ const PasswordReset: React.FC = () => {
     }
 
     try {
-      const response = await passwordReset(otp, password, email);
+      const response = await passwordReset(otp, email, password);
 
       if (!response.success) {
         setMsg(response.message);
@@ -125,7 +125,7 @@ const PasswordReset: React.FC = () => {
                   onChange={(e) => setOtp(e.target.value)}
                   disabled={loading}
                   placeholder="123456"
-                  className="border border-gray-300 text-[#707070] p-2 rounded-[8px] outline-none w-full"
+                  className="border border-gray-300  text-white p-2 rounded-[8px] outline-none w-full"
                 />
                 <p className="text-[#667085] text-[12px] text-end">
                   Please check your email inbox for an OTP code
@@ -141,7 +141,7 @@ const PasswordReset: React.FC = () => {
                     type={passwordType}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="********"
-                    className="outline-none w-full"
+                    className="outline-none w-full text-white"
                     disabled={loading}
                   />
                   <div>
@@ -169,7 +169,7 @@ const PasswordReset: React.FC = () => {
                     type={passwordType}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     placeholder="********"
-                    className="outline-none w-full"
+                    className="outline-none w-full text-white"
                     disabled={loading}
                   />
                   <div>

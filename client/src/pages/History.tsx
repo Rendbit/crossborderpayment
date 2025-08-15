@@ -34,7 +34,7 @@ const History: React.FC = () => {
       navigate("/login");
     }
     handleGetTransactionHistory();
-    handleGetFiatTransactionHistory();
+    // handleGetFiatTransactionHistory();
   }, []);
 
   async function handleGetTransactionHistory() {
@@ -53,6 +53,7 @@ const History: React.FC = () => {
         return;
       }
       const response = await getTransactionHistory(user);
+      console.log("Transaction History Response: ", response);
 
       if (!response.success) {
         if (response.message === "Login has expired") {
@@ -84,6 +85,7 @@ const History: React.FC = () => {
           ])
         ).values()
       );
+      console.log("Unique Transactions: ", uniqueTransactions);
       setTransactionHistory(uniqueTransactions);
     } catch (error: any) {
       if (error.message === "Login has expired") {
@@ -123,6 +125,8 @@ const History: React.FC = () => {
         return;
       }
       const response = await getFiatTransactionHistory(user, 10, 1);
+      console.log("Fiat Transaction History Response: ", response);
+      
 
       if (!response.success) {
         setMsg(response.message);
@@ -135,7 +139,7 @@ const History: React.FC = () => {
         }
         return;
       }
-
+      console.log("Fiat Transaction History Data: ", response?.data?.json?.transactions);
       setFiatTransactionHistory(response?.data?.json?.transactions);
     } catch (error: any) {
       if (error.message === "Login has expired") {

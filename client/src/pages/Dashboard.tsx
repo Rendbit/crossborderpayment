@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { GoChevronDown } from "react-icons/go";
+import { GoArrowSwitch, GoChevronDown } from "react-icons/go";
 import TopNav from "../components/top-nav/TopNav";
 import Cookies from "js-cookie";
 import Alert from "../components/alert/Alert";
@@ -20,6 +20,10 @@ import AssetProgressBar from "../components/progress-bar/AssetProgressBar";
 import TransactionGraph from "../components/TransactionGraph";
 import TokenHoldingsProgress from "../components/TokenHoldingsProgress";
 import MobileNav from "../components/mobile-nav/MobileNav";
+import { LuArrowDownToLine } from "react-icons/lu";
+import { IoCopyOutline } from "react-icons/io5";
+import TransactionList from "../components/transaction-list/TransactionList";
+
 
 const Dashboard: React.FC = () => {
   const [userData, setUserData] = useState<any>();
@@ -363,119 +367,164 @@ const Dashboard: React.FC = () => {
   const walletAssetCodes =
     walletAssets?.allWalletAssets?.map((asset: any) => asset?.asset_code) || [];
 
+  const handleCopy = async (): Promise<void> => {
+    try {
+      await navigator.clipboard.writeText(address);
+      console.log('Address copied to clipboard');
+    } catch (err) {
+      console.error('Failed to copy address: ', err);
+    }
+  }
+
+  const truncateAddress = (addr: string, length: number): string => {
+    if (addr.length <= length) return addr;
+    const start = Math.ceil(length / 3);
+    const end = Math.floor(length / 3);
+    return `${addr.slice(0, start)}...${addr.slice(-end)}`;
+  };
+
+  const displayAddress = truncateAddress(address, 10);
+
   return (
-    <div className="w-full md:grid grid-cols-12">
+    <div className="w-full md:grid grid-cols-12 bg-white">
       <div className="md:block hidden h-[100vh] sidebar p-4 pr-2 ">
         <SideNav />
       </div>
       <div className="py-6 overflow-hidden h-[100px] w-full z-50 sticky md:top-[-2%] top-0">
-        <TopNav page="Dashboard" />
+        <TopNav page="Home" />
       </div>
-      <div className="mt-[100px]  main-container md:pl-[60px] px-4 pl-2 w-full overflow-hidden md:col-span-10 col-span-12">
+      <div className="mt-[100px] main-container md:pl-[60px] px-4 pl-2 w-full overflow-hidden md:col-span-10 col-span-12">
         <main className="top-0 left-0 right-0 w-full">
           <div className="flex-1">
-            <div className={`md:flex grid items-center gap-5`}>
-              <div
-                className={`bg-gradient-to-b from-[#0E84B2] to-[#0F2267]/5 border  border-[#FFFFFF]/10 text-white pt-3 rounded-lg w-full mx-auto ${
-                  loadingWalletAssets
-                    ? "animate-pulse from-primary-color to-blue-400"
-                    : ""
-                }`}
-              >
-                <div className={`mb-4 px-6`}>
-                  <div className="flex justify-between">
-                    <h2 className="text-[#FFFFFF]/70 text-[18px]">
-                      <b>BALANCE</b>
-                    </h2>
-                    <div className="relative mb-[10px] ml-[10px]">
-                      <b>
-                        <span
-                          className="text-[#FFFFFF]/70 inline-flex text-[18px] items-center cursor-pointer"
-                          onClick={() => setCurrencyChange(!currencyChange)}
-                        >
-                          {selectedCurrency} <GoChevronDown />
-                        </span>
-                      </b>
-                      {currencyChange && (
-                        <div className="absolute bg-white border rounded shadow">
-                          {assets.map((currency, index) => (
-                            <p
-                              key={index}
-                              className="px-2 py-1 text-[black] cursor-pointer"
-                              onClick={() => {
-                                setCurrencyChange(false);
-                                setSelectedCurrency(currency.displaySymbol);
-                                if (currency.symbol === "NGNC") {
-                                  setCurrentPrice(
-                                    walletAssets.allWalletTotalBalanceInNgn
-                                  );
-                                  setConvertPrice(
-                                    walletAssets.allWalletTotalBalanceInUsd || 0
-                                  );
-                                  setConvertCurrency("USD");
-                                } else {
-                                  setConvertCurrency("NGN");
-                                  setConvertPrice(
-                                    walletAssets.allWalletTotalBalanceInNgn || 0
-                                  );
-                                  setCurrentPrice(
-                                    walletAssets.allWalletTotalBalanceInUsd || 0
-                                  );
-                                }
-                              }}
-                            >
-                              {currency.displaySymbol}
-                            </p>
-                          ))}
-                        </div>
-                      )}
+            <div className={`md:flex items-start grid gap-10`}>
+              <div className="w-full">
+                <div
+                  className='shadow-lg shadow-[#7FD0F9B2] border border-[#f4f2f2] text-black py-5 rounded-lg w-full mx-auto'
+                >
+                {/* <div
+                  className={`bg-gradient-to-b from-[#0E84B2] to-[#0F2267]/5 border  border-[#FFFFFF]/10 text-white pt-3 rounded-lg w-full mx-auto ${
+                    loadingWalletAssets
+                      ? "animate-pulse from-primary-color to-blue-400"
+                      : ""
+                  }`}
+                > */}
+                  <div className={`mb-4 px-6`}>
+                    <div className="flex justify-between">
+                      <h2 className="text-[#000000B2] text-[18px]">
+                        <b>Total Balance</b>
+                      </h2>
+                      <div className="relative mb-[10px] ml-[10px]">
+                        <b>
+                          <span
+                            className="text-[#000] inline-flex text-[18px] items-center cursor-pointer"
+                            onClick={() => setCurrencyChange(!currencyChange)}
+                          >
+                            {selectedCurrency} <GoChevronDown />
+                          </span>
+                        </b>
+                        {currencyChange && (
+                          <div className="absolute bg-white border rounded shadow">
+                            {assets.map((currency, index) => (
+                              <p
+                                key={index}
+                                className="px-2 py-1 text-[black] cursor-pointer"
+                                onClick={() => {
+                                  setCurrencyChange(false);
+                                  setSelectedCurrency(currency.displaySymbol);
+                                  if (currency.symbol === "NGNC") {
+                                    setCurrentPrice(
+                                      walletAssets.allWalletTotalBalanceInNgn
+                                    );
+                                    setConvertPrice(
+                                      walletAssets.allWalletTotalBalanceInUsd || 0
+                                    );
+                                    setConvertCurrency("USD");
+                                  } else {
+                                    setConvertCurrency("NGN");
+                                    setConvertPrice(
+                                      walletAssets.allWalletTotalBalanceInNgn || 0
+                                    );
+                                    setCurrentPrice(
+                                      walletAssets.allWalletTotalBalanceInUsd || 0
+                                    );
+                                  }
+                                }}
+                              >
+                                {currency.displaySymbol}
+                              </p>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  </div>
 
-                  <div className="flex ">
-                    <p className="md:text-4xl mt-2 mb-2 text-[white] text-3xl">
-                      <b>
-                        {selectedCurrency}{" "}
-                        {currentPrice?.toFixed(2) || "loading..."}
-                      </b>
+                    <div className="flex ">
+                      <p className="md:text-4xl mt-2 mb-2 text-[#000000] text-3xl">
+                        <b>
+                          {selectedCurrency}{" "}
+                          {currentPrice?.toFixed(2) || "loading..."}
+                        </b>
+                      </p>
+                    </div>
+                    <p className="text-[16px] font-[300] text-[#000000]">
+                      ≈ {convertPrice?.toFixed(2) || "loading..."}{" "}
+                      {convertCurrency}
                     </p>
                   </div>
-                  <p className="text-[16px] font-[300] text-[white]">
-                    ≈ {convertPrice?.toFixed(2) || "loading..."}{" "}
-                    {convertCurrency}
-                  </p>
-                </div>
 
-                <div className="mt-3 px-6">
-                  <TokenHoldingsProgress address={address} />
+                  <div className="mt-3 px-6">
+                    <TokenHoldingsProgress address={address} />
+                  </div>
                 </div>
-                <div className={`flex px-6 gap-4 py-4 rounded-b-lg`}>
-                  <button
-                    onClick={() => navigate("/deposit")}
-                    className="bg-[#0E7BB2] cursor-pointer px-6 text-[12px] md:text-[16px] rounded-[8px]"
-                  >
-                    Deposit
-                  </button>
-                  <button
-                    onClick={() => navigate("/transfer")}
-                    className="border cursor-pointer border-[#B2B2B27A] text-white py-[6px] px-6 text-[12px] md:text-[16px] rounded-[8px]"
-                  >
-                    Transfer
-                  </button>
-                </div>
+                  <div className={`flex items-start justify-between gap-4 py-4 rounded-b-lg`}>
+                    <div className="inline-flex items-center border border-gray-100 rounded-lg px-3 py-2 gap-2">
+                      <IoCopyOutline 
+                        className="w-4 h-4 text-gray-600 cursor-pointer hover:text-gray-800" 
+                        onClick={handleCopy}
+                      />
+                      <p className="text-gray-700 text-sm font-medium">{displayAddress}</p>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="flex flex-col items-center gap1">
+                        <button
+                          onClick={() => navigate("/deposit")}
+                          className="bg-[#0000000D] cursor-pointer py-4 px-8 text-[12px] md:text-[16px] rounded-[8px]"
+                        >
+                          <LuArrowDownToLine />
+                        </button>
+                        <p>Deposit</p>
+                      </div>
+                      <div className="flex flex-col items-center gap1">
+                        <button
+                          onClick={() => navigate("/transfer")}
+                          className="bg-[#0000000D] cursor-pointer py-4 px-8 text-[12px] md:text-[16px] rounded-[8px]"
+                        >
+                          <GoArrowSwitch />
+                        </button>
+                        <p>Transfer</p>
+                      </div>
+                    </div>
+                  </div>
               </div>
+              
               <div
-                className={`border border-[#FFFFFF]/20 pt-3 rounded-lg w-full mx-auto `}
+                className={`border border-[#FFFFFF]/20 rounded-lg w-full mx-auto `}
               >
-                <TransactionGraph address={address} />
+                <p className="text-[18px] font-[600]">Transaction History</p>
+                <TransactionList />
+                {/* <TransactionGraph address={address} /> */}
               </div>
             </div>
-            <div className="mt-5 w-full">
-              <div className="rounded-[12px] shadow-md text-white">
+
+
+
+
+            <div className="md:flex items-start grid gap-10 mt-5 w-full border-t border-[#dcdcdc] pt-5">
+              <div className="w-full">
                 <>
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-                    <h2 className="text-[22px] font-semibold text-white">
-                      Your Assets
+                    <h2 className="text-[22px] font-semibold text-black">
+                      My Assets
                     </h2>
                     <div className="flex gap-3">
                       <button
@@ -645,7 +694,7 @@ const Dashboard: React.FC = () => {
                 </>
 
                 {/* Asset Cards Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4  overflow-y-auto">
+                <div className="overflow-y-auto">
                   {loadingWalletAssets ? (
                     <ArrayItemLoader />
                   ) : (
@@ -653,7 +702,7 @@ const Dashboard: React.FC = () => {
                       (asset: any, index: number) => (
                         <div
                           key={index}
-                          className="bg-[#050d2a] p-4 rounded-[10px] border border-white/20 hover:shadow-lg transition cursor-pointer"
+                          className="border-b mb-3 flex items-center justify-between shadow shadow-[#0000001A] p-4 rounded-[5px] border border-white/20 hover:shadow-lg transition cursor-pointer"
                         >
                           <div className="flex items-center gap-3 mb-3">
                             <img
@@ -662,21 +711,21 @@ const Dashboard: React.FC = () => {
                               className="w-10 h-10"
                             />
                             <div>
-                              <p className="text-[white] text-[16px] font-semibold">
+                              <p className="text-[black] text-[16px] font-semibold">
                                 {asset?.asset_name}
                               </p>
-                              <p className="text-[11px] text-gray-400">
+                              <p className="text-[11px] text-gray-700">
                                 {asset?.asset_code === "NATIVE"
                                   ? "XLM"
                                   : asset?.asset_code}
                               </p>
                             </div>
                           </div>
-                          <div className="flex justify-between items-center">
-                            <p className="text-[20px] font-bold text-white">
+                          <div className="flex flex-col justify-between items-end">
+                            <p className="text-[20px] font-bold text-black">
                               {formateDecimal(asset?.balance || 0)}
                             </p>
-                            <p className="text-[16px] text-gray-300">
+                            <p className="text-[16px] text-gray-500">
                               $
                               {formateDecimal(
                                 asset?.equivalentBalanceInUsd || 0
@@ -688,6 +737,9 @@ const Dashboard: React.FC = () => {
                     )
                   )}
                 </div>
+              </div>
+              <div className='border border-[#FFFFFF]/20 rounded-lg w-full mx-auto'>
+                <TransactionGraph address={address} />
               </div>
 
               {/* <TransactionTable

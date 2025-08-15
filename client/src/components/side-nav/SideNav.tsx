@@ -30,7 +30,7 @@ const SideNav: React.FC = () => {
   ];
 
   return (
-    <div className="w-[18%] bg-[#050d2a] my-4 overflow-hidden col-span-2 fixed border border-white/10 rounded-2xl p-2 hidden lg:flex flex-col gap-6 top-0 h-[97vh] z-40 backdrop-blur-md">
+    <div className="w-[18%] bg-[#02001C] overflow-hidden col-span-2 fixed left-0 border border-white/10 rounded-r-2xl p-2 hidden lg:flex flex-col gap-6 top-0 h-[100vh] z-40 backdrop-blur-md">
       <div className="mb-2 pb-1">
         <img src="./images/rendbit-logo.svg" alt="RendBit" />
       </div>

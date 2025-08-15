@@ -94,8 +94,8 @@ const TokenHoldingsProgress: React.FC<Props> = ({ address }) => {
     fetchBalances();
   }, [address]);
 
-  if (loading) return <p className="text-white">Loading balances...</p>;
-  if (!data.length) return <p className="text-white">No assets found.</p>;
+  if (loading) return <p className="text-black">Loading balances...</p>;
+  if (!data.length) return <p className="text-black">No assets found.</p>;
 
   return (
     <div>
@@ -121,7 +121,7 @@ const TokenHoldingsProgress: React.FC<Props> = ({ address }) => {
         </div>
 
         {/* Legend */}
-        <div className="md:flex block justify-between text-white text-sm">
+        <div className="md:flex block justify-between text-black text-sm">
           {data.map((token, idx) => (
             <div key={idx} title={`${token.name}: ${token.balance.toFixed(2)}`} className="flex items-center space-x-1">
               <span
