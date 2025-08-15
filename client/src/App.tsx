@@ -7,6 +7,7 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Login = lazy(() => import("./pages/Login"));
 const Deposit = lazy(() => import("./pages/Deposit"));
 const DepositCrypto = lazy(() => import("./pages/DepositCrypto"));
+const ChooseRecipientCountry = lazy(() => import("./pages/ChooseRecipientCountry"));
 const Transfer = lazy(() => import("./pages/Transfer"));
 const Wallet = lazy(() => import("./pages/Wallet"));
 const Swap = lazy(() => import("./pages/Swap"));
@@ -62,6 +63,7 @@ const App: React.FC = () => {
             <Route path="/swap" element={<Swap />} />
             <Route path="/deposit" element={<Deposit />} />
             <Route path="/deposit-crypto" element={<DepositCrypto />} />
+            <Route path="/choose-recipient-country" element={<ChooseRecipientCountry />} />
             <Route path="/transfer" element={<Transfer />} />
             <Route path="/history" element={<History />} />
             <Route path="/settings" element={<Settings />} />

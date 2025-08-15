@@ -73,7 +73,10 @@ const Dashboard: React.FC = () => {
   const [isActivateWalletAlert, setIsActivateWalletAlert] =
     useState<boolean>(false);
   const [address, setAddress] = useState<string>("");
-  const { setIsAddMoneyModalOpen, isAddMoneyModalOpen } = useAppContext();
+  const {
+    setIsAddMoneyModalOpen,
+    isAddMoneyModalOpen,
+  } = useAppContext();
 
   const navigate = useNavigate();
 
@@ -874,7 +877,7 @@ const Dashboard: React.FC = () => {
         {/* Balances */}
         <section className="mt-6 bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg border border-[#D9D9D9] dark:border-gray-700">
           {/* Balance Card */}
-          <div className="w-full  bg-white dark:bg-gray-900  p-6 md:p-8 mb-6">
+          <div className="w-full  bg-white dark:bg-gray-800  p-6 md:p-8 mb-6">
             {/* Top Controls */}
             <div className="flex justify-between items-start mb-6">
               {/* Left Side: Title + Main Balance */}
@@ -993,7 +996,7 @@ const Dashboard: React.FC = () => {
             {/* Actions */}
             <div className="flex flex-wrap justify-center gap-3">
               <button
-                onClick={() => setIsAddMoneyModalOpen(true)}
+               
                 className="px-4 py-3 flex items-center gap-2 text-sm bg-white dark:bg-gray-800 border border-[#D9D9D9] dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
               >
                 <Banknote size={16} /> Add Currency

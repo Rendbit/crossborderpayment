@@ -10,6 +10,10 @@ const AddMoneyModal: React.FC = () => {
     navigate("/deposit-crypto");
     setIsAddMoneyModalOpen(false);
   };
+  const handleChooseRecipientCountry = () => {
+    navigate("/choose-recipient-country");
+    setIsAddMoneyModalOpen(false);
+  };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
       <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6 relative">
@@ -67,7 +71,10 @@ const AddMoneyModal: React.FC = () => {
           </button>
 
           {/* Option 2 */}
-          <button className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+          <button
+            onClick={handleChooseRecipientCountry}
+            className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+          >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 flex items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700">
                 {/* Bank Icon */}
