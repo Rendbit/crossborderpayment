@@ -33,6 +33,8 @@ import {
 import { BsBank } from "react-icons/bs";
 import { useAppContext } from "../context/useContext";
 import AddMoneyModal from "../components/modals/add-money";
+import { CgAdd } from "react-icons/cg";
+import { BiInfoCircle } from "react-icons/bi";
 
 const Dashboard: React.FC = () => {
   const [userData, setUserData] = useState<any>();
@@ -73,10 +75,7 @@ const Dashboard: React.FC = () => {
   const [isActivateWalletAlert, setIsActivateWalletAlert] =
     useState<boolean>(false);
   const [address, setAddress] = useState<string>("");
-  const {
-    setIsAddMoneyModalOpen,
-    isAddMoneyModalOpen,
-  } = useAppContext();
+  const { setIsAddMoneyModalOpen } = useAppContext();
 
   const navigate = useNavigate();
 
@@ -952,11 +951,19 @@ const Dashboard: React.FC = () => {
                 (asset: any, index: number) => (
                   <div
                     key={index}
+                    style={{
+                      backgroundImage:
+                        "url(./images/vector-line.svg), url(./images/vector-line.svg)",
+                      backgroundRepeat: "no-repeat, no-repeat",
+                      backgroundPosition:
+                        "right 0px top -10px, right -60px top 20px",
+                      backgroundSize: "auto, auto",
+                    }}
                     className="p-4 md:p-6 rounded-lg border border-[#D9D9D9] dark:border-gray-700 flex flex-col gap-4"
                   >
                     {/* Asset Header */}
                     <div className="flex justify-between items-center">
-                      <div className="flex items-center gap-2 bg-[#E7F1F7] dark:bg-gray-700 py-1 px-3 rounded-full text-sm">
+                      <div className="flex items-center p-3 gap-2 bg-[#E7F1F7] dark:bg-gray-700 rounded-full text-sm">
                         <img
                           src={asset?.image}
                           alt={asset?.asset_name}
@@ -964,29 +971,42 @@ const Dashboard: React.FC = () => {
                         />
                         <span>{asset?.asset_name}</span>
                       </div>
-                      <span className="bg-[#E7F1F7] dark:bg-gray-700 p-2 rounded-full">
-                        <BsBank />
+                      <span className="bg-[#E7F1F7]  dark:bg-gray-700 p-3 rounded-full">
+                        <BsBank size={16} />
                       </span>
                     </div>
 
                     {/* Asset Balance */}
-                    <div className="text-center">
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Available{" "}
-                        {asset?.asset_code === "NATIVE"
-                          ? "XLM"
-                          : asset?.asset_code}{" "}
-                        balance
-                      </p>
-                      <p className="text-2xl font-bold">
-                        {asset?.asset_code === "NATIVE"
-                          ? "XLM"
-                          : asset?.asset_code}{" "}
-                        {formateDecimal(asset?.balance || 0)}
-                      </p>
-                      <p className="text-sm text-gray-500 dark:text-gray-300">
-                        ${formateDecimal(asset?.equivalentBalanceInUsd || 0)}
-                      </p>
+                    <div className="flex justify-center items-center">
+                      <div>
+                        <div className="flex gap-2 text-center">
+                          <p className="text-sm text-black dark:text-gray-400">
+                            Available{" "}
+                            {asset?.asset_code === "NATIVE"
+                              ? "XLM"
+                              : asset?.asset_code}{" "}
+                            balance
+                          </p>
+                          <BiInfoCircle
+                            title={`${
+                              asset?.asset_code === "NATIVE"
+                                ? "XLM"
+                                : asset?.asset_code
+                            } balance`}
+                            className="cursor-pointer"
+                          />
+                        </div>
+
+                        <p className="text-2xl text-[#1E1E1E] dark:text-gray-400 text-center font-bold">
+                          {asset?.asset_code === "NATIVE"
+                            ? "XLM"
+                            : asset?.asset_code}{" "}
+                          {formateDecimal(asset?.balance || 0)}
+                        </p>
+                        <p className="text-sm text-center text-[#1E1E1E dark:text-gray-300">
+                          ${formateDecimal(asset?.equivalentBalanceInUsd || 0)}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 )
@@ -995,20 +1015,17 @@ const Dashboard: React.FC = () => {
 
             {/* Actions */}
             <div className="flex flex-wrap justify-center gap-3">
-              <button
-               
-                className="px-4 py-3 flex items-center gap-2 text-sm bg-white dark:bg-gray-800 border border-[#D9D9D9] dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-              >
+              <button className="px-4 py-3 flex items-center gap-2 text-sm bg-white dark:bg-gray-800 border border-[#D9D9D9] dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
                 <Banknote size={16} /> Add Currency
               </button>
               <button
                 onClick={() => setIsAddMoneyModalOpen(true)}
                 className="px-4 py-3 flex items-center gap-2 text-sm bg-white dark:bg-gray-800 border border-[#D9D9D9] dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
               >
-                <Banknote size={16} /> Add Money
+                Add Money <CgAdd size={16} />
               </button>
               <button className="px-4 py-3 flex items-center gap-2 text-sm bg-white dark:bg-gray-800 border border-[#D9D9D9] dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                <Send size={16} /> Send Money
+                Send Money <Send size={16} />
               </button>
               <button className="px-4 py-3 flex items-center gap-2 text-sm bg-white dark:bg-gray-800 border border-[#D9D9D9] dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
                 <ArrowRightLeft size={16} /> Convert Funds
@@ -1102,7 +1119,6 @@ const Dashboard: React.FC = () => {
             </table>
           </div>
         </section>
-        {isAddMoneyModalOpen && <AddMoneyModal />}
       </main>
     </>
   );

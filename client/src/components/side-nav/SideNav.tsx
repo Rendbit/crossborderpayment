@@ -136,10 +136,11 @@
 //     </>
 //   );
 // };
+
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
-import { X, ArrowRightIcon } from "lucide-react";
+import { X, ArrowRightIcon, LogOutIcon } from "lucide-react";
 import { GrDashboard } from "react-icons/gr";
 import {
   RiMoneyDollarCircleFill,
@@ -154,7 +155,8 @@ import { useAppContext } from "../../context/useContext";
 
 const SideNav: React.FC = () => {
   const { pathname } = useLocation();
-  const { sidebarOpen, setSidebarOpen } = useAppContext();
+  const { sidebarOpen, setSidebarOpen, setIsAddMoneyModalOpen } =
+    useAppContext();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -166,23 +168,71 @@ const SideNav: React.FC = () => {
   const isActive = (path: string) => pathname.includes(path);
 
   const mainLinks = [
-    { label: "Dashboard", path: "/dashboard", icon: <GrDashboard /> },
-    { label: "Deposit", path: "/deposit", icon: <RiMoneyDollarCircleFill /> },
-    { label: "Transfer", path: "/transfer", icon: <RiSendPlaneFill /> },
-    { label: "Exchange", path: "/swap", icon: <RiExchangeDollarFill /> },
-    { label: "History", path: "/transactions", icon: <RiFileListFill /> },
-    { label: "My Cards", path: "/my-cards", icon: <RiMoneyDollarCircleFill /> },
+    {
+      label: "Dashboard",
+      path: "/dashboard",
+      icon: <GrDashboard />,
+      onClick: () => {
+        navigate("/dashboard");
+      },
+    },
+    {
+      label: "Deposit",
+      path: "/deposit",
+      icon: <RiMoneyDollarCircleFill />,
+      onClick: () => {
+        setIsAddMoneyModalOpen(true);
+      },
+    },
+    {
+      label: "Transfer",
+      path: "/transfer",
+      icon: <RiSendPlaneFill />,
+      onClick: () => {
+        setIsAddMoneyModalOpen(true);
+      },
+    },
+    {
+      label: "Exchange",
+      path: "/swap",
+      icon: <RiExchangeDollarFill />,
+      onClick: () => {
+        setIsAddMoneyModalOpen(true);
+      },
+    },
+    {
+      label: "History",
+      path: "/transactions",
+      icon: <RiFileListFill />,
+      onClick: () => {
+        setIsAddMoneyModalOpen(true);
+      },
+    },
   ];
 
   const otherLinks = [
-    { label: "Settings", path: "/settings", icon: <RiSettings3Fill /> },
-    { label: "Support", path: "/support", icon: <RiCustomerService2Fill /> },
+    {
+      label: "Settings",
+      path: "/settings",
+      icon: <RiSettings3Fill />,
+      onClick: () => {
+        navigate("/settings");
+      },
+    },
+    {
+      label: "Support",
+      path: "/support",
+      icon: <RiCustomerService2Fill />,
+      onClick: () => {
+        navigate("/support");
+      },
+    },
   ];
 
   return (
     <>
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-64 bg-white dark:bg-gray-800 border-r border-[#E2E4E9] dark:border-gray-700 flex flex-col transform transition-transform duration-300
+        className={`fixed h-screen inset-y-0 left-0 z-40 w-64 bg-white dark:bg-gray-800 border-r border-[#E2E4E9] dark:border-gray-700 flex flex-col transform transition-transform duration-300
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} 
         lg:translate-x-0 lg:static`}
       >
@@ -223,7 +273,8 @@ const SideNav: React.FC = () => {
                     : "w-[4px] h-[20px] ml-[-9px]"
                 }`}
               ></div>
-              <div
+              <button
+                onClick={link.onClick}
                 className={`flex items-center justify-between p-2 ml-3 w-full rounded-lg ${
                   isActive(link.path)
                     ? "bg-blue-50 dark:bg-gray-700 text-[#000] dark:text-white"
@@ -237,7 +288,7 @@ const SideNav: React.FC = () => {
                 </div>
                 {/* Arrow only visible if active */}
                 {isActive(link.path) && <ArrowRightIcon />}
-              </div>
+              </button>
             </div>
           ))}
 
@@ -251,11 +302,12 @@ const SideNav: React.FC = () => {
                 className={`${
                   isActive(link.path)
                     ? "w-[4px] h-[20px] bg-[#0E7BB2] rounded-br-[4px] ml-[-9px] rounded-tr-[4px]"
-                    : "w-[4px] h-[20px]"
+                    : "w-[4px] h-[20px] ml-[-9px]"
                 }`}
               ></div>
-              <div
-                className={`flex items-center justify-between p-2 mb-2 rounded-lg ${
+              <button
+                onClick={link.onClick}
+                className={`flex items-center justify-between p-2 ml-3 w-full rounded-lg ${
                   isActive(link.path)
                     ? "bg-blue-50 dark:bg-gray-700 text-[#000] dark:text-white"
                     : "hover:bg-[#F6F8FA] dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
@@ -266,16 +318,18 @@ const SideNav: React.FC = () => {
                   <span>{link.label}</span>
                 </div>
                 {isActive(link.path) && <ArrowRightIcon />}
-              </div>
+              </button>
             </div>
           ))}
 
           <div className="mt-4">
             <button
               onClick={handleLogout}
-              className="cursor-pointer text-left w-full py-2 pl-5 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
+              className="cursor-pointer text-left w-full py-2 transition-colors
+              flex items-center gap-3 p-2 mb-2 rounded-lg pl-4
+          hover:bg-[#F6F8FA] dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
             >
-              Logout
+              <LogOutIcon size={16} /> <span>Logout</span>
             </button>
           </div>
 

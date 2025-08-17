@@ -1,13 +1,16 @@
 import React, { Suspense, lazy } from "react";
 import { HashRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { useAppContext } from "./context/useContext";
+import AddMoneyModal from "./components/modals/add-money";
 
 // Lazy-loaded pages
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Login = lazy(() => import("./pages/Login"));
 const Deposit = lazy(() => import("./pages/Deposit"));
 const DepositCrypto = lazy(() => import("./pages/DepositCrypto"));
-const ChooseRecipientCountry = lazy(() => import("./pages/ChooseRecipientCountry"));
+const ChooseRecipientCountry = lazy(
+  () => import("./pages/ChooseRecipientCountry")
+);
 const Transfer = lazy(() => import("./pages/Transfer"));
 const Wallet = lazy(() => import("./pages/Wallet"));
 const Swap = lazy(() => import("./pages/Swap"));
@@ -23,12 +26,16 @@ const SideNav = lazy(() => import("./components/side-nav/SideNav"));
 
 // Layout for pages that need sidebar
 const SideNavLayout: React.FC = () => {
-  const { sidebarOpen } = useAppContext();
+  const { sidebarOpen, isAddMoneyModalOpen } = useAppContext();
 
   return (
     <div className="flex min-h-screen bg-white dark:bg-gray-800">
-      {sidebarOpen !== undefined && <SideNav />}
-      <div className="flex-1">
+      <div className="h-screen fixed">
+        {sidebarOpen !== undefined && <SideNav />}
+      </div>
+      {isAddMoneyModalOpen && <AddMoneyModal />}
+
+      <div className="flex-1 lg:ml-[240px] ml-0">
         <Outlet />
       </div>
     </div>
@@ -36,12 +43,17 @@ const SideNavLayout: React.FC = () => {
 };
 
 // Layout for pages without sidebar
-const NonSideNavLayout: React.FC = () => (
-  <div className="min-h-screen bg-white dark:bg-gray-800">
-    <Outlet />
-  </div>
-);
+const NonSideNavLayout: React.FC = () => {
+  const { isAddMoneyModalOpen } = useAppContext();
 
+  return (
+    <div className="min-h-screen bg-white dark:bg-gray-800">
+      {isAddMoneyModalOpen && <AddMoneyModal />}
+
+      <Outlet />
+    </div>
+  );
+};
 
 const App: React.FC = () => {
   return (
@@ -63,7 +75,10 @@ const App: React.FC = () => {
             <Route path="/swap" element={<Swap />} />
             <Route path="/deposit" element={<Deposit />} />
             <Route path="/deposit-crypto" element={<DepositCrypto />} />
-            <Route path="/choose-recipient-country" element={<ChooseRecipientCountry />} />
+            <Route
+              path="/choose-recipient-country"
+              element={<ChooseRecipientCountry />}
+            />
             <Route path="/transfer" element={<Transfer />} />
             <Route path="/history" element={<History />} />
             <Route path="/settings" element={<Settings />} />

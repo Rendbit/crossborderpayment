@@ -90,7 +90,7 @@ const Login: React.FC = () => {
   return (
     <>
       {authPage ? (
-        <div className="relative">
+        <div className="relative bg-gray-100 dark:bg-gray-800">
           <AuthNav />
           <div className="sm:mt-[5rem] mt-[50px] mx-3 md:px-24">
             <div className="flex flex-col justify-center items-center relative z-[11]">
@@ -104,7 +104,7 @@ const Login: React.FC = () => {
                 </div>
                 <div className="text-center mb-12 mt-[-80px] relative z-[100]">
                   {/* <h2 className="text-[36px] font-semibold mb-2">Login</h2> */}
-                  <p className="text-[#ffffff] text-[14px]">
+                  <p className="text-black dark:text-gray-300 text-[14px]">
                     Enter Verification code
                   </p>
                 </div>
@@ -112,7 +112,7 @@ const Login: React.FC = () => {
                   onSubmit={handleSignIn}
                   className="flex flex-col sm:w-[400px] mx-auto"
                 >
-                  <p className="text-center text-[14px] text-[#ffffff] mb-[35px] mt-[4.5rem]">
+                  <p className="text-center text-[14px] text-black dark:text-gray-300 mb-[35px] mt-[4.5rem]">
                     Enter the 6-digit code from your google authenticator app
                   </p>
                   <div
@@ -161,11 +161,11 @@ const Login: React.FC = () => {
             </div>
           </div>
           <div className="mt-[50px] mb-5 sm:mx-10 flex sm:flex-row flex-col sm:gap-0 gap-3 items-center justify-between">
-            <p className="text-[white] text-[14px]">
+            <p className="text-black dark:text-gray-300 text-[14px]">
               &copy; {new Date().getFullYear()} RendBit. All rights
               reserved.
             </p>
-            <div className="text-[white] text-[14px] flex items-center gap-4">
+            <div className="text-black dark:text-gray-300 text-[14px] flex items-center gap-4">
               <Link to="#" className="flex items-center gap-[2px]">
                 Privacy Policy <FiExternalLink />
               </Link>
@@ -192,7 +192,7 @@ const Login: React.FC = () => {
                   <input
                     type="text"
                     placeholder="******"
-                    className="mt-5 w-full border border-[#D0D5DD] px-[14px] py-[10px] rounded-[8px] shadow-sm outline-none text-[#ffffff]"
+                    className="mt-5 w-full border border-[#D0D5DD] px-[14px] py-[10px] rounded-[8px] shadow-sm outline-none text-black dark:text-gray-300"
                     onChange={(e) => setMfaCode(e.target.value)}
                   />
                   <button
@@ -215,10 +215,10 @@ const Login: React.FC = () => {
           )}
         </div>
       ) : (
-        <div className="relative bg-[#F9F9F9] min-h-screen">
+        <div className="relative bg-gray-100 dark:bg-gray-800 min-h-screen">
           <div className="flex items-center justify-between w-full md:pr-[100px] pr-[20px]">
             <AuthNav />
-            <div className="text-center text-[14px]">
+            <div className="text-center text-black dark:text-gray-300 text-[14px]">
               Don&apos;t have an account?{" "}
               <Link to="/create-account" className="text-[#0E7BB2] underline ml-1">
                 Register
@@ -232,7 +232,7 @@ const Login: React.FC = () => {
               alt=""
             />
             <div className="flex flex-col h-[70vh] justify-center items-center relative z-[11]">
-              <div className="bg-white shadow shadow-[#585C5F1A] px-4 sm:px-6 pt-8 pb-5 rounded-[18px] w-full sm:w-[450px]">
+              <div className="bg-[white] dark:bg-gray-900 shadow shadow-[#585C5F1A] px-4 sm:px-6 pt-8 pb-5 rounded-[18px] w-full sm:w-[450px]">
                 <div className="top-bg relative top-[50px] sm:flex items-center justify-center w-[300px] mx-auto">
                   <img
                     src="./image/Custom-Icon.svg"
@@ -241,8 +241,8 @@ const Login: React.FC = () => {
                   />
                 </div>
                 <div className="text-center mb-12 mt-[-30px] relative z-[100]">
-                  <h2 className="text-[18px] md:text-[24px] text-[#0A0D14] mb-2">Login to your account</h2>
-                  <p className="text-[#525866] text-[14px]">
+                  <h2 className="text-[18px] md:text-[24px] text-[black] dark:text-gray-300 mb-2">Login to your account</h2>
+                  <p className="text-black dark:text-gray-300 text-[14px]">
                     Enter your details to login.
                   </p>
                 </div>
@@ -251,7 +251,7 @@ const Login: React.FC = () => {
                   className="flex flex-col mx-auto"
                 >
                   <div className="w-[100%]">
-                    <label className="text-[#0A0D14] font-[500] text-[14px] mb-2 ml-1 block">
+                    <label className="text-black dark:text-gray-300 font-[500] text-[14px] mb-2 ml-1 block">
                       Email Address
                     </label>
                     <div className="border border-[#E2E4E9] text-[#868C98] px-2 py-[7px] rounded-[6px] gap-2 flex items-center justify-between w-full">
@@ -269,7 +269,7 @@ const Login: React.FC = () => {
                   </div>
 
                   <div className="mt-8">
-                    <label className="text-[#0A0D14] font-[500] text-[14px] mb-2 ml-1 block">
+                    <label className="text-black dark:text-gray-300 font-[500] text-[14px] mb-2 ml-1 block">
                       Password
                     </label>
                     <div className="border border-[#E2E4E9] text-[#868C98] px-2 py-[7px] rounded-[6px] gap-2 flex items-center justify-between w-full">
@@ -281,7 +281,7 @@ const Login: React.FC = () => {
                         placeholder="********"
                         autoComplete="new-password"
                         name="password-field"
-                        className="outline-none w-full"
+                        className="outline-none w-full text-[#868C98]"
                       />
                       <div>
                         {passwordType === "password" ? (
@@ -300,7 +300,7 @@ const Login: React.FC = () => {
                   </div>
 
                   <p
-                    className="text-[#525866] cursor-pointer text-end mt-2 text-[14px] underline"
+                    className="text-black dark:text-gray-300 cursor-pointer text-end mt-2 text-[14px] underline"
                     onClick={() => navigate("/forgot-password")}
                   >
                     Forgot Password?
@@ -336,11 +336,11 @@ const Login: React.FC = () => {
             </div> */}
           </div>
           <div className="mt-[50px] mb-5 sm:mx-10 flex sm:flex-row flex-col sm:gap-0 gap-3 items-center justify-between">
-            <p className="text-[#525866] text-[14px]">
+            <p className="text-black dark:text-gray-300 text-[14px]">
               &copy; {new Date().getFullYear()} RendBit. All rights
               reserved.
             </p>
-            <div className="text-[#525866] text-[14px] flex items-center gap-4">
+            <div className="text-black dark:text-gray-300 text-[14px] flex items-center gap-4">
               <Link to="#" className="flex items-center gap-[2px]">
                 Privacy Policy <FiExternalLink />
               </Link>
@@ -371,7 +371,7 @@ const Login: React.FC = () => {
                     type="text"
                     placeholder="******"
                     disabled={verifyCodeLoader}
-                    className="mt-5 w-full border border-[#D0D5DD] bg-transparent px-[14px] py-[10px] rounded-[8px] shadow-sm outline-none text-[#ffffff]"
+                    className="mt-5 w-full border border-[#D0D5DD] bg-transparent px-[14px] py-[10px] rounded-[8px] shadow-sm outline-none text-black dark:text-gray-300"
                     onChange={(e) => setMfaCode(e.target.value)}
                   />
 

@@ -21,7 +21,7 @@ const TopNav: React.FC<TopNavProps> = ({ page }) => {
   }, [token]);
 
   return (
-    <>
+    <div>
       {/* Topbar for Mobile */}
       <div className="flex items-center justify-between mb-4 lg:hidden">
         <h2 className="text-lg font-semibold">{page}</h2>
@@ -47,7 +47,7 @@ const TopNav: React.FC<TopNavProps> = ({ page }) => {
           <ThemeToggle />
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
