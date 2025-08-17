@@ -12,6 +12,7 @@ const Wallet = lazy(() => import("./pages/Wallet"));
 const Swap = lazy(() => import("./pages/Swap"));
 const History = lazy(() => import("./pages/History"));
 const Settings = lazy(() => import("./pages/Settings"));
+const Setting = lazy(() => import("./pages/Setting"));
 const CreateAccount = lazy(() => import("./pages/CreateAccount"));
 const ConfirmEmail = lazy(() => import("./pages/ConfirmEmail"));
 const AboutSelf = lazy(() => import("./pages/AboutSelf"));
@@ -53,6 +54,7 @@ const App: React.FC = () => {
           {/* Dashboard pages (with SideNav) */}
           <Route element={<SideNavLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/setting" element={<Setting />} />
           </Route>
 
           {/* Auth pages (no SideNav) */}

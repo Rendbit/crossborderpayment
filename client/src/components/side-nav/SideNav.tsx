@@ -175,7 +175,7 @@ const SideNav: React.FC = () => {
   ];
 
   const otherLinks = [
-    { label: "Settings", path: "/settings", icon: <RiSettings3Fill /> },
+    { label: "Settings", path: "/setting", icon: <RiSettings3Fill /> },
     { label: "Support", path: "/support", icon: <RiCustomerService2Fill /> },
   ];
 
@@ -224,6 +224,7 @@ const SideNav: React.FC = () => {
                 }`}
               ></div>
               <div
+                onClick={() => navigate(link.path)}
                 className={`flex items-center justify-between p-2 ml-3 w-full rounded-lg ${
                   isActive(link.path)
                     ? "bg-blue-50 dark:bg-gray-700 text-[#000] dark:text-white"
@@ -255,7 +256,8 @@ const SideNav: React.FC = () => {
                 }`}
               ></div>
               <div
-                className={`flex items-center justify-between p-2 mb-2 rounded-lg ${
+                onClick={() => navigate(link.path)}
+                className={`flex items-center justify-between p-2 mb-2 w-full rounded-lg ${
                   isActive(link.path)
                     ? "bg-blue-50 dark:bg-gray-700 text-[#000] dark:text-white"
                     : "hover:bg-[#F6F8FA] dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
