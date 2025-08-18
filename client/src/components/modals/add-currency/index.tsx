@@ -52,7 +52,7 @@ const AddCurrencyModal: React.FC<AddCurrencyModalProps> = ({
 
             {/* Modal Header */}
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-              Add Currency to Current List
+              Add Currency
             </h2>
             <p className="text-gray-600 dark:text-gray-300 mb-6">
               Select and add new currency to your currency list.
@@ -64,7 +64,7 @@ const AddCurrencyModal: React.FC<AddCurrencyModalProps> = ({
             ) : availableAssets?.length > 0 ? (
               availableAssets.map((key, index) => (
                 <div className="flex items-center justify-between" key={index}>
-                  <div className="flex items-center gap-3 py-2 px-3 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer rounded-md">
+                  <div className="flex items-center gap-3 py-2 px-3  cursor-pointer rounded-md">
                     <img
                       src={PUBLIC_ASSETS[key].image}
                       alt={PUBLIC_ASSETS[key].name}
@@ -83,7 +83,7 @@ const AddCurrencyModal: React.FC<AddCurrencyModalProps> = ({
                   </div>
                   <button
                     onClick={() => handleAddClick(PUBLIC_ASSETS[key])}
-                    className="flex items-center gap-1 px-2 py-1 text-sm bg-[#0E7BB2] text-white rounded-md hover:bg-[#0c5e89]"
+                    className="flex items-center gap-1 px-2 py-1 text-sm  text-white rounded-md hover:bg-[#0c5e89] bg-[#0E7BB2]"
                   >
                     Add <CgAdd />
                   </button>
@@ -153,8 +153,8 @@ const AddCurrencyModal: React.FC<AddCurrencyModalProps> = ({
               <button
                 className={`p-3 rounded-lg w-full flex items-center justify-center gap-2 ${
                   theme === "dark"
-                    ? "bg-blue-600 hover:bg-blue-700"
-                    : "bg-blue-500 hover:bg-blue-600"
+                    ? "hover:bg-[#0c5e89] bg-[#0E7BB2]"
+                    : "hover:bg-[#0c5e89] bg-[#0E7BB2]"
                 } text-white disabled:opacity-50`}
                 onClick={handleConfirm}
                 disabled={loading}

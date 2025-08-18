@@ -75,8 +75,8 @@ const RemoveCurrencyModal: React.FC<RemoveCurrencyModalProps> = ({
           <button
             className={`p-3 rounded-lg w-full flex items-center justify-center gap-2 ${
               theme === "dark"
-                ? "bg-blue-600 hover:bg-blue-700"
-                : "bg-blue-500 hover:bg-blue-600"
+                ? "hover:bg-[#0c5e89] bg-[#0E7BB2]"
+                : "hover:bg-[#0c5e89] bg-[#0E7BB2]"
             } text-white disabled:opacity-50`}
             onClick={handlRemoveTrustLine}
             disabled={loading}

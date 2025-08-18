@@ -485,6 +485,7 @@ const Dashboard: React.FC = () => {
                       </div>
                       <button
                         onClick={() => {
+                          if (asset?.asset_name.toUpperCase() === "LUMENS") return;
                           setSelectedTrustLine(asset);
                           setIsRemoveCurrencyModalOpen(true);
                         }}
