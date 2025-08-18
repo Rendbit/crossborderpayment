@@ -132,12 +132,12 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     const search = searchText.toLowerCase();
 
     const matchesSearch =
-      (transaction?.hash || "").toLowerCase().includes(search) ||
-      (transaction?.from || "").toLowerCase().includes(search) ||
-      (transaction?.to || "").toLowerCase().includes(search) ||
-      (transaction?.tokenReceived || "").toLowerCase().includes(search) ||
-      (transaction?.tokenSent || "").toLowerCase().includes(search) ||
-      (transaction?.type || "").toLowerCase().includes(search) ||
+      (transaction?.hash || "").toLowerCase()?.includes(search) ||
+      (transaction?.from || "").toLowerCase()?.includes(search) ||
+      (transaction?.to || "").toLowerCase()?.includes(search) ||
+      (transaction?.tokenReceived || "").toLowerCase()?.includes(search) ||
+      (transaction?.tokenSent || "")?.toLowerCase()?.includes(search) ||
+      (transaction?.type || "")?.toLowerCase()?.includes(search) ||
       String(transaction?.amountReceived || transaction?.amountSent || "")
         .toLowerCase()
         .includes(search);
@@ -146,8 +146,8 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
       filterType === "all" ? true : transaction?.type === filterType;
 
     const matchesDate = filterDate
-      ? new Date(transaction?.date).toLocaleDateString() ===
-        new Date(filterDate).toLocaleDateString()
+      ? new Date(transaction?.date)?.toLocaleDateString() ===
+        new Date(filterDate)?.toLocaleDateString()
       : true;
 
     return matchesSearch && matchesType && matchesDate;
@@ -375,73 +375,73 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                     >
                       {/* From/To */}
                       <td className="py-3 font-medium break-all">
-                        {tx.type === "receive" ? (
+                        {tx?.type === "receive" ? (
                           <>
-                            From: {tx.from?.slice(0, 6)}...
-                            {tx.from?.slice(-6)}
+                            From: {tx?.from?.slice(0, 6)}...
+                            {tx?.from?.slice(-6)}
                           </>
                         ) : (
                           <>
-                            To: {tx.to?.slice(0, 6)}...
-                            {tx.to?.slice(-6)}
+                            To: {tx?.to?.slice(0, 6)}...
+                            {tx?.to?.slice(-6)}
                           </>
                         )}
                       </td>
 
                       {/* Amount */}
-                      <td>{tx.amountReceived || tx.amountSent || tx.fee}</td>
+                      <td>{tx?.amountReceived || tx?.amountSent || tx?.fee}</td>
 
                       {/* Token */}
-                      <td>{tx.tokenReceived || tx.tokenSent}</td>
+                      <td>{tx?.tokenReceived || tx?.tokenSent}</td>
 
                       {/* Date */}
-                      <td>{formatDate(tx.date)}</td>
+                      <td>{formatDate(tx?.date)}</td>
 
                       {/* Type */}
                       <td className="flex items-center py-2 gap-1 capitalize">
-                        {tx.type.includes("swap") ? (
+                        {tx?.type?.includes("swap") ? (
                           <div className="flex items-center gap-2">
                             <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
                               <ArrowRightLeft size={14} />
                             </span>
                             <span>Swap</span>
                           </div>
-                        ) : tx.type === "receive" ? (
+                        ) : tx?.type === "receive" ? (
                           <div className="flex items-center gap-2">
                             <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
                               <Globe size={14} />
                             </span>
                             <span>Receive</span>
                           </div>
-                        ) : tx.type === "send" ? (
+                        ) : tx?.type === "send" ? (
                           <div className="flex items-center gap-2">
                             <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
                               <ArrowUpRight size={14} />
                             </span>
                             <span>Send</span>
                           </div>
-                        ) : tx.type === "add currency" ? (
+                        ) : tx?.type === "add currency" ? (
                           <div className="flex items-center gap-2">
                             <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
                               <Plus size={14} />
                             </span>
                             <span>Add Currency</span>
                           </div>
-                        ) : tx.type === "remove currency" ? (
+                        ) : tx?.type === "remove currency" ? (
                           <div className="flex items-center gap-2">
                             <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
                               <Minus size={14} />
                             </span>
                             <span>Remove Currency</span>
                           </div>
-                        ) : tx.type === "create account" ? (
+                        ) : tx?.type === "create account" ? (
                           <div className="flex items-center gap-2">
                             <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
                               <UserPlus size={14} />
                             </span>
                             <span>Create Account</span>
                           </div>
-                        ) : tx.type === "account merge" ? (
+                        ) : tx?.type === "account merge" ? (
                           <div className="flex items-center gap-2">
                             <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
                               <UserMinus size={14} />
@@ -453,7 +453,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                             <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
                               <Globe size={14} />
                             </span>
-                            <span>{tx.type}</span>
+                            <span>{tx?.type}</span>
                           </div>
                         )}
                       </td>
