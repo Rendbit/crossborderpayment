@@ -521,7 +521,7 @@ const SendCrypto: React.FC = () => {
       <EmptyTopNav />
       <main className="flex items-center justify-center min-h-screen p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
         <div
-          className={`mt-5 w-full max-w-md bg-[#E7F1F7] dark:bg-gray-800  rounded-2xl shadow-lg p-6 ${
+          className={`mt-5 w-full max-w-md bg-[white] dark:bg-gray-800  rounded-2xl shadow-lg p-6 ${
             canProceed && mode !== "sendExact" && "mt-[80px]"
           }`}
         >

@@ -1170,6 +1170,99 @@ export const strictReceive = async (req: any, res: any) => {
   }
 };
 
+// export const getTransactions = async (req: any, res: any) => {
+//   try {
+//     const user = req.user;
+//     const { cursor, limit, order } = req.query;
+//     const server = new Server(
+//       `${process.env.STELLAR_NETWORK}` === "public"
+//         ? `${process.env.HORIZON_MAINNET_URL}`
+//         : `${process.env.HORIZON_TESTNET_URL}`
+//     );
+//     // First, check if the account exists
+//     try {
+//       const account = await server.loadAccount(user.stellarPublicKey);
+//     } catch (error) {
+//       return res.status(httpStatus.NOT_FOUND).json({
+//         message:
+//           "Fund your wallet with at least 5 XLM to activate your account.",
+//         status: httpStatus.NOT_FOUND,
+//         success: false,
+//       });
+//     }
+
+//     // Set up the initial call builder with query parameters
+//     let callBuilder = server
+//       .transactions()
+//       .forAccount(user.stellarPublicKey)
+//       .order(order === "asc" ? "asc" : "desc") // Default to descending
+//       .limit(Math.min(parseInt(limit) || 10, 200)); // Default 10, max 200
+
+//     // If cursor is provided, start from that point
+//     if (cursor) {
+//       callBuilder.cursor(cursor);
+//     }
+
+//     // Get the page of transactions
+//     const page = await callBuilder.call();
+//     const transactions = page.records;
+
+//     // Process operations for the fetched transactions
+//     const BATCH_SIZE = 5;
+//     const allOperations: any[] = [];
+
+//     for (let i = 0; i < transactions.length; i += BATCH_SIZE) {
+//       const batch = transactions.slice(i, i + BATCH_SIZE);
+//       const batchOperations = await Promise.all(
+//         batch.map(async (tx: any) => {
+//           try {
+//             const operationsResponse = await server
+//               .operations()
+//               .forTransaction(tx.id)
+//               .limit(200)
+//               .call();
+//             return operationsResponse.records;
+//           } catch (error) {
+//             console.error(`Error fetching operations for tx ${tx.id}:`, error);
+//             return [];
+//           }
+//         })
+//       );
+//       allOperations.push(...batchOperations.flat());
+//     }
+
+//     return res.status(httpStatus.OK).json({
+//       data: {
+//         paging: {
+//           next: page.next
+//             ? page.next().then((p: any) => p.records.length)
+//             : null,
+//           prev: page.prev
+//             ? page.prev().then((p: any) => p.records.length)
+//             : null,
+//           count: transactions.length,
+//           cursor:
+//             page.records.length > 0
+//               ? page.records[page.records.length - 1].paging_token
+//               : null,
+//         },
+//         transactions,
+//         operations: allOperations,
+//       },
+//       message: "Transactions fetched successfully",
+//       status: httpStatus.OK,
+//       success: true,
+//     });
+//   } catch (error: any) {
+//     console.error("Error fetching transactions:", error);
+//     return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
+//       message: error.message || "Error fetching transactions",
+//       status: httpStatus.INTERNAL_SERVER_ERROR,
+//       success: false,
+//     });
+//   }
+// };
+
 export const getTransactions = async (req: any, res: any) => {
   try {
     const user = req.user;
@@ -1179,9 +1272,10 @@ export const getTransactions = async (req: any, res: any) => {
         ? `${process.env.HORIZON_MAINNET_URL}`
         : `${process.env.HORIZON_TESTNET_URL}`
     );
+
     // First, check if the account exists
     try {
-      const account = await server.loadAccount(user.stellarPublicKey);
+      await server.loadAccount(user.stellarPublicKey);
     } catch (error) {
       return res.status(httpStatus.NOT_FOUND).json({
         message:
@@ -1195,8 +1289,8 @@ export const getTransactions = async (req: any, res: any) => {
     let callBuilder = server
       .transactions()
       .forAccount(user.stellarPublicKey)
-      .order(order === "asc" ? "asc" : "desc") // Default to descending
-      .limit(Math.min(parseInt(limit) || 10, 200)); // Default 10, max 200
+      .order(order === "asc" ? "asc" : "desc")
+      .limit(Math.min(parseInt(limit) || 50, 200));
 
     // If cursor is provided, start from that point
     if (cursor) {
@@ -1207,29 +1301,163 @@ export const getTransactions = async (req: any, res: any) => {
     const page = await callBuilder.call();
     const transactions = page.records;
 
-    // Process operations for the fetched transactions
-    const BATCH_SIZE = 5;
-    const allOperations: any[] = [];
+    // Process transactions to extract required fields
+    const simplifiedTransactions = await Promise.all(
+      transactions.map(async (tx: any) => {
+        try {
+          // First try to get info from operations
+          const operationsResponse = await server
+            .operations()
+            .forTransaction(tx.id)
+            .limit(200)
+            .call();
 
-    for (let i = 0; i < transactions.length; i += BATCH_SIZE) {
-      const batch = transactions.slice(i, i + BATCH_SIZE);
-      const batchOperations = await Promise.all(
-        batch.map(async (tx: any) => {
-          try {
-            const operationsResponse = await server
-              .operations()
-              .forTransaction(tx.id)
-              .limit(200)
-              .call();
-            return operationsResponse.records;
-          } catch (error) {
-            console.error(`Error fetching operations for tx ${tx.id}:`, error);
-            return [];
+          const operations = operationsResponse.records;
+          const paymentOp: any = operations.find(
+            (op: any) => op.type === "payment"
+          );
+
+          // Determine transaction type
+          let type = "other";
+
+          if (
+            operations.some(
+              (op: any) => op.type === "path_payment_strict_receive"
+            )
+          ) {
+            type = "swap"; // strict receive - swap
+          } else if (
+            operations.some((op: any) => op.type === "path_payment_strict_send")
+          ) {
+            type = "swap"; // strict send - swap
+          } else if (paymentOp) {
+            type =
+              paymentOp.from === user.stellarPublicKey ? "send" : "receive";
           }
-        })
-      );
-      allOperations.push(...batchOperations.flat());
-    }
+
+          // For swap transactions, find the path payment operation
+          const pathPaymentOp: any = operations.find(
+            (op: any) => op.type === "path_payment_strict_receive"
+          );
+
+          // If we have complete info from operations, return it
+          if (paymentOp || pathPaymentOp) {
+            return {
+              hash: tx.hash,
+              date: tx.created_at,
+              fee: tx.fee_charged / 10000000,
+              type,
+              from: tx.source_account,
+              to: paymentOp?.to || pathPaymentOp?.to || "",
+              amountSent: paymentOp
+                ? paymentOp.amount
+                : pathPaymentOp
+                ? pathPaymentOp.source_amount
+                : "",
+              amountReceived: paymentOp
+                ? paymentOp.from === user.stellarPublicKey
+                  ? ""
+                  : paymentOp.amount
+                : pathPaymentOp
+                ? pathPaymentOp.amount
+                : "",
+              tokenSent: paymentOp
+                ? paymentOp.asset_type === "native"
+                  ? "XLM"
+                  : paymentOp.asset_code
+                : pathPaymentOp
+                ? pathPaymentOp.source_asset_type === "native"
+                  ? "XLM"
+                  : pathPaymentOp.source_asset_code
+                : "",
+              tokenReceived: paymentOp
+                ? paymentOp.from === user.stellarPublicKey
+                  ? ""
+                  : paymentOp.asset_type === "native"
+                  ? "XLM"
+                  : paymentOp.asset_code
+                : pathPaymentOp
+                ? pathPaymentOp.source_asset_type === "native"
+                  ? "XLM"
+                  : pathPaymentOp.source_asset_code
+                : "",
+            };
+          }
+
+          // If operations didn't give us complete info, fetch full transaction details
+          const fullTx: any = await server
+            .transactions()
+            .transaction(tx.hash)
+            .call();
+          // console.log(fullTx);
+          const txOperations = await server
+            .operations()
+            .forTransaction(tx.hash)
+            .call();
+
+          // Find the first operation that has amount information
+          const operationWithAmount: any = txOperations.records.find(
+            (op: any) => op.amount || op.source_amount || op.destination_amount
+          );
+
+          return {
+            hash: tx.hash,
+            date: tx.created_at,
+            fee: tx.fee_charged / 10000000,
+            type: type || "other",
+            from: tx.source_account,
+            to: operationWithAmount?.to || fullTx.to || "",
+            amountSent: operationWithAmount?.source_amount
+              ? operationWithAmount.source_amount
+              : operationWithAmount?.amount
+              ? operationWithAmount.amount
+              : "",
+            amountReceived: operationWithAmount?.amount
+              ? operationWithAmount.amount
+              : operationWithAmount?.destination_amount_code
+              ? `${operationWithAmount.destination_amount} ${
+                  operationWithAmount.destination_asset_type === "native"
+                    ? "XLM"
+                    : operationWithAmount.destination_asset_code
+                }`
+              : "",
+            tokenSent: operationWithAmount?.source_asset_code
+              ? operationWithAmount.source_asset_type === "native"
+                ? "XLM"
+                : operationWithAmount.source_asset_code
+              : operationWithAmount?.asset_code
+              ? operationWithAmount.asset_type === "native"
+                ? "XLM"
+                : operationWithAmount.asset_code
+              : "",
+            tokenReceived: operationWithAmount?.asset_code
+              ? operationWithAmount.asset_type === "native"
+                ? "XLM"
+                : operationWithAmount.asset_code
+              : operationWithAmount?.destination_asset_code
+              ? operationWithAmount.destination_asset_type === "native"
+                ? "XLM"
+                : operationWithAmount.destination_asset_code
+              : "",
+          };
+        } catch (error) {
+          console.error(`Error processing transaction ${tx.hash}:`, error);
+          // Return at least the basic info we have from the transaction
+          return {
+            hash: tx.hash,
+            date: tx.created_at,
+            fee: tx.fee_charged / 10000000,
+            type: "unknown",
+            from: tx.source_account,
+            to: "",
+            amountSent: "",
+            amountReceived: "",
+            tokenSent: "",
+            tokenReceived: "",
+          };
+        }
+      })
+    );
 
     return res.status(httpStatus.OK).json({
       data: {
@@ -1240,14 +1468,13 @@ export const getTransactions = async (req: any, res: any) => {
           prev: page.prev
             ? page.prev().then((p: any) => p.records.length)
             : null,
-          count: transactions.length,
+          count: simplifiedTransactions.length,
           cursor:
             page.records.length > 0
               ? page.records[page.records.length - 1].paging_token
               : null,
         },
-        transactions,
-        operations: allOperations,
+        transactions: simplifiedTransactions,
       },
       message: "Transactions fetched successfully",
       status: httpStatus.OK,

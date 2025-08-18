@@ -8,7 +8,7 @@ const getTransactionHistory = async (token: string) => {
       {
         headers: {
           Authorization: `Bearer ${token}`,
-          "x-api-key": `${BASE_URL}`,
+          "x-api-key": `${API_KEY}`,
         },
       }
     );
@@ -50,7 +50,7 @@ const getFiatTransactionHistory = async (
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
-          "x-api-key": `${BASE_URL}`,
+          "x-api-key": `${API_KEY}`,
         },
         body: JSON.stringify({
           assetCode: "NGNC",
@@ -94,7 +94,7 @@ const makeWithdrawal = async (
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-api-key": `${BASE_URL}`,
+          "x-api-key": `${API_KEY}`,
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
@@ -135,7 +135,7 @@ const swapAssets = async (
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
-          "x-api-key": `${BASE_URL}`,
+          "x-api-key": `${API_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -174,7 +174,7 @@ const swapAssetsPreview = async (
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
-          "x-api-key": `${BASE_URL}`,
+          "x-api-key": `${API_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({

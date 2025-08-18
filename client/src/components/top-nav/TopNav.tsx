@@ -1,7 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Cookies from "js-cookie";
-import { useNavigate } from "react-router-dom";
-import { getProfile } from "../../function/user";
 import { Menu } from "lucide-react";
 import ThemeToggle from "../theme-toggle";
 import { useAppContext } from "../../context/useContext";
@@ -10,15 +8,8 @@ interface TopNavProps {
 }
 
 const TopNav: React.FC<TopNavProps> = ({ page }) => {
-  const [userData, setUserData] = useState<any>(null);
-  const token = Cookies.get("token");
+  const { userData } = useAppContext();
   const { setSidebarOpen } = useAppContext();
-
-  useEffect(() => {
-    const localUser = localStorage.getItem("userData") || "{}";
-    setUserData(JSON.parse(localUser));
-    if (token) getProfile(token).then((res) => setUserData(res.data));
-  }, [token]);
 
   return (
     <div>
