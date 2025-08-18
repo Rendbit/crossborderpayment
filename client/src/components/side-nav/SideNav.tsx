@@ -86,14 +86,14 @@ const SideNav: React.FC = () => {
         navigate("/settings");
       },
     },
-    {
-      label: "Support",
-      path: "/support",
-      icon: <RiCustomerService2Fill />,
-      onClick: () => {
-        navigate("/support");
-      },
-    },
+    // {
+    //   label: "Support",
+    //   path: "/support",
+    //   icon: <RiCustomerService2Fill />,
+    //   onClick: () => {
+    //     navigate("/support");
+    //   },
+    // },
   ];
 
   return (
