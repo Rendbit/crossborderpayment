@@ -1,18 +1,19 @@
+
 import React from "react";
 import { X, ArrowRight } from "lucide-react";
 import { useAppContext } from "../../../context/useContext";
 import { useNavigate } from "react-router-dom";
 
-const AddMoneyModal: React.FC = () => {
-  const { setIsAddMoneyModalOpen } = useAppContext();
+const SendMoneyModal: React.FC = () => {
+  const { setIsSendMoneyModalOpen } = useAppContext();
   const navigate = useNavigate();
-  const handleAddViaLumen = () => {
-    navigate("/deposit-crypto");
-    setIsAddMoneyModalOpen(false);
+  const handleSendViaLumen = () => {
+    navigate("/send-crypto");
+    setIsSendMoneyModalOpen(false);
   };
   const handleChooseRecipientCountry = () => {
-    navigate("/choose-recipient-deposit-country");
-    setIsAddMoneyModalOpen(false);
+    navigate("/choose-recipient-transfer-country");
+    setIsSendMoneyModalOpen(false);
   };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
@@ -20,14 +21,14 @@ const AddMoneyModal: React.FC = () => {
         {/* Close Button */}
         <button
           className="absolute bg-gray-100 dark:bg-gray-700 rounded-full p-1 text-[1rem] top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100"
-          onClick={() => setIsAddMoneyModalOpen(false)}
+          onClick={() => setIsSendMoneyModalOpen(false)}
         >
           <X size={24} />
         </button>
 
         {/* Modal Header */}
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-          Add Money
+          Send Money
         </h2>
         <p className="text-gray-600 dark:text-gray-300 mb-6">
           Choose asset, verify network, and get wallet address.
@@ -37,7 +38,7 @@ const AddMoneyModal: React.FC = () => {
         <div className="flex flex-col gap-4">
           {/* Option 1 */}
           <button
-            onClick={handleAddViaLumen}
+            onClick={handleSendViaLumen}
             className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
           >
             <div className="flex items-center gap-3">
@@ -60,7 +61,7 @@ const AddMoneyModal: React.FC = () => {
               </div>
               <div className="text-left">
                 <p className="font-medium text-gray-900 dark:text-white">
-                  Add via Lumens
+                  Send via Lumens
                 </p>
                 <p className="text-sm text-gray-500 dark:text-gray-300">
                   Using stellar XLM as the currency bridge.
@@ -95,7 +96,7 @@ const AddMoneyModal: React.FC = () => {
               </div>
               <div className="text-left">
                 <p className="font-medium text-gray-900 dark:text-white">
-                  Add via Bank Transfer
+                  Send via Bank Transfer
                 </p>
                 <p className="text-sm text-gray-500 dark:text-gray-300">
                   Easily transfer funds to any local bank account within minutes
@@ -110,4 +111,4 @@ const AddMoneyModal: React.FC = () => {
   );
 };
 
-export default AddMoneyModal;
+export default SendMoneyModal;

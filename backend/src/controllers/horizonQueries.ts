@@ -49,7 +49,10 @@ export const getConversionRates = async (req: any, res: any): Promise<any> => {
     };
 
     const input = cleanSymbol(inputSymbol);
-    const output = cleanSymbol(outputSymbol);
+    const output =
+      outputSymbol.toUpperCase() === "NATIVE"
+        ? "XLM"
+        : outputSymbol.replace(/c/gi, "");
 
     const url = `https://pro-api.coinmarketcap.com/v1/tools/price-conversion?amount=${inputAmount}&symbol=${input}&convert=${output}`;
 
@@ -81,6 +84,7 @@ export const getConversionRates = async (req: any, res: any): Promise<any> => {
       success: true,
     });
   } catch (error: any) {
+    console.log({ error });
     console.error("Conversion error:", error.message);
     return res.status(500).json({
       message: error.message || "Conversion failed",

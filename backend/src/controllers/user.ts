@@ -19,7 +19,7 @@ export const getUserProfile = async (req: any, res: any) => {
       .select("-password -encryptedPrivateKey")
       .lean();
 
-    if (!account) throw new Error("Account not found.");
+    if (!account) throw new Error("Invalid Credentials.");
     return res.status(httpStatus.OK).json({
       data: account,
       status: httpStatus.OK,
@@ -175,7 +175,7 @@ export const updateProfile = async (req: any, res: any) => {
       const account = await User.findById(user._id).select(
         "-password -encryptedPrivateKey"
       );
-      if (!account) throw new Error("Account not found.");
+      if (!account) throw new Error("Invalid Credentials.");
 
       user.xp += task.xp;
       await account.save();

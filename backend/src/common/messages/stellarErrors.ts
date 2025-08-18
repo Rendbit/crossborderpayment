@@ -64,6 +64,22 @@ export const STELLAR_ERRORS: any = {
     "The payment parameters are invalid or malformed. Please review the details and try again.",
   pathPaymentStrictReceiveBadFlags:
     "The asset transfer flags are invalid or not supported. Check asset configuration.",
+  pathPaymentStrictSendUnderfunded:
+    "You do not have enough balance of the source asset to complete this payment. Please deposit more or reduce the payment amount.",
+  pathPaymentStrictSendSrcNoTrust:
+    "You must enable the source asset in your wallet before sending this payment. Add a trustline for the asset.",
+  pathPaymentStrictSendSrcNotAuthorized:
+    "You are not authorized to send the source asset. Contact the asset issuer for authorization.",
+  pathPaymentStrictSendNoIssuer:
+    "The source asset is invalid or the issuer account does not exist. Please verify the asset details.",
+  pathPaymentStrictSendTooFewOffers:
+    "There is not enough liquidity to convert between the source and destination assets. Try a different amount, asset, or wait for more offers.",
+  pathPaymentStrictSendOverflow:
+    "The payment amount is too large and cannot be processed. Try sending a smaller amount.",
+  pathPaymentStrictSendMalformed:
+    "The payment parameters are invalid or malformed. Please review the details and try again.",
+  pathPaymentStrictSendUnderDestmin:
+    "The destination account would receive less than the minimum amount specified (destMin). Try lowering the minimum or increasing the send amount.",
 
   // Account Management Errors
   accountMergeIsMerging:

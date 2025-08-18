@@ -24,6 +24,79 @@ router.use(apiKeyValidator);
 
 /**
  * @swagger
+ * /api/horizonQueries/getConversionRates:
+ *   post:
+ *     summary: Get currency conversion rates
+ *     description: Convert an amount from one currency or asset symbol to another using CoinMarketCap API.
+ *     tags:
+ *       - Conversion
+ *     security:
+ *       - bearerAuth: []
+ *       - apiKey: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - inputAmount
+ *               - inputSymbol
+ *               - outputSymbol
+ *             properties:
+ *               inputAmount:
+ *                 type: number
+ *                 example: 100
+ *                 description: The amount to convert.
+ *               inputSymbol:
+ *                 type: string
+ *                 example: XLM
+ *                 description: Symbol of the currency to convert from.
+ *               outputSymbol:
+ *                 type: string
+ *                 example: NGN
+ *                 description: Symbol of the currency to convert to.
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved conversion rate
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     inputAmount:
+ *                       type: number
+ *                       example: 100
+ *                     inputSymbol:
+ *                       type: string
+ *                       example: XLM
+ *                     outputSymbol:
+ *                       type: string
+ *                       example: NGN
+ *                     originalAmount:
+ *                       type: number
+ *                       example: 100
+ *                     convertedAmount:
+ *                       type: number
+ *                       example: 152300
+ *                     rate:
+ *                       type: number
+ *                       example: 1523
+ *       400:
+ *         description: Invalid request payload
+ *       500:
+ *         description: Internal server error
+ */
+router.post("/getConversionRates", getConversionRates);
+
+/**
+ * @swagger
  * /api/horizonQueries/getAllWalletAssets:
  *   get:
  *     summary: Get all wallet assets for a user from Stellar Horizon

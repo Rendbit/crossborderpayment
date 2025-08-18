@@ -57,7 +57,7 @@ export const login = async (req: any, res: any) => {
 
     if (!account) {
       return res.status(httpStatus.NOT_FOUND).json({
-        message: "Account not found",
+        message: "Invalid Credentials",
         status: httpStatus.NOT_FOUND,
         success: false,
         data: null,
@@ -108,7 +108,7 @@ export const login = async (req: any, res: any) => {
     // If user not found, throw BadRequestException
     if (!user) {
       return res.status(httpStatus.NOT_FOUND).json({
-        message: "Account not found",
+        message: "Invalid Credentials",
         status: httpStatus.NOT_FOUND,
         success: false,
         data: null,
@@ -207,7 +207,7 @@ export const authorizeRefreshToken = async (req: any, res: any) => {
         .status(httpStatus.NOT_FOUND)
         .status(httpStatus.NOT_FOUND)
         .json({
-          message: "Account not found.",
+          message: "Invalid Credentials.",
           status: httpStatus.NOT_FOUND,
           success: false,
           data: null,
@@ -390,7 +390,7 @@ export const register = async (req: any, res: any) => {
 
     if (!account) {
       return res.status(httpStatus.NOT_FOUND).json({
-        message: "Account not found.",
+        message: "Invalid Credentials.",
         status: httpStatus.NOT_FOUND,
         success: false,
         data: null,
@@ -537,7 +537,7 @@ export const validateUser = async (details: any) => {
     ).lean();
 
     if (!account) {
-      throw new Error("Account not found");
+      throw new Error("Invalid Credentials");
     }
     await Promise.all([
       new UserSetting({ user: account._id }).save(), // Save user settings
@@ -741,7 +741,7 @@ export const forgotPassword = async (req: any, res: any) => {
 
     if (!user) {
       return res.status(httpStatus.NOT_FOUND).json({
-        message: "Account not found",
+        message: "Invalid Credentials",
         status: httpStatus.NOT_FOUND,
         success: false,
         data: null,
@@ -798,7 +798,7 @@ export const resendForgotPasswordOTP = async (req: any, res: any) => {
 
     if (!user) {
       return res.status(httpStatus.NOT_FOUND).json({
-        message: "Account not found",
+        message: "Invalid Credentials",
         status: httpStatus.NOT_FOUND,
         success: false,
         data: null,
@@ -862,7 +862,7 @@ export const verifyEmail = async (req: any, res: any) => {
 
     if (!user) {
       return res.status(httpStatus.NOT_FOUND).json({
-        message: "Account not found",
+        message: "Invalid Credentials",
         status: httpStatus.NOT_FOUND,
         success: false,
         data: null,
@@ -995,7 +995,7 @@ export const resetPassword = async (req: any, res: any) => {
 
     if (!user) {
       return res.status(httpStatus.NOT_FOUND).json({
-        message: "Account not found",
+        message: "Invalid Credentials",
         status: httpStatus.NOT_FOUND,
         success: false,
         data: null,

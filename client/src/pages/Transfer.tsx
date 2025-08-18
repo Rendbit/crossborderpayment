@@ -211,7 +211,7 @@ const Transfer: React.FC = () => {
                 </h1>
                 {segment === "crypto" ? (
                   <p className="text-gray-400 text-sm">
-                    Ensure 1.5 XLM remains for gas fee
+                    Ensure 5 XLM remains for gas fee
                   </p>
                 ) : (
                   <p className="text-gray-400 text-sm">

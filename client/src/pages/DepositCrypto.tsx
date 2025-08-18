@@ -386,7 +386,7 @@ const DepositCrypto: React.FC = () => {
           {/* Top icon */}
           <div className="flex justify-center items-center py-4">
             <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
-              <BsBank className="text-blue-600 dark:text-white w-6 h-6" />
+              <BsBank className="text-gray-900 dark:text-gray-100 w-6 h-6" />
             </span>
           </div>
 

@@ -82,7 +82,7 @@ router.post("/login", loginLimiter, login);
  *       200:
  *         description: Tokens refreshed successfully
  *       404:
- *         description: Account not found
+ *         description: Invalid Credentials
  *       500:
  *         description: Server error
  */
@@ -265,7 +265,7 @@ router.post("/create-wallet", authenticate, createWallet);
  *       406:
  *         description: Invalid work email
  *       404:
- *         description: Account not found
+ *         description: Invalid Credentials
  *       500:
  *         description: Internal server error
  */
@@ -299,7 +299,7 @@ router.post("/forgot-password", forgotPassword);
  *       406:
  *         description: Invalid work email
  *       404:
- *         description: Account not found
+ *         description: Invalid Credentials
  *       500:
  *         description: Internal server error
  */
@@ -333,7 +333,7 @@ router.post("/resend-forgot-password-otp", resendForgotPasswordOTP);
  *       401:
  *         description: Invalid OTP
  *       404:
- *         description: Account not found
+ *         description: Invalid Credentials
  *       409:
  *         description: Email already verified
  *       500:
@@ -411,7 +411,7 @@ router.post("/resend-verify-email-otp", resendEmailVerificationOTP);
  *       401:
  *         description: Invalid OTP or account
  *       404:
- *         description: Account not found
+ *         description: Invalid Credentials
  *       406:
  *         description: Is not a valid work email
  *       500:

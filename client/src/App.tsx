@@ -7,28 +7,45 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Login = lazy(() => import("./pages/Login"));
 const Deposit = lazy(() => import("./pages/Deposit"));
 const DepositCrypto = lazy(() => import("./pages/DepositCrypto"));
+const ChooseRecipientDepositCountry = lazy(
+  () => import("./pages/ChooseRecipientDepositCountry")
+);
+const ChooseRecipientTransferCountry = lazy(
+  () => import("./pages/ChooseRecipientTransferCountry")
+);
 const Transfer = lazy(() => import("./pages/Transfer"));
 const Wallet = lazy(() => import("./pages/Wallet"));
 const Swap = lazy(() => import("./pages/Swap"));
 const History = lazy(() => import("./pages/History"));
 const Settings = lazy(() => import("./pages/Settings"));
-const Setting = lazy(() => import("./pages/Setting"));
+const Setting = lazy(() => import("./pages/Settings"));
 const CreateAccount = lazy(() => import("./pages/CreateAccount"));
 const ConfirmEmail = lazy(() => import("./pages/ConfirmEmail"));
 const AboutSelf = lazy(() => import("./pages/AboutSelf"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
 const PasswordReset = lazy(() => import("./pages/PasswordReset"));
+const AnchorDepositMethod = lazy(() => import("./pages/AnchorDepositMethod"));
+const AnchorTransferMethod = lazy(() => import("./pages/AnchorTransferMethod"));
 const TransactionDashboard = lazy(() => import("./pages/TransactionDashboard"));
+const SendCrypto = lazy(() => import("./pages/SendCrypto"));
 const SideNav = lazy(() => import("./components/side-nav/SideNav"));
+const SendMoneyModal = lazy(() => import("./components/modals/send-money"));
+const AddMoneyModal = lazy(() => import("./components/modals/add-money"));
 
 // Layout for pages that need sidebar
 const SideNavLayout: React.FC = () => {
-  const { sidebarOpen } = useAppContext();
+  const { sidebarOpen, isAddMoneyModalOpen, isSendMoneyModalOpen } =
+    useAppContext();
 
   return (
     <div className="flex min-h-screen bg-white dark:bg-gray-800">
-      {sidebarOpen !== undefined && <SideNav />}
-      <div className="flex-1">
+      <div className="h-screen fixed">
+        {sidebarOpen !== undefined && <SideNav />}
+      </div>
+      {isAddMoneyModalOpen && <AddMoneyModal />}
+      {isSendMoneyModalOpen && <SendMoneyModal />}
+
+      <div className="flex-1 lg:ml-[240px] ml-0">
         <Outlet />
       </div>
     </div>
@@ -36,12 +53,17 @@ const SideNavLayout: React.FC = () => {
 };
 
 // Layout for pages without sidebar
-const NonSideNavLayout: React.FC = () => (
-  <div className="min-h-screen bg-white dark:bg-gray-800">
-    <Outlet />
-  </div>
-);
+const NonSideNavLayout: React.FC = () => {
+  const { isAddMoneyModalOpen, isSendMoneyModalOpen } = useAppContext();
+  return (
+    <div className="min-h-screen bg-white dark:bg-gray-800">
+      {isAddMoneyModalOpen && <AddMoneyModal />}
+      {isSendMoneyModalOpen && <SendMoneyModal />}
 
+      <Outlet />
+    </div>
+  );
+};
 
 const App: React.FC = () => {
   return (
@@ -54,19 +76,35 @@ const App: React.FC = () => {
           {/* Dashboard pages (with SideNav) */}
           <Route element={<SideNavLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/setting" element={<Setting />} />
+            <Route path="/settings" element={<Settings />} />
           </Route>
 
           {/* Auth pages (no SideNav) */}
           <Route element={<NonSideNavLayout />}>
             <Route path="/traction" element={<TransactionDashboard />} />
             <Route path="/wallet" element={<Wallet />} />
+            <Route path="/send-crypto" element={<SendCrypto />} />
             <Route path="/swap" element={<Swap />} />
             <Route path="/deposit" element={<Deposit />} />
             <Route path="/deposit-crypto" element={<DepositCrypto />} />
+            <Route
+              path="/anchor-deposit-method"
+              element={<AnchorDepositMethod />}
+            />
+            <Route
+              path="/anchor-transfer-method"
+              element={<AnchorTransferMethod />}
+            />
+            <Route
+              path="/choose-recipient-deposit-country"
+              element={<ChooseRecipientDepositCountry />}
+            />
+            <Route
+              path="/choose-recipient-transfer-country"
+              element={<ChooseRecipientTransferCountry />}
+            />
             <Route path="/transfer" element={<Transfer />} />
             <Route path="/history" element={<History />} />
-            <Route path="/settings" element={<Settings />} />
 
             <Route path="/login" element={<Login />} />
             <Route path="/create-account" element={<CreateAccount />} />

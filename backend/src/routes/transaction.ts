@@ -900,7 +900,7 @@ router.get("/fiat-all", authenticate, getFiatTransactions);
  *       400:
  *         description: Bad request (e.g., invalid parameters)
  *       404:
- *         description: Account not found or not activated
+ *         description: Invalid Credentials or not activated
  *       500:
  *         description: Internal server error
  */
