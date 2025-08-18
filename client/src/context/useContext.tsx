@@ -13,14 +13,20 @@ type Theme = "light" | "dark" | "system";
 interface AppContextProps {
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
+  isRemoveCurrencyModalOpen: boolean;
+  setIsRemoveCurrencyModalOpen: (open: boolean) => void;
   isAddMoneyModalOpen: boolean;
   setIsAddMoneyModalOpen: (open: boolean) => void;
   isSendMoneyModalOpen: boolean;
   setIsSendMoneyModalOpen: (open: boolean) => void;
   selectedCountryForTransfer: any;
+  setIsAddCurrencyModalOpen: (open: boolean) => void;
+  isAddCurrencyModalOpen: any;
   setSelectedCountryForTransfer: (country: any) => void;
   theme: Theme;
   toggleTheme: () => void;
+  selectedAsset: any;
+  setSelectedAsset: any;
   setTheme: React.Dispatch<React.SetStateAction<Theme>>;
   userData: any;
   setUserData: any;
@@ -31,7 +37,11 @@ const AppContext = createContext<AppContextProps | undefined>(undefined);
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [selectedAsset, setSelectedAsset] = useState({});
   const [isAddMoneyModalOpen, setIsAddMoneyModalOpen] = useState(false);
+  const [isRemoveCurrencyModalOpen, setIsRemoveCurrencyModalOpen] =
+    useState(false);
+  const [isAddCurrencyModalOpen, setIsAddCurrencyModalOpen] = useState(false);
   const [isSendMoneyModalOpen, setIsSendMoneyModalOpen] = useState(false);
   const [selectedCountryForTransfer, setSelectedCountryForTransfer] =
     useState<any>(() => {
@@ -125,11 +135,17 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setIsSendMoneyModalOpen,
         selectedCountryForTransfer,
         setSelectedCountryForTransfer,
+        isAddCurrencyModalOpen,
+        setIsAddCurrencyModalOpen,
+        isRemoveCurrencyModalOpen,
+        setIsRemoveCurrencyModalOpen,
         theme,
         setTheme,
         toggleTheme,
         userData,
         setUserData,
+        selectedAsset,
+        setSelectedAsset,
         token,
       }}
     >

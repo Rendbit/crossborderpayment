@@ -1,5 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { Search, Globe, ArrowUpRight, ArrowRightLeft } from "lucide-react";
+import {
+  Search,
+  Globe,
+  ArrowUpRight,
+  ArrowRightLeft,
+  Minus,
+  Plus,
+  UserPlus,
+  UserMinus,
+} from "lucide-react";
 import ArrayTableLoader from "../loader/ArrayTableLoader";
 import Cookies from "js-cookie";
 import { getTransactionHistory } from "../../function/transaction";
@@ -84,7 +93,6 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
         return;
       }
       console.log(response.data.transactions);
-
       setTransactionHistory(response.data.transactions);
       localStorage.setItem(
         "uniqueTransactions",
@@ -280,10 +288,14 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                 onChange={(e) => setFilterType(e.target.value)}
                 className="px-2 py-2 border cursor-pointer focus:outline-0 focus:border-[#0E7BB2] border-[#E2E4E9] dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               >
-                <option value="all">All</option>
+                <option value="all">All Transactions</option>
                 <option value="send">Send</option>
                 <option value="receive">Receive</option>
                 <option value="swap">Swap</option>
+                <option value="add currency">Add Currency</option>
+                <option value="remove currency">Remove Currency</option>
+                <option value="create account">Create Account</option>
+                <option value="account merge">Account Merge</option>
               </select>
 
               {!isHistoryPage && (
@@ -377,7 +389,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                       </td>
 
                       {/* Amount */}
-                      <td>{tx.amountReceived || tx.amountSent}</td>
+                      <td>{tx.amountReceived || tx.amountSent || tx.fee}</td>
 
                       {/* Token */}
                       <td>{tx.tokenReceived || tx.tokenSent}</td>
@@ -386,19 +398,63 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                       <td>{formatDate(tx.date)}</td>
 
                       {/* Type */}
-                      <td className="flex items-center mt-3 gap-1 capitalize">
+                      <td className="flex items-center py-2 gap-1 capitalize">
                         {tx.type.includes("swap") ? (
-                          <>
-                            <ArrowRightLeft size={14} /> Swap
-                          </>
+                          <div className="flex items-center gap-2">
+                            <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
+                              <ArrowRightLeft size={14} />
+                            </span>
+                            <span>Swap</span>
+                          </div>
                         ) : tx.type === "receive" ? (
-                          <>
-                            <Globe size={14} /> Receive
-                          </>
+                          <div className="flex items-center gap-2">
+                            <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
+                              <Globe size={14} />
+                            </span>
+                            <span>Receive</span>
+                          </div>
+                        ) : tx.type === "send" ? (
+                          <div className="flex items-center gap-2">
+                            <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
+                              <ArrowUpRight size={14} />
+                            </span>
+                            <span>Send</span>
+                          </div>
+                        ) : tx.type === "add currency" ? (
+                          <div className="flex items-center gap-2">
+                            <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
+                              <Plus size={14} />
+                            </span>
+                            <span>Add Currency</span>
+                          </div>
+                        ) : tx.type === "remove currency" ? (
+                          <div className="flex items-center gap-2">
+                            <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
+                              <Minus size={14} />
+                            </span>
+                            <span>Remove Currency</span>
+                          </div>
+                        ) : tx.type === "create account" ? (
+                          <div className="flex items-center gap-2">
+                            <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
+                              <UserPlus size={14} />
+                            </span>
+                            <span>Create Account</span>
+                          </div>
+                        ) : tx.type === "account merge" ? (
+                          <div className="flex items-center gap-2">
+                            <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
+                              <UserMinus size={14} />
+                            </span>
+                            <span>Account Merge</span>
+                          </div>
                         ) : (
-                          <>
-                            <ArrowUpRight size={14} /> Send
-                          </>
+                          <div className="flex items-center gap-2">
+                            <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
+                              <Globe size={14} />
+                            </span>
+                            <span>{tx.type}</span>
+                          </div>
                         )}
                       </td>
                     </tr>
