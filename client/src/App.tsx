@@ -33,8 +33,11 @@ const AddMoneyModal = lazy(() => import("./components/modals/add-money"));
 
 // Layout for pages that need sidebar
 const SideNavLayout: React.FC = () => {
-  const { sidebarOpen, isAddMoneyModalOpen, isSendMoneyModalOpen } =
-    useAppContext();
+  const {
+    sidebarOpen,
+    isAddMoneyModalOpen,
+    isSendMoneyModalOpen,
+  } = useAppContext();
 
   return (
     <div className="flex min-h-screen bg-white dark:bg-gray-800">
@@ -53,7 +56,8 @@ const SideNavLayout: React.FC = () => {
 
 // Layout for pages without sidebar
 const NonSideNavLayout: React.FC = () => {
-  const { isAddMoneyModalOpen, isSendMoneyModalOpen } = useAppContext();
+  const { isAddMoneyModalOpen, isSendMoneyModalOpen, isAddCurrencyModalOpen } =
+    useAppContext();
   return (
     <div className="min-h-screen bg-white dark:bg-gray-800">
       {isAddMoneyModalOpen && <AddMoneyModal />}
