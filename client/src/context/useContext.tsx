@@ -5,6 +5,8 @@ import React, {
   ReactNode,
   useEffect,
 } from "react";
+import { getProfile } from "../function/user";
+import Cookies from "js-cookie";
 
 type Theme = "light" | "dark" | "system";
 
@@ -20,6 +22,9 @@ interface AppContextProps {
   theme: Theme;
   toggleTheme: () => void;
   setTheme: React.Dispatch<React.SetStateAction<Theme>>;
+  userData: any;
+  setUserData: any;
+  token: string;
 }
 
 const AppContext = createContext<AppContextProps | undefined>(undefined);
@@ -28,7 +33,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isAddMoneyModalOpen, setIsAddMoneyModalOpen] = useState(false);
   const [isSendMoneyModalOpen, setIsSendMoneyModalOpen] = useState(false);
-
   const [selectedCountryForTransfer, setSelectedCountryForTransfer] =
     useState<any>(() => {
       const saved = localStorage.getItem("selectedCountryForTransfer");
@@ -39,11 +43,18 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         return null;
       }
     });
-
   const [theme, setTheme] = useState<Theme>(
     (localStorage.getItem("theme") as Theme) || "system"
   );
 
+  const [userData, setUserData] = useState<any>(null);
+  const token = Cookies.get("token") || "";
+
+  useEffect(() => {
+    const localUser = localStorage.getItem("userData") || "{}";
+    setUserData(JSON.parse(localUser));
+    if (token) getProfile(token).then((res) => setUserData(res.data));
+  }, [token]);
   // Get system theme
   const getSystemTheme = () =>
     window.matchMedia("(prefers-color-scheme: dark)").matches
@@ -117,6 +128,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         theme,
         setTheme,
         toggleTheme,
+        userData,
+        setUserData,
+        token,
       }}
     >
       {children}

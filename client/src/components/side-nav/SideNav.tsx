@@ -21,7 +21,9 @@ const SideNav: React.FC = () => {
     setSidebarOpen,
     setIsAddMoneyModalOpen,
     setIsSendMoneyModalOpen,
+    userData,
   } = useAppContext();
+
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -67,10 +69,10 @@ const SideNav: React.FC = () => {
     },
     {
       label: "History",
-      path: "/transactions",
+      path: "/history",
       icon: <RiFileListFill />,
       onClick: () => {
-        navigate("/transactions");
+        navigate("/history");
       },
     },
   ];
@@ -218,10 +220,10 @@ const SideNav: React.FC = () => {
             <div className="w-8 h-8 rounded-full bg-yellow-200"></div>
             <div>
               <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
-                Charles Thompson
+                {userData?.username}
               </p>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                charles@rendbit.com
+                {userData?.primaryEmail}
               </p>
             </div>
           </div>
