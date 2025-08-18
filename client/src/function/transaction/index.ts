@@ -1,3 +1,6 @@
+const BASE_URL = import.meta.env.VITE_BASE_URL;
+const API_KEY = import.meta.env.VITE_API_KEY;
+
 const getTransactionHistory = async (token: string) => {
   try {
     const res = await fetch(
@@ -5,7 +8,7 @@ const getTransactionHistory = async (token: string) => {
       {
         headers: {
           Authorization: `Bearer ${token}`,
-          "x-api-key": `${import.meta.env.VITE_API_KEY}`,
+          "x-api-key": `${BASE_URL}`,
         },
       }
     );
@@ -47,7 +50,7 @@ const getFiatTransactionHistory = async (
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
-          "x-api-key": `${import.meta.env.VITE_API_KEY}`,
+          "x-api-key": `${BASE_URL}`,
         },
         body: JSON.stringify({
           assetCode: "NGNC",
@@ -91,7 +94,7 @@ const makeWithdrawal = async (
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-api-key": `${import.meta.env.VITE_API_KEY}`,
+          "x-api-key": `${BASE_URL}`,
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
@@ -132,7 +135,7 @@ const swapAssets = async (
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
-          "x-api-key": `${import.meta.env.VITE_API_KEY}`,
+          "x-api-key": `${BASE_URL}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -157,6 +160,45 @@ const swapAssets = async (
   }
 };
 
+const swapAssetsPreview = async (
+  token: string,
+  sourceAssetCode: string,
+  desAssetCode: string,
+  sourceAmount: number,
+  slippage: number
+) => {
+  try {
+    const res = await fetch(
+      `${import.meta.env.VITE_BASE_URL}/transaction/preview/swap`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "x-api-key": `${BASE_URL}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          sourceAssetCode,
+          desAssetCode,
+          sourceAmount,
+          slippage,
+        }),
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || "Failed to get swap assets preview");
+    }
+
+    return data;
+  } catch (error: any) {
+    console.log("Error handling asset swap preview: ", error);
+    throw new Error(error.message || "Error handling asset swap preview");
+  }
+};
+
 const removeTrustLine = async (assetCode: string, token: string) => {
   try {
     const res = await fetch(
@@ -166,7 +208,7 @@ const removeTrustLine = async (assetCode: string, token: string) => {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
-          "x-api-key": `${import.meta.env.VITE_API_KEY}`,
+          "x-api-key": `${API_KEY}`,
         },
         body: JSON.stringify({
           assetCode,
@@ -194,7 +236,7 @@ const addTrustLine = async (assetCode: string, token: string) => {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
-          "x-api-key": `${import.meta.env.VITE_API_KEY}`,
+          "x-api-key": `${API_KEY}`,
         },
         body: JSON.stringify({
           assetCode,
@@ -212,11 +254,179 @@ const addTrustLine = async (assetCode: string, token: string) => {
   }
 };
 
+
+
+/**
+ * Execute a strict send transaction
+ */
+ const strictSend = async (
+  token: string,
+  assetCode: string,
+  amount: number,
+  desAddress: string,
+  slippage: number
+) => {
+  try {
+    const res = await fetch(`${BASE_URL}/transaction/strictSend`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "x-api-key": API_KEY,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        assetCode,
+        amount,
+        desAddress,
+        slippage,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || "Failed to execute strict send");
+    }
+
+    return data;
+  } catch (error: any) {
+    console.error("Error handling strict send: ", error);
+    throw new Error(error.message || "Error handling strict send");
+  }
+};
+
+/**
+ * Preview a strict send transaction
+ */
+ const strictSendPreview = async (
+  token: string,
+  assetCode: string,
+  amount: number,
+  desAddress: string,
+  slippage: number
+) => {
+  try {
+    const res = await fetch(`${BASE_URL}/transaction/preview/strictSend`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "x-api-key": API_KEY,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        assetCode,
+        amount,
+        desAddress,
+        slippage,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || "Failed to preview strict send");
+    }
+
+    return data;
+  } catch (error: any) {
+    console.error("Error handling strict send preview: ", error);
+    throw new Error(error.message || "Error handling strict send preview");
+  }
+};
+
+/**
+ * Execute a strict receive transaction
+ */
+const strictReceive = async (
+  token: string,
+  sourceAssetCode: string,
+  desAssetCode: string,
+  desAmount: number,
+  desAddress: string,
+  slippage: number
+) => {
+  try {
+    const res = await fetch(`${BASE_URL}/transaction/strictReceive`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "x-api-key": API_KEY,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        sourceAssetCode,
+        desAssetCode,
+        desAmount,
+        desAddress,
+        slippage,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || "Failed to execute strict receive");
+    }
+
+    return data;
+  } catch (error: any) {
+    console.error("Error handling strict receive: ", error);
+    throw new Error(error.message || "Error handling strict receive");
+  }
+};
+
+/**
+ * Preview a strict receive transaction
+ */
+const strictReceivePreview = async (
+  token: string,
+  sourceAssetCode: string,
+  desAssetCode: string,
+  desAmount: number,
+  desAddress: string,
+  slippage: number
+) => {
+  try {
+    const res = await fetch(`${BASE_URL}/transaction/preview/strictReceive`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "x-api-key": API_KEY,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        sourceAssetCode,
+        desAssetCode,
+        desAmount,
+        desAddress,
+        slippage,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || "Failed to preview strict receive");
+    }
+
+    return data;
+  } catch (error: any) {
+    console.error("Error handling strict receive preview: ", error);
+    throw new Error(error.message || "Error handling strict receive preview");
+  }
+};
+
+
 export {
   getTransactionHistory,
   getFiatTransactionHistory,
   makeWithdrawal,
   swapAssets,
+  swapAssetsPreview,
   addTrustLine,
   removeTrustLine,
+  strictReceivePreview,
+  strictSend,
+  strictReceive,
+  strictSendPreview
 };

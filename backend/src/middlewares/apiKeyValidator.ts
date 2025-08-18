@@ -20,7 +20,6 @@ export const apiKeyValidator = (req: any, res: any, next: any) => {
       success: false,
     });
   } else if (clientKey && clientKey !== API_KEY) {
-    console.log({ ExpectedKey: API_KEY, KeyFromUser: clientKey });
     return res.status(httpStatus.UNAUTHORIZED).json({
       status: httpStatus.UNAUTHORIZED,
       message: "Invalid API key",

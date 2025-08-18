@@ -1,747 +1,532 @@
 import React, { useEffect, useRef, useState } from "react";
-import { IoChevronDown } from "react-icons/io5";
-import SideNav from "../components/side-nav/SideNav";
-import TopNav from "../components/top-nav/TopNav";
-import Cookies from "js-cookie";
-import Alert from "../components/alert/Alert";
-import { getConversionRates, getMyAssets } from "../function/horizonQuery";
-import { formateDecimal } from "../utils";
-import { swapAssets } from "../function/transaction";
-import { RiBankLine } from "react-icons/ri";
+import EmptyTopNav from "../components/top-nav/EmptyTopNav";
+import { FaExchangeAlt } from "react-icons/fa";
+import { getMyAssets } from "../function/horizonQuery";
 import { useNavigate } from "react-router-dom";
-import MobileNav from "../components/mobile-nav/MobileNav";
+import Cookies from "js-cookie";
+import { swapAssets, swapAssetsPreview } from "../function/transaction";
+import { formateDecimal } from "../utils";
+import Alert from "../components/alert/Alert";
 
 const Swap: React.FC = () => {
   const user = Cookies.get("token");
-  const [currencyDropDown, setCurrencyDropDown] = useState<any>(false);
-  const [assets, setAssets] = useState<any>([]);
-  const [selectedAsset, setSelectedAsset] = useState<any>();
-  const [selectedAssetReceive, setSelectedAssetReceive] = useState<any>();
-  const [currentBalance, setCurrentbalance] = useState<any>(0);
-  const [sourceAmount, setSourceAmount] = useState<any>();
 
-  const [msg, setMsg] = useState<any>("");
-  const [alertType, setAlertType] = useState<any>("");
+  // DATA
+  const [assets, setAssets] = useState<any>(null);
+  const [loadingWalletAssets, setLoadingWalletAssets] = useState<boolean>(true);
 
-  const [loading, setLoading] = useState<any>(false);
-  const [value, setValue] = useState<any>(2.75);
-  const [loadingWalletAssets, setLoadingWalletAssets] = useState<any>(false);
-  const [activateWalletAlert, setActivateWalletAlert] = useState<string>("");
-  const [isActivateWalletAlert, setIsActivateWalletAlert] =
-    useState<boolean>(false);
-  const [selectedCurrency, setSelectedCurrency] = useState(
-    assets && assets.length ? assets[0] : []
-  );
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const [processing, setProcessing] = useState<boolean>(false);
-  const [rateExchange, setExchangeRate] = useState<number | string>("");
-  const [descAmount, setDescAmount] = useState<number | string>("");
+  // SELECTIONS
+  const [selectedAsset, setSelectedAsset] = useState<any>(null);
+  const [selectedAssetReceive, setSelectedAssetReceive] = useState<any>(null);
+
+  // BALANCE & AMOUNTS
+  const [currentBalance, setCurrentbalance] = useState<number>(0);
+  const [sourceAmount, setSourceAmount] = useState<string>("");
+  const [descAmount, setDescAmount] = useState<string>("");
+  const [rateExchange, setExchangeRate] = useState<string>("");
+
+  // PREVIEW/SWAP
+  const [swapAssetPreview, setSwapAssetPreview] = useState<any>(null);
   const [next, setNext] = useState<boolean>(false);
-  const [swap, setSwap] = useState<boolean>(false);
-  const [swapping, setSwapping] = useState<boolean>(false);
+  const [loadingPreview, setLoadingPreview] = useState<boolean>(false);
+  const [loadingSwap, setLoadingSwap] = useState<boolean>(false);
+
+  // UI
+  const [msg, setMsg] = useState<string>("");
+  const [alertType, setAlertType] = useState<"" | "error" | "success">("");
+  const [slippage, setSlippage] = useState<number>(2.75);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const navigate = useNavigate();
 
+  // -------- Helpers --------
+  const formatNumberWithCommas = (number: number | string): string =>
+    Number(number).toLocaleString();
+
+  const clearAmountsAndPreview = () => {
+    setSourceAmount("");
+    setDescAmount("");
+    setExchangeRate("");
+    setSwapAssetPreview(null);
+    setNext(false);
+  };
+
+  // -------- Load assets (block UI until ready) --------
   useEffect(() => {
-    if (!sourceAmount) {
-      setNext(false);
-      setSwap(false);
-    }
-  }, [sourceAmount, descAmount]);
-
-  const handleInputCurrencyChange = (currencySymbol: string, value: number) => {
-    const currency = assets.allWalletAssets.find(
-      (cur: any) => cur.asset_code === currencySymbol
-    );
-    console.log({
-      inputAsset: currencySymbol,
-      amount: value,
-      outputAsset: selectedAsset.asset_code,
-    });
-    if (currency && sourceAmount) {
-      fetchXlmRate(value, currencySymbol, selectedAsset.asset_code);
-    }
-  };
-
-  const handleOuputCurrencyChange = (currencySymbol: string, value: number) => {
-    const currency = assets.allWalletAssets.find(
-      (cur: any) => cur.asset_code === currencySymbol
-    );
-    console.log({
-      inputAsset: selectedAsset.asset_code,
-      amount: value,
-      outputAsset: currencySymbol,
-    });
-    if (currency && sourceAmount) {
-      fetchXlmRate(value, selectedAsset.asset_code, currencySymbol);
-    }
-  };
-
-  const fetchXlmRate = async (
-    amount: number,
-    inputAsset: string,
-    outputAsset: string
-  ) => {
-    if (amount) {
-      setProcessing(true);
-
+    const bootstrapAssets = async () => {
       try {
+        setLoadingWalletAssets(true);
+
+        // 1) Instant cache (if any) so UI can render options immediately
+        const cached = localStorage.getItem("walletAssets");
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached);
+            if (parsed?.allWalletAssets?.length) {
+              setAssets(parsed);
+              setLoadingWalletAssets(false); // allow UI while we refresh in background
+            }
+          } catch {}
+        }
+
+        // 2) Network fetch (authoritative). If no cache, we keep loader shown until this completes.
         if (!user) {
           setLoadingWalletAssets(false);
           return;
         }
-        // console.log({ amount, inputAsset, outputAsset });
-        const response = await getConversionRates(
-          user,
-          Number(amount),
-          inputAsset,
-          outputAsset
-        );
-        setDescAmount(response.data.convertedAmount);
-        setExchangeRate(response.data.rate);
-      } catch (error) {
-        console.error("Error fetching XLM conversion rate:", error);
-      } finally {
-        setProcessing(false);
-      }
-    } else {
-      setDescAmount("");
-    }
-  };
+        const response = await getMyAssets(user, undefined);
 
-  const handleCurrencyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (!isNaN(Number(value))) {
-      setSourceAmount(value);
-    }
-    if (!value) {
-      setDescAmount("");
-    }
-  };
+        if (!response?.success) {
+          if (response?.message === "Login has expired") {
+            localStorage.clear();
+            Cookies.remove("token");
+            navigate("/login");
+            return;
+          }
+          setAlertType("error");
+          setMsg(response?.message || "Failed to load assets");
+          return;
+        }
 
-  const handleMax = (value: number) => {
-    setSourceAmount(value);
-  };
-
-  const formatNumberWithCommas = (number: number | string): string => {
-    return Number(number).toLocaleString();
-  };
-
-  const handleChange = (e) => {
-    setValue(e.target.value);
-  };
-
-  useEffect(() => {
-    const storedWalletAssets = localStorage.getItem("walletAssets");
-    const parsedWalletAssets = JSON.parse(storedWalletAssets || "null");
-
-    if (!selectedAsset) {
-      setAssets(parsedWalletAssets);
-      setSelectedAsset(parsedWalletAssets?.allWalletAssets[0]);
-      setCurrentbalance(parsedWalletAssets?.allWalletAssets[0].balance);
-    }
-  }, [assets]);
-
-  async function handleGetMyAssets() {
-    const storedWalletAssets = localStorage.getItem("walletAssets");
-    const parsedWalletAssets = JSON.parse(storedWalletAssets || "null");
-
-    if (!parsedWalletAssets) {
-      setLoadingWalletAssets(true);
-    }
-    try {
-      if (!user) {
-        setLoadingWalletAssets(false);
-        return;
-      }
-      const response = await getMyAssets(user, selectedAsset?.asset_code);
-
-      if (!response.success) {
-        if (response.message === "Login has expired") {
+        // Save fresh to state & cache
+        setAssets(response.data);
+        localStorage.setItem("walletAssets", JSON.stringify(response.data));
+      } catch (err: any) {
+        if (err?.message === "Login has expired") {
           localStorage.clear();
           Cookies.remove("token");
           navigate("/login");
+          return;
         }
-        if (
-          response.message.includes(
-            "Fund your wallet with at least 5 XLM to activate your account."
-          )
-        ) {
-          setActivateWalletAlert(response.message);
-          setIsActivateWalletAlert(true);
-        }
-        setMsg(response.message);
         setAlertType("error");
+        setMsg(err?.message || "Failed to get wallet assets");
+      } finally {
         setLoadingWalletAssets(false);
+      }
+    };
+
+    bootstrapAssets();
+  }, []);
+
+  // When user types amount, debounce preview
+  const handleSourceAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    console.log({ value });
+    if (!/^(?:\d*(?:\.|,)??\d*)$/.test(value)) return; // allow numbers & dot
+    setSourceAmount(value);
+    setDescAmount("");
+    setExchangeRate("");
+    setSwapAssetPreview(null);
+
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      if (Number(value) > 0) handleSwapAssetsPreview();
+    }, 500);
+  };
+
+  const handleMax = () => {
+    if (!selectedAsset) return;
+    const max = Number(selectedAsset.balance) || 0;
+    if (max <= 0) return;
+    setSourceAmount(String(max));
+    setDescAmount("");
+    setExchangeRate("");
+    setSwapAssetPreview(null);
+    // immediate preview
+    handleSwapAssetsPreview(String(max));
+  };
+
+  // -------- API: Preview --------
+  async function handleSwapAssetsPreview(overrideAmount?: string) {
+    if (!selectedAsset || !selectedAssetReceive) {
+      setAlertType("error");
+      setMsg("Please select both From and To assets before entering amount.");
+      return;
+    }
+
+    const amount = overrideAmount ?? sourceAmount;
+    if (!amount || Number(amount) <= 0) return;
+
+    if (selectedAsset.asset_code === selectedAssetReceive.asset_code) {
+      setAlertType("error");
+      setMsg("Please select different assets.");
+      return;
+    }
+
+    if (Number(selectedAsset.balance) < Number(amount)) {
+      setAlertType("error");
+      setMsg("Insufficient balance.");
+      return;
+    }
+
+    setLoadingPreview(true);
+
+    try {
+      if (!user) return;
+
+      const response = await swapAssetsPreview(
+        user,
+        selectedAsset.asset_code,
+        selectedAssetReceive.asset_code,
+        Number(amount),
+        Number(slippage)
+      );
+
+      if (!response?.success) {
+        if (response?.message === "Login has expired") {
+          localStorage.clear();
+          Cookies.remove("token");
+          navigate("/login");
+          return;
+        }
+        setAlertType("error");
+        setMsg(response?.message || "Preview failed");
         return;
       }
-      setAssets(response?.data);
-      setSelectedAsset(response?.data?.allWalletAssets[0]);
-      setCurrentbalance(response?.data?.allWalletAssets[0].balance || 0);
+
+      const details = response.data.swapDetails;
+      setSwapAssetPreview(details);
+      setDescAmount(details.expectedDestinationAmount);
+      setExchangeRate(details.exchangeRate);
+      setNext(true);
     } catch (error: any) {
-      if (error.message === "Login has expired") {
+      if (error?.message === "Login has expired") {
         localStorage.clear();
         Cookies.remove("token");
         navigate("/login");
+        return;
       }
-      if (
-        error.message.includes(
-          "Fund your wallet with at least 5 XLM to activate your account."
-        )
-      ) {
-        setActivateWalletAlert(error.message);
-        setIsActivateWalletAlert(true);
-      } else {
-        console.log(error);
-        setAlertType("error");
-        setMsg(error.message || "Failed to get all wallet assets");
-      }
+      setAlertType("error");
+      setMsg(error?.message || "An error occurred. Please try again.");
     } finally {
-      setLoadingWalletAssets(false);
+      setLoadingPreview(false);
     }
   }
 
-  const handleNext = () => {
-    if (sourceAmount && descAmount) {
-      setNext(true);
-    }
-  };
-
+  // -------- API: Swap --------
   async function handleSwapAssets() {
-    setLoading(true);
     if (!selectedAsset || !selectedAssetReceive) {
-      setMsg("Please select assets to swap.");
       setAlertType("error");
-      setLoading(false);
+      setMsg("Please select assets to swap.");
       return;
     }
 
     if (selectedAsset.asset_code === selectedAssetReceive.asset_code) {
-      setMsg("Please select different assets.");
       setAlertType("error");
-      setLoading(false);
+      setMsg("Please select different assets.");
       return;
     }
 
     if (!sourceAmount || Number(sourceAmount) <= 0) {
-      setMsg("Please enter a valid amount.");
       setAlertType("error");
-      setLoading(false);
+      setMsg("Please enter a valid amount.");
       return;
     }
 
     if (Number(selectedAsset.balance) < Number(sourceAmount)) {
-      setMsg("Insufficient balance.");
       setAlertType("error");
-      setLoading(false);
+      setMsg("Insufficient balance.");
       return;
     }
 
     if (Number(sourceAmount) < 0.0000001) {
-      setMsg("The amount is too small.");
       setAlertType("error");
-      setLoading(false);
+      setMsg("The amount is too small.");
       return;
     }
 
+    setLoadingSwap(true);
     try {
-      if (!user) {
-        setLoadingWalletAssets(false);
-        return;
-      }
+      if (!user) return;
 
       const response = await swapAssets(
         user,
         selectedAsset.asset_code,
         selectedAssetReceive.asset_code,
         Number(sourceAmount),
-        Number(value)
+        Number(slippage)
       );
 
-      if (!response.success) {
-        if (response.message === "Login has expired") {
+      if (!response?.success) {
+        if (response?.message === "Login has expired") {
           localStorage.clear();
           Cookies.remove("token");
           navigate("/login");
+          return;
         }
-        setMsg(response.message);
         setAlertType("error");
-        setLoading(false);
+        setMsg(response?.message || "Swap failed");
         return;
       }
 
-      await handleGetMyAssets();
-      setAlertType("success");
-      setSourceAmount("");
-      setSwap(true);
-      setSwapping(true);
-      setDescAmount("");
-      setCurrentbalance(currentBalance - Number(sourceAmount));
-      setValue(2.75);
-      setSwap(false);
-      setNext(false);
-      setSwapping(false);
+      // Refresh balances
+      try {
+        const fresh = await getMyAssets(user, selectedAsset?.asset_code);
+        if (fresh?.success) {
+          setAssets(fresh.data);
+          localStorage.setItem("walletAssets", JSON.stringify(fresh.data));
+        }
+      } catch {}
+
       setAlertType("success");
       setMsg(
-        ` ${selectedAsset.asset_code} ${formatNumberWithCommas(
+        `${selectedAsset.asset_code} ${formatNumberWithCommas(
           sourceAmount
-        )} swapped to  ${formatNumberWithCommas(Number(descAmount))} 
-        ${selectedCurrency}
-        
-        successfully.`
+        )} swapped to ${formatNumberWithCommas(Number(descAmount))} ${
+          selectedAssetReceive?.asset_code
+        } successfully.`
       );
+
+      // Reset state
+      setSelectedAsset(null);
+      setSelectedAssetReceive(null);
+      setCurrentbalance(0);
+      clearAmountsAndPreview();
     } catch (error: any) {
-      if (error.message === "Login has expired") {
+      if (error?.message === "Login has expired") {
         localStorage.clear();
         Cookies.remove("token");
         navigate("/login");
+        return;
       }
-      setMsg(error.message || "An error occurred. Please try again.");
-      console.log(error);
       setAlertType("error");
+      setMsg(error?.message || "An error occurred. Please try again.");
     } finally {
-      setLoading(false);
+      setLoadingSwap(false);
     }
   }
 
-  useEffect(() => {
-    handleGetMyAssets();
-  }, []);
-
   const filteredReceiveAssets = assets?.allWalletAssets?.filter(
-    (asset: any) =>
-      !(
-        selectedAsset?.asset_code === "NGNC" &&
-        ["BTC", "ETH", "yETH"].includes(asset?.asset_code)
-      ) &&
-      !(
-        selectedAsset?.asset_code === "BTC" &&
-        ["NGNC"].includes(asset?.asset_code)
-      ) &&
-      !(
-        selectedAsset?.asset_code === "ETH" &&
-        ["NGNC"].includes(asset?.asset_code)
-      ) &&
-      !(
-        selectedAsset?.asset_code === "yETH" &&
-        ["NGNC"].includes(asset?.asset_code)
-      )
+    (asset: any) => asset.asset_code !== selectedAsset?.asset_code
   );
 
-  useEffect(() => {
-    if (selectedAssetReceive?.asset_code === selectedAsset?.asset_code) {
-      setSelectedAsset(false);
-    }
-  }, [selectedAssetReceive]);
-  useEffect(() => {
-    if (selectedAsset?.asset_code === selectedAssetReceive?.asset_code) {
-      setSelectedAssetReceive(false);
-    }
-  }, [selectedAsset]);
-
-  const filteredFromAssets = assets?.allWalletAssets?.filter(
-    (asset) =>
-      !(
-        selectedAssetReceive?.asset_code === "NGNC" &&
-        ["BTC", "ETH", "yETH"].includes(asset?.asset_code)
-      )
-  );
+  const gateReady = !!assets?.allWalletAssets?.length && !loadingWalletAssets;
 
   return (
-    <div className="w-full md:grid grid-cols-12">
-      <div className="md:block hidden h-[100vh] sidebar p-4 pr-2 ">
-        <SideNav />
-      </div>
-      <div className="py-6 overflow-hidden h-[100px] w-full z-50 sticky md:top-[-2%] top-0">
-        <TopNav page="Swap" />
-      </div>
-      <div
-        className={`text-white  main-container md:pl-[60px] px-4 pl-2 w-full overflow-hidden md:col-span-10 col-span-12 ${
-          !next ? " mt-[70px]" : " mt-[-20px]"
-        }`}
-      >
-        <main
-          className={`flex-grow md:px-[24%] px-0 left-0 right-0 w-full  ${
-            next ? "md:pt-[80px] " : "md:mt-[70px]"
-          } text-white  pb-5  overflow-hidden`}
-        >
-          <div className="bg-[#050d2a] border border-white/10 rounded-2xl shadow-lg md:p-6 md:px-2 px-4 md:mt-[50px] text-white">
-            <div className="text-center mb-8">
-              <div className="inline-block bg-[#0E7BB2] mt-4 p-3 rounded-full shadow-md">
-                <RiBankLine className="text-white text-xl" />
-              </div>
-              <h1 className="mt-4 text-2xl font-bold">Swap Asset</h1>
-              <p className="text-gray-400 text-sm">
-                Choose your crypto and wait for the transaction to complete.
-              </p>
-              <p className="text-gray-400 text-sm">
-                Leave at least 1.5XLM for gas fee
-              </p>
-            </div>
-            <div className="rounded-[11px] mt-[-50px] w-full py-[30px] md:px-[10px] ">
-              <div className=" py-6 md:p-[15px] rounded-[8px] shadow  mx-auto w-full ">
-                <div className="my-4">
-                  <div className="flex p-4 bg-white/10 rounded-xl justify-between items-center">
-                    <div>
-                      <p className="text-sm font-medium text-gray-400">
-                        Balance
-                      </p>
-                      <p className="text-lg font-semibold">
-                        {currentBalance === 0
-                          ? "0"
-                          : formateDecimal(currentBalance)}
-                      </p>
-                    </div>
-                    <div className="flex text-[14px]">
-                      <img
-                        src={selectedAsset?.image}
-                        alt=""
-                        className="w-5 h-5"
-                      />
-                      <span className="uppercase text-sm">
-                        {selectedAsset?.asset_code}
-                      </span>
-                    </div>
-                  </div>
+    <>
+      <EmptyTopNav />
 
-                  <div className="relative mt-5">
-                    <p className="text-sm text-gray-400">FROM&nbsp;AMOUNT</p>
-                    <div className="flex justify-between bg-white/10 border border-[#FFFFFF]/50 rounded-md relative z-[12] p-2 items-center">
-                      <div className="flex item-center gap-2">
-                        <div
-                          className="flex items-center bg-white/10 rounded-md p-2 cursor-pointer"
-                          onClick={() => {
-                            setCurrencyDropDown(
-                              currencyDropDown === "from" ? false : "from"
-                            );
-                          }}
-                        >
-                          <img src={selectedAsset?.image} alt="" width="20px" />
-
-                          <div className="mr-3 ml-1 flex items-center  gap-2 text-[12px] text-white uppercase">
-                            <p>{selectedAsset?.asset_code || "SELECT"}</p>
-                            <p className="text-[12px] text-white">
-                              <IoChevronDown />
-                            </p>
-                          </div>
-                        </div>
-                        <input
-                          type="number"
-                          id="input-amount"
-                          className="outline-none lg:w-1/2 w-full bg-transparent text-[#ffffff]"
-                          placeholder="Enter amount"
-                          value={sourceAmount}
-                          disabled={swapping}
-                          onChange={(e) => {
-                            handleCurrencyChange(e);
-                            if (typingTimeoutRef.current)
-                              clearTimeout(typingTimeoutRef.current);
-                            typingTimeoutRef.current = setTimeout(() => {
-                              fetchXlmRate(
-                                Number(e.target.value),
-                                selectedAsset?.asset_code,
-                                selectedCurrency
-                              );
-                            }, 500);
-                          }}
-                        />
-                      </div>
-                      <p
-                        className="text-white text-[12px] cursor-pointer"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (!swapping) {
-                            handleMax(currentBalance);
-                            fetchXlmRate(
-                              currentBalance,
-                              selectedAsset?.asset_code,
-                              selectedCurrency
-                            );
-                          }
-                        }}
-                      >
-                        Max
-                      </p>
-                    </div>
-
-                    {currencyDropDown === "from" && (
-                      <div className="absolute bg-black z-50 text-white rounded-md shadow-md py-2 px-3 max-h-[200px] overflow-y-auto">
-                        {filteredFromAssets?.map(
-                          (asset: any, index: number) => (
-                            <div
-                              key={index}
-                              className="py-2 px-4 cursor-pointer "
-                              onClick={() => {
-                                handleInputCurrencyChange(
-                                  asset.asset_code,
-                                  sourceAmount
-                                );
-                                setSelectedCurrency(selectedCurrency);
-                                setSelectedAsset(asset);
-                                setCurrencyDropDown(false);
-                                setCurrentbalance(asset.balance);
-                                setSourceAmount("");
-                              }}
-                            >
-                              <div
-                                key={index}
-                                className="flex items-center gap-2"
-                              >
-                                <img src={asset.image} alt="" width="25px" />
-                                <div className="flex gap-2 items-center">
-                                  <p className="font-medium text-sm">
-                                    {asset.asset_name}
-                                  </p>
-                                  <p className="text-xs">
-                                    ({asset.asset_code})
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          )
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="my-4">
-                  <p className="text-sm text-gray-400">TO&nbsp;AMOUNT</p>
-                  <div className="relative">
-                    <div className="flex justify-between bg-white/10 border border-[#FFFFFF]/50 rounded-md relative z-[10] px-2 items-center">
-                      <div
-                        className="flex items-center bg-white/10 rounded-md p-2 cursor-pointer"
-                        onClick={() =>
-                          setCurrencyDropDown(
-                            currencyDropDown === "to" ? false : "to"
-                          )
-                        }
-                      >
-                        <img
-                          src={selectedAssetReceive?.image}
-                          alt=""
-                          width="20px"
-                        />
-                        <div className="mr-3 ml-1 flex items-center h-[20px]  gap-2 text-[12px] text-white uppercase">
-                          <p>{selectedAssetReceive?.asset_code || "SELECT"}</p>
-                          <p className="text-[12px] text-white">
-                            <IoChevronDown />
-                          </p>
-                        </div>
-                      </div>
-                      &nbsp;&nbsp;
-                      <div className="flex justify-between gap-3 w-auto items-center bg-white/10 my-3 rounded-xl px-4 py-2">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm text-gray-400">AMOUNT:</p>
-                        </div>
-                        <input
-                          type="number"
-                          disabled
-                          value={
-                            sourceAmount ? Number(descAmount).toFixed(8) : ""
-                          }
-                          className="w-full bg-transparent outline-none md:text-md text-sm font-semibold"
-                        />
-                        {processing && sourceAmount && (
-                          <img
-                            src="./images/loader.gif"
-                            className="w-[20px] h-[20px] mx-2"
-                            alt=""
-                          />
-                        )}
-                      </div>
-                    </div>
-                    {currencyDropDown === "to" && (
-                      <div className="absolute bg-black z-50 text-white rounded-md shadow-md py-2 px-3 max-h-[200px] overflow-y-auto">
-                        {filteredReceiveAssets?.map(
-                          (asset: any, index: number) => (
-                            <div
-                              key={index}
-                              className="py-2 px-4 cursor-pointer "
-                              onClick={() => {
-                                if (loading) return;
-                                setSelectedCurrency(asset.asset_code);
-                                setSelectedAsset(selectedAsset);
-                                setSelectedAssetReceive(asset);
-                                setCurrencyDropDown(false);
-                                handleOuputCurrencyChange(
-                                  asset.asset_code,
-                                  sourceAmount
-                                );
-                              }}
-                            >
-                              <div
-                                key={index}
-                                className="flex items-center gap-2"
-                              >
-                                <img src={asset.image} alt="" width="25px" />
-                                <div className="flex gap-2 items-center">
-                                  <p className="font-medium text-sm">
-                                    {asset.asset_name}
-                                  </p>
-                                  <p className="text-xs">
-                                    ({asset.asset_code})
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          )
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <label
-                    htmlFor="small-range"
-                    className="text-[#ffffff] text-[14px] font-[300]"
-                  >
-                    Slippage
-                  </label>
-                  <input
-                    id="small-range"
-                    type="range"
-                    min={0.5}
-                    max={10}
-                    step={0.01}
-                    value={value}
-                    disabled={loading}
-                    onChange={handleChange}
-                    className="w-full h-1 mb-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-sm dark:bg-gray-700"
-                  />
-                  <p className="text-[#ffffff] text-[14px] font-[300] text-center">
-                    {value}%
-                  </p>
-                </div>
-
-                {next ? (
-                  <button
-                    className="flex gap-2 justify-center items-center bg-[#0E7BB2] border border-white/50 text-white p-3 rounded-lg w-full mt-[1rem] cursor-pointer"
-                    disabled={!sourceAmount || !descAmount || swapping}
-                    onClick={async () => {
-                      await handleSwapAssets();
-                      setTimeout(() => {
-                        const starAnimation = document.createElement("div");
-                        starAnimation.className =
-                          "fixed top-0 left-0 w-full h-full z-50 pointer-events-none star-animation";
-                        document.body.appendChild(starAnimation);
-
-                        for (let i = 0; i < 50; i++) {
-                          const star = document.createElement("div");
-                          star.className = "star";
-                          star.style.left = `${Math.random() * 100}%`;
-                          star.style.top = `${Math.random() * 100}%`;
-                          starAnimation.appendChild(star);
-                        }
-
-                        setTimeout(() => {
-                          document.body.removeChild(starAnimation);
-                        }, 5000);
-                      }, 3000);
-                    }}
-                  >
-                    <span>Swap</span>
-                    {loading && (
-                      <img
-                        src="./images/loader.gif"
-                        className="w-[20px] mx-2"
-                        alt=""
-                      />
-                    )}
-                  </button>
-                ) : (
-                  <button
-                    className="bg-[#0E7BB2] border border-white/50 text-white p-3 rounded-lg w-full mt-[1rem] cursor-pointer"
-                    disabled={!sourceAmount && !descAmount}
-                    onClick={handleNext}
-                  >
-                    Next
-                  </button>
-                )}
-              </div>
-
-              <div>
-                {next && (
-                  <div className="w-[100%]">
-                    <div className="py-4 px-[40px] mt-[20px] rounded-[8px] w-full bg-white/10  border border-[#B2B2B27A] animate-fade-in">
-                      <p className="text-[14px] text-[#ffffff] border-b border-[#CFCFCF] pb-2">
-                        {selectedAsset.asset_code === "NATIVE"
-                          ? "XLM"
-                          : selectedAsset.asset_code}{" "}
-                        {formatNumberWithCommas(sourceAmount)} ={" "}
-                        {selectedCurrency === "NATIVE"
-                          ? "XLM"
-                          : selectedCurrency}{" "}
-                        {formatNumberWithCommas(descAmount)}
-                      </p>
-                      <div className="flex flex-col gap-[8px] mt-5">
-                        <div className="flex items-center justify-between text-[14px] text-[#ffffff]">
-                          <p>Slippage</p>
-                          <p>{value}%</p>
-                        </div>
-                        <div className="flex items-center justify-between text-[14px] text-[#ffffff]">
-                          <p>Transaction Cost</p>
-                          <p>~XLM 0.0000001</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <style>{`
-          @keyframes fade-in {
-            from {
-              opacity: 0;
-              transform: translateY(20px);
-            }
-            to {
-              opacity: 1;
-              transform: translateY(0);
-            }
-          }
-          .animate-fade-in {
-            animation: fade-in 0.5s ease-out;
-          }
-        `}</style>
-              </div>
-
-              <style>{`
-                  .star-animation {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    overflow: hidden;
-                    pointer-events: none;
-                  }
-
-                  .star {
-                    position: absolute;
-                    width: 10px;
-                    height: 10px;
-                    background: radial-gradient(circle, rgba(0,255,255,1) 0%, rgba(0,255,255,0) 70%);
-                    border-radius: 50%;
-                    animation: star-move 5s ease-out forwards;
-                  }
-
-                  @keyframes star-move {
-                    0% {
-                      opacity: 1;
-                      transform: scale(1) translateY(0);
-                    }
-                    100% {
-                      opacity: 0;
-                      transform: scale(1.5) translateY(-50px);
-                    }
-                  }
-                `}</style>
-            </div>
+      {/* Block UI until assets are available */}
+      {!gateReady ? (
+        <main className="flex items-center justify-center min-h-screen p-6 bg-gray-50 dark:bg-gray-900">
+          <div className="flex flex-col items-center gap-4">
+            <div className="h-10 w-10 rounded-full border-4 border-gray-300 dark:border-gray-700 border-t-transparent animate-spin" />
+            <p className="text-gray-600 dark:text-gray-300 text-sm">
+              Fetching wallet assets…
+            </p>
           </div>
         </main>
-        <MobileNav />
-      </div>
-      {msg && <Alert msg={msg} setMsg={setMsg} alertType={alertType} />}
-    </div>
+      ) : (
+        <main className="flex items-center justify-center min-h-screen p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+          <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+            {/* Icon */}
+            <div className="flex justify-center items-center py-4">
+              <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
+                <FaExchangeAlt className="text-gray-900 dark:text-gray-100 w-6 h-6" />
+              </span>
+            </div>
+
+            {/* Heading */}
+            <h2 className="text-center text-xl font-semibold">
+              Exchange Funds
+            </h2>
+            <p className="text-center text-sm text-gray-500 dark:text-gray-400 mb-6">
+              Choose your crypto and wait for the transaction to complete.{" "}
+              <br />
+              Leave at least <span className="font-medium">1.5XLM</span> for gas
+              fee
+            </p>
+
+            {/* Balance (only when From selected) */}
+            {selectedAsset && (
+              <div className="flex items-center justify-between bg-white dark:bg-gray-700 rounded-lg px-4 py-3 mb-4">
+                <div className="flex items-center gap-3">
+                  {selectedAsset?.image && (
+                    <img
+                      src={selectedAsset.image}
+                      alt={selectedAsset.asset_code}
+                      className="w-5 h-5 rounded-full"
+                    />
+                  )}
+                  <div>
+                    <p className="text-sm font-medium">
+                      {selectedAsset.asset_code === "NATIVE"
+                        ? "XLM"
+                        : selectedAsset.asset_code}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Available Balance
+                    </p>
+                  </div>
+                </div>
+                <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 px-3 py-1 rounded-full">
+                  {selectedAsset.asset_code === "NATIVE"
+                    ? "XLM"
+                    : selectedAsset.asset_code}{" "}
+                  {formateDecimal(selectedAsset.balance || 0)}
+                </span>
+              </div>
+            )}
+
+            {/* From Amount */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">
+                From Amount
+              </label>
+              <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
+                <select
+                  className="bg-gray-50 dark:bg-gray-700 px-3 py-2 outline-none"
+                  value={selectedAsset?.asset_code || ""}
+                  onChange={(e) => {
+                    const asset = assets?.allWalletAssets?.find(
+                      (a: any) => a.asset_code === e.target.value
+                    );
+                    if (asset) {
+                      setSelectedAsset(asset);
+                      setCurrentbalance(Number(asset.balance) || 0);
+                      clearAmountsAndPreview();
+                    }
+                  }}
+                >
+                  <option value="">Select</option>
+                  {assets?.allWalletAssets?.map((asset: any, index: number) => (
+                    <option key={index} value={asset.asset_code}>
+                      {asset.asset_code === "NATIVE" ? "XLM" : asset.asset_code}
+                    </option>
+                  ))}
+                </select>
+
+                <input
+                  type="number"
+                  placeholder="Enter amount"
+                  className="flex-1 px-3 py-2 bg-transparent outline-none"
+                  value={sourceAmount}
+                  disabled={!selectedAsset || loadingPreview || loadingSwap}
+                  onChange={handleSourceAmountChange}
+                />
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (!selectedAsset || loadingPreview || loadingSwap) return;
+                    handleMax();
+                  }}
+                  className="px-3 text-sm font-medium text-blue-600 dark:text-blue-400 disabled:opacity-50"
+                  disabled={!selectedAsset || loadingPreview || loadingSwap}
+                >
+                  Max
+                </button>
+              </div>
+            </div>
+
+            {/* To Amount */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">
+                To Amount
+              </label>
+              <div className="flex items-center border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
+                <select
+                  className="bg-gray-50 dark:bg-gray-700 px-3 py-2 outline-none"
+                  value={selectedAssetReceive?.asset_code || ""}
+                  onChange={(e) => {
+                    const asset = assets?.allWalletAssets?.find(
+                      (a: any) => a.asset_code === e.target.value
+                    );
+                    if (asset) {
+                      setSelectedAssetReceive(asset);
+                      clearAmountsAndPreview();
+                    }
+                  }}
+                >
+                  <option value="">Select</option>
+                  {filteredReceiveAssets?.map((asset: any, index: number) => (
+                    <option key={index} value={asset.asset_code}>
+                      {asset.asset_code === "NATIVE" ? "XLM" : asset.asset_code}
+                    </option>
+                  ))}
+                </select>
+                <input
+                  type="number"
+                  placeholder="Converted amount"
+                  className="flex-1 px-3 py-2 bg-transparent outline-none"
+                  value={descAmount}
+                  disabled
+                  readOnly
+                />
+              </div>
+            </div>
+
+            {/* Slippage */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium mb-1">Slippage</label>
+              <input
+                id="small-range"
+                type="range"
+                min={0.5}
+                max={10}
+                step={0.01}
+                value={slippage}
+                onChange={(e) => setSlippage(Number(e.target.value))}
+                className="w-full"
+                disabled={loadingPreview || loadingSwap}
+              />
+              <p className="text-center">{slippage}%</p>
+            </div>
+
+            {/* Preview Details */}
+            {swapAssetPreview && (
+              <div className="p-3 mb-4 rounded-lg bg-gray-100 dark:bg-gray-700 text-sm">
+                <p>
+                  Rate: 1{" "}
+                  {selectedAsset?.asset_code === "NATIVE"
+                    ? "XLM"
+                    : selectedAsset?.asset_code}{" "}
+                  ≈ {rateExchange}{" "}
+                  {selectedAssetReceive?.asset_code === "NATIVE"
+                    ? "XLM"
+                    : selectedAssetReceive?.asset_code}
+                </p>
+                <p>
+                  Expected: {formateDecimal(Number(descAmount) || 0)}{" "}
+                  {selectedAssetReceive?.asset_code === "NATIVE"
+                    ? "XLM"
+                    : selectedAssetReceive?.asset_code}
+                </p>
+                <p>Min Received: {swapAssetPreview.minimumReceived}</p>
+                <p>Fee: {swapAssetPreview.fee}</p>
+                <p>Slippage: {swapAssetPreview.slippage}</p>
+              </div>
+            )}
+
+            {/* Buttons */}
+            {!next ? (
+              <button
+                className="bg-[#0E7BB2] text-white p-3 rounded-lg w-full mt-4 cursor-pointer disabled:opacity-50"
+                disabled={
+                  !selectedAsset ||
+                  !selectedAssetReceive ||
+                  !sourceAmount ||
+                  loadingPreview ||
+                  loadingSwap
+                }
+                onClick={() => handleSwapAssetsPreview()}
+              >
+                {loadingPreview ? "Previewing…" : "Next"}
+              </button>
+            ) : (
+              <button
+                className="flex gap-2 justify-center items-center bg-[#0E7BB2] text-white p-3 rounded-lg w-full mt-4 cursor-pointer disabled:opacity-50"
+                disabled={!sourceAmount || !descAmount || loadingSwap}
+                onClick={handleSwapAssets}
+              >
+                <span>{loadingSwap ? "Swapping…" : "Swap"}</span>
+              </button>
+            )}
+
+            {msg && <Alert msg={msg} setMsg={setMsg} alertType={alertType} />}
+          </div>
+        </main>
+      )}
+    </>
   );
 };
 

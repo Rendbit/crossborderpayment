@@ -75,7 +75,7 @@ const Dashboard: React.FC = () => {
   const [isActivateWalletAlert, setIsActivateWalletAlert] =
     useState<boolean>(false);
   const [address, setAddress] = useState<string>("");
-  const { setIsAddMoneyModalOpen } = useAppContext();
+  const { setIsAddMoneyModalOpen, setIsSendMoneyModalOpen } = useAppContext();
 
   const navigate = useNavigate();
 
@@ -972,12 +972,15 @@ const Dashboard: React.FC = () => {
                         <span>{asset?.asset_name}</span>
                       </div>
                       <span className="bg-[#E7F1F7]  dark:bg-gray-700 p-3 rounded-full">
-                        <BsBank size={16} />
+                        <BsBank
+                          className="text-gray-900 dark:text-gray-100"
+                          size={16}
+                        />
                       </span>
                     </div>
 
                     {/* Asset Balance */}
-                    <div className="flex justify-center items-center">
+                    <div className="flex mt-[50px] py-[20px] justify-center items-center">
                       <div>
                         <div className="flex gap-2 text-center">
                           <p className="text-sm text-black dark:text-gray-400">
@@ -1016,7 +1019,7 @@ const Dashboard: React.FC = () => {
             {/* Actions */}
             <div className="flex flex-wrap justify-center gap-3">
               <button className="px-4 py-3 flex items-center gap-2 text-sm bg-white dark:bg-gray-800 border border-[#D9D9D9] dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                <Banknote size={16} /> Add Currency
+                Add Currency <Banknote size={16} />
               </button>
               <button
                 onClick={() => setIsAddMoneyModalOpen(true)}
@@ -1024,10 +1027,16 @@ const Dashboard: React.FC = () => {
               >
                 Add Money <CgAdd size={16} />
               </button>
-              <button className="px-4 py-3 flex items-center gap-2 text-sm bg-white dark:bg-gray-800 border border-[#D9D9D9] dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+              <button
+                onClick={() => setIsSendMoneyModalOpen(true)}
+                className="px-4 py-3 flex items-center gap-2 text-sm bg-white dark:bg-gray-800 border border-[#D9D9D9] dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+              >
                 Send Money <Send size={16} />
               </button>
-              <button className="px-4 py-3 flex items-center gap-2 text-sm bg-white dark:bg-gray-800 border border-[#D9D9D9] dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+              <button
+                onClick={() => navigate("/swap")}
+                className="px-4 py-3 flex items-center gap-2 text-sm bg-white dark:bg-gray-800 border border-[#D9D9D9] dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+              >
                 <ArrowRightLeft size={16} /> Convert Funds
               </button>
             </div>

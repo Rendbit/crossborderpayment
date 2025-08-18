@@ -83,7 +83,7 @@ const fetchAllTransactions = async (address: string): Promise<any[]> => {
     }
   } catch (error: any) {
     if (error instanceof NotFoundError || error?.response?.status === 404) {
-      // console.warn(`No transactions found or account not found: ${address}`);
+      // console.warn(`No transactions found or Invalid Credentials: ${address}`);
       return []; // Skip if account has no transactions or is not found
     } else {
       console.error(`Error fetching transactions for ${address}:`, error);

@@ -181,7 +181,7 @@ const WithdrawCrypto: React.FC = () => {
                 Send Crypto Securely
               </h2>
               <p className="text-sm text-gray-300">
-                Ensure 1.5 XLM remains for gas fee
+                Ensure 5 XLM remains for gas fee
               </p>
             </div>
 

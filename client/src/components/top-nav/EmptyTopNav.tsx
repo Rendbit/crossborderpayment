@@ -20,9 +20,11 @@ const EmptyTopNav = () => {
         </button>
 
         {/* Title */}
-        <span className="text-gray-900 dark:text-white font-medium text-lg">
-          RendBit
-        </span>
+        <button onClick={() => navigate("/dashboard")}>
+          <span className="text-gray-900 dark:text-white font-medium text-lg">
+            RendBit
+          </span>
+        </button>
       </div>
     </div>
   );

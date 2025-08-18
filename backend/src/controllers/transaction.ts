@@ -590,6 +590,7 @@ export const swapPreview = async (req: any, res: any) => {
     });
 
     const paths = _paths.data.sendPaymentPath;
+    console.log(paths);
     const desAmount = paths?.filter(
       (pth: any) =>
         pth.destination_asset_type === desAssetIssuer ||
@@ -727,6 +728,7 @@ export const swap = async (req: any, res: any) => {
       StellarSdk.Keypair.fromSecret(decryptedPrivateKey),
       "swap"
     );
+    console.log({ resp });
 
     if (!resp.status) {
       return res.status(httpStatus.BAD_REQUEST).json({
@@ -959,15 +961,9 @@ export const strictSend = async (req: any, res: any) => {
 
 export const strictReceivePreview = async (req: any, res: any) => {
   try {
-    let {
-      slippage,
-      desAddress,
-      sourceAssetCode,
-      desAssetCode,
-      sourceAmount,
-      desAmount,
-    } = req.body;
-    slippage *= 1;
+    let { slippage, desAddress, sourceAssetCode, desAssetCode, desAmount } =
+      req.body;
+    slippage = parseFloat(slippage) || 0;
 
     if (!WalletHelper.isValidStellarAddress(desAddress)) {
       return res.status(httpStatus.BAD_REQUEST).json({
@@ -977,6 +973,7 @@ export const strictReceivePreview = async (req: any, res: any) => {
       });
     }
 
+    // Get issuers for both assets (depends on network)
     const sourceAssetIssuer =
       process.env.STELLAR_NETWORK === "public"
         ? PUBLIC_ASSETS[sourceAssetCode as keyof typeof PUBLIC_ASSETS].issuer
@@ -987,21 +984,28 @@ export const strictReceivePreview = async (req: any, res: any) => {
         ? PUBLIC_ASSETS[desAssetCode as keyof typeof PUBLIC_ASSETS].issuer
         : TESTNET_ASSETS[desAssetCode as keyof typeof TESTNET_ASSETS].issuer;
 
+    // Ask Stellar for payment paths (strict receive)
     const _paths: any = await WalletHelper.receivePaymentPath({
-      sourceAssetCode: sourceAssetCode,
+      sourceAssetCode,
       sourceAssetIssuer,
-      desAssetCode: desAssetCode,
+      desAssetCode,
       desAssetIssuer,
       amount: desAmount,
     });
-    const paths = _paths.data.receivePaymentPath;
-    const _sourceAmount =
-      sourceAmount ||
-      paths.filter(
-        (pth: any) =>
-          pth.source_asset_type === sourceAssetIssuer ||
-          sourceAssetCode.startsWith(pth.source_asset_code)
-      )[0].source_amount;
+
+    const paths = _paths?.data?.receivePaymentPath || [];
+
+    if (!paths.length) {
+      return res.status(httpStatus.BAD_REQUEST).json({
+        message: "No payment path found for the given assets and amount.",
+        status: httpStatus.BAD_REQUEST,
+        success: false,
+      });
+    }
+
+    // Take best path (lowest source amount)
+    const bestPath = paths[0];
+    const _sourceAmount = bestPath.source_amount;
 
     const sendMax = (
       (100 * parseFloat(_sourceAmount)) /
@@ -1017,18 +1021,18 @@ export const strictReceivePreview = async (req: any, res: any) => {
           sourceAmount: _sourceAmount,
           destinationAmount: desAmount,
           destinationAddress: desAddress,
-          slippage: slippage,
+          slippage,
           estimatedSendMax: sendMax,
           fee: process.env.FEE,
           network: process.env.STELLAR_NETWORK,
         },
       },
-      messsage: "Strict receive preview generated successfully.",
+      message: "Strict receive preview generated successfully.",
       status: httpStatus.OK,
       success: true,
     });
   } catch (error: any) {
-    console.log("Error generating strict receive preview.", error);
+    console.error("Error generating strict receive preview.", error);
     return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
       message: error.message || "Error generating strict receive preview.",
       status: httpStatus.INTERNAL_SERVER_ERROR,
@@ -1039,19 +1043,12 @@ export const strictReceivePreview = async (req: any, res: any) => {
 
 export const strictReceive = async (req: any, res: any) => {
   try {
-    let {
-      slippage,
-      desAddress,
-      sourceAssetCode,
-      desAssetCode,
-      sourceAmount,
-      desAmount,
-    } = req.body;
+    let { slippage, desAddress, sourceAssetCode, desAssetCode, desAmount } =
+      req.body;
     const user = req.user;
-    // Ensure the slippage value is a number.
-    slippage *= 1;
+    slippage = parseFloat(slippage) || 0;
 
-    // Validate the destination Stellar address.
+    // ✅ Validate destination address
     if (!WalletHelper.isValidStellarAddress(desAddress)) {
       return res.status(httpStatus.BAD_REQUEST).json({
         message: "Invalid Address",
@@ -1060,6 +1057,7 @@ export const strictReceive = async (req: any, res: any) => {
       });
     }
 
+    // ✅ Get issuers for both assets
     const sourceAssetIssuer =
       process.env.STELLAR_NETWORK === "public"
         ? PUBLIC_ASSETS[sourceAssetCode as keyof typeof PUBLIC_ASSETS].issuer
@@ -1070,79 +1068,77 @@ export const strictReceive = async (req: any, res: any) => {
         ? PUBLIC_ASSETS[desAssetCode as keyof typeof PUBLIC_ASSETS].issuer
         : TESTNET_ASSETS[desAssetCode as keyof typeof TESTNET_ASSETS].issuer;
 
-    // Extract the hashed password from the account object.
+    // ✅ Decrypt user’s private key
     const hashedPassword = user.password;
-
-    // Decrypt the user's private key using their encrypted private key,
-    // primary email, hashed password, and pin code.
     const decryptedPrivateKey = WalletDecryption.decryptPrivateKey(
       user.encryptedPrivateKey,
       `${user.primaryEmail}${hashedPassword}${user.pinCode}`
     );
 
-    // Find the payment path from the source asset to the destination asset.
+    // ✅ Query payment paths (strict receive)
     const _paths: any = await WalletHelper.receivePaymentPath({
-      sourceAssetCode: sourceAssetCode,
+      sourceAssetCode,
       sourceAssetIssuer,
-      desAssetCode: desAssetCode,
+      desAssetCode,
       desAssetIssuer,
       amount: desAmount,
     });
 
-    const paths = _paths.data.receivePaymentPath;
-    // Calculate the source amount based on the provided amount or the paths.
-    const _sourceAmount =
-      sourceAmount ||
-      paths.filter(
-        (pth: any) =>
-          pth.source_asset_type === sourceAssetIssuer ||
-          sourceAssetCode.startsWith(pth.source_asset_code)
-      )[0].source_amount;
+    const paths = _paths?.data?.receivePaymentPath || [];
 
-    // Create the source asset object.
+    if (!paths.length) {
+      return res.status(httpStatus.BAD_REQUEST).json({
+        message: "No payment path found for the given assets and amount.",
+        status: httpStatus.BAD_REQUEST,
+        success: false,
+      });
+    }
+
+    // ✅ Use best path (lowest source amount)
+    const bestPath = paths[0];
+    const _sourceAmount = bestPath.source_amount;
+
+    // ✅ Build asset objects
     const sourceAsset =
       sourceAssetCode !== "NATIVE"
         ? new StellarSdk.Asset(sourceAssetCode, sourceAssetIssuer)
         : StellarSdk.Asset.native();
 
-    // Create the destination asset object.
     const desAsset =
       desAssetCode !== "NATIVE"
         ? new StellarSdk.Asset(desAssetCode, desAssetIssuer)
         : StellarSdk.Asset.native();
 
-    // Calculate the maximum amount to send considering the slippage.
+    // ✅ Calculate send max (with slippage)
     const sendMax = (
       (100 * parseFloat(_sourceAmount)) /
       (100 - slippage)
     ).toFixed(7);
 
-    // Fetch the source account details from the Stellar network using the user's public key.
+    // ✅ Load source account
     const sourceAccount = await server.getAccount(user.stellarPublicKey);
 
-    // Construct the strict receive payment transaction.
+    // ✅ Build transaction
     const transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
-      fee: process.env.FEE, // Set the transaction fee.
-      // Set the network passphrase based on the network configuration.
+      fee: process.env.FEE,
       networkPassphrase:
         process.env.STELLAR_NETWORK === "public"
           ? Networks.PUBLIC
           : Networks.TESTNET,
     })
       .addOperation(
-        // Add the path payment strict receive operation to the transaction.
         StellarSdk.Operation.pathPaymentStrictReceive({
-          sendAsset: sourceAsset, // Set the source asset.
-          sendMax: sendMax, // Set the maximum amount to send.
-          destination: desAddress, // Set the destination address.
-          destAsset: desAsset, // Set the destination asset.
-          destAmount: desAmount.toString(), // Set the destination amount.
+          sendAsset: sourceAsset,
+          sendMax,
+          destination: desAddress,
+          destAsset: desAsset,
+          destAmount: desAmount.toString(),
         })
       )
-      .setTimeout(process.env.TIMEOUT) // Set the transaction timeout.
-      .build(); // Build the transaction.
+      .setTimeout(parseInt(process.env.TIMEOUT || "60", 10))
+      .build();
 
-    // Sign the transaction using the user's decrypted private key.
+    // ✅ Sign + Submit
     const resp: any = await WalletHelper.execTranst(
       transaction,
       StellarSdk.Keypair.fromSecret(decryptedPrivateKey),
@@ -1151,14 +1147,13 @@ export const strictReceive = async (req: any, res: any) => {
 
     if (!resp.status) {
       return res.status(httpStatus.BAD_REQUEST).json({
-        data: { hash: resp.details.hash },
+        data: { hash: resp.details?.hash },
         message: resp.userMessage || resp.msg,
         status: httpStatus.BAD_REQUEST,
         success: false,
       });
     }
 
-    // Return the transaction response.
     return res.status(httpStatus.OK).json({
       data: { hash: resp.hash },
       message: resp.userMessage || resp.msg,
@@ -1166,7 +1161,7 @@ export const strictReceive = async (req: any, res: any) => {
       success: true,
     });
   } catch (error: any) {
-    console.log("Error handling strict receive.", error);
+    console.error("Error handling strict receive.", error);
     return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
       message: error.message || "Error handling strict receive.",
       status: httpStatus.INTERNAL_SERVER_ERROR,

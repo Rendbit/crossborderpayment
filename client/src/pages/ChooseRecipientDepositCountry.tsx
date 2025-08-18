@@ -1,17 +1,22 @@
 import { useState } from "react";
 import { Globe, Plus } from "lucide-react";
 import EmptyTopNav from "../components/top-nav/EmptyTopNav";
+import { useNavigate } from "react-router-dom";
+import { useAppContext } from "../context/useContext";
 
-interface Country {
-  name: string;
-  code: string;
-}
-
-const ChooseRecipientCountry = () => {
+const ChooseRecipientDepositCountry = () => {
   const [search, setSearch] = useState("");
+  const navigate = useNavigate();
+  const { setSelectedCountryForTransfer } = useAppContext();
 
-  const countries: Country[] = [
-    { name: "Nigeria", code: "NGN" },
+  const countries = [
+    {
+      name: "Nigeria",
+      code: "NGN",
+      symbol: "NGNC",
+      logo: "https://flagcdn.com/w20/ng.png",
+      currency: "Naira",
+    },
     // { name: "Ghana", code: "GHS" },
     // { name: "Kenya", code: "KSH" },
   ];
@@ -19,6 +24,12 @@ const ChooseRecipientCountry = () => {
   const filteredCountries = countries.filter((country) =>
     country.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  const handleSelectCountry = (country: any) => {
+    localStorage.setItem("selectedCountryForTransfer", JSON.stringify(country));
+    setSelectedCountryForTransfer(country);
+    navigate("/anchor-deposit-method");
+  };
 
   return (
     <>
@@ -64,7 +75,12 @@ const ChooseRecipientCountry = () => {
             placeholder="Search for Country..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full 
+             border border-gray-300 dark:border-gray-600 
+             rounded-lg p-2 
+             bg-white dark:bg-gray-800 
+             text-gray-900 dark:text-gray-100
+             focus:outline-none focus:ring-2 focus:ring-[#0E7BB2]"
           />
         </div>
 
@@ -74,15 +90,22 @@ const ChooseRecipientCountry = () => {
             SUPPORTED COUNTRIES
           </div>
           {filteredCountries.map((country, idx) => (
-            <div
+            <button
+              onClick={() => handleSelectCountry(country)}
               key={country.name}
-              className={`flex items-center px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 ${
+              className={`flex gap-2 w-full items-center px-4 py-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 ${
                 idx !== filteredCountries.length - 1
                   ? "border-b border-gray-100 dark:border-gray-700"
                   : ""
               }`}
             >
-              <Globe className="w-5 h-5 text-gray-500 dark:text-gray-400 mr-3" />
+              <span className="rounded-full overflow-hidden">
+                <img
+                  src={country?.logo}
+                  alt={`${country?.name}`}
+                  className="h-[25px] w-[25px]"
+                />
+              </span>{" "}
               <div>
                 <div className="text-gray-900 dark:text-white text-sm font-medium">
                   {country.name}
@@ -91,7 +114,7 @@ const ChooseRecipientCountry = () => {
                   {country.code}
                 </div>
               </div>
-            </div>
+            </button>
           ))}
 
           {/* New Recipient */}
@@ -104,4 +127,4 @@ const ChooseRecipientCountry = () => {
   );
 };
 
-export default ChooseRecipientCountry;
+export default ChooseRecipientDepositCountry;
