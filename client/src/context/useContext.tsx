@@ -13,6 +13,8 @@ type Theme = "light" | "dark" | "system";
 interface AppContextProps {
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
+  isRemoveTransactionConfirmationModalOpen: boolean;
+  setIsRemoveTransactionConfirmationModalOpen: (open: boolean) => void;
   isRemoveCurrencyModalOpen: boolean;
   setIsRemoveCurrencyModalOpen: (open: boolean) => void;
   isAddMoneyModalOpen: boolean;
@@ -37,6 +39,10 @@ const AppContext = createContext<AppContextProps | undefined>(undefined);
 
 export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [
+    isRemoveTransactionConfirmationModalOpen,
+    setIsRemoveTransactionConfirmationModalOpen,
+  ] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState({});
   const [isAddMoneyModalOpen, setIsAddMoneyModalOpen] = useState(false);
   const [isRemoveCurrencyModalOpen, setIsRemoveCurrencyModalOpen] =
@@ -146,6 +152,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setUserData,
         selectedAsset,
         setSelectedAsset,
+        isRemoveTransactionConfirmationModalOpen,
+        setIsRemoveTransactionConfirmationModalOpen,
         token,
       }}
     >

@@ -683,7 +683,7 @@ export const fundWithFriendbot = async (publicKey: string) => {
   }
 };
 
-export const fundAccount = async (destination: string) => {
+export const fundAccount = async (destination: string, amount: string) => {
   try {
     // Load the funding account and fetch base fee for the transaction
     const account = await server.loadAccount(fundingKey.publicKey());
@@ -700,7 +700,7 @@ export const fundAccount = async (destination: string) => {
       .addOperation(
         StellarSdk.Operation.createAccount({
           destination,
-          startingBalance: "5",
+          startingBalance: amount,
         })
       )
       .setTimeout(30)
@@ -711,7 +711,7 @@ export const fundAccount = async (destination: string) => {
     const transactionResult = await server.submitTransaction(transaction);
 
     // Return the transaction result
-    return transactionResult;
+    return { status: true, transactionResult };
   } catch (error) {
     console.log("Error funding account", error);
     throw new Error("Error funding account");

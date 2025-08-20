@@ -213,10 +213,11 @@ export const getConversionRate = async (
       // Check if the asset data exists in the fetched data
       if (data.data && data.data[symbol]) {
         // Retrieve the conversion rates for the selected currency, USD, and NGN
+      
         const selectedCurrencyRate =
           data.data[symbol].quote[currencyType.trim().toUpperCase()].price;
-        const usdRate = usdData.data[symbol].quote.USD.price;
-        const ngnRate = ngnData.data[symbol].quote.NGN.price;
+        const usdRate = usdData?.data[symbol]?.quote?.USD?.price;
+        const ngnRate = ngnData?.data[symbol]?.quote?.NGN?.price;
 
         // Calculate the equivalent balances for the token in USD, NGN, and the selected currency
         token.equivalentBalanceInUsd =
@@ -357,7 +358,8 @@ export const getAllWalletAssets = async (req: any, res: any) => {
 
     if (walletAssets.status === 404) {
       return res.status(httpStatus.NOT_FOUND).json({
-        message: "Wallet not found",
+        message:
+          "Account Inactive. This wallet needs a minimum balance of 5 XLM to be created on the network. Activate your account to continue.",
         success: false,
       });
     }

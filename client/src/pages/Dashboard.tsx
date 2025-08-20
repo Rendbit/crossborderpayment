@@ -19,7 +19,7 @@ import { formateDecimal } from "../utils";
 import { Banknote, ArrowRightLeft, Send, Eye } from "lucide-react";
 import { BsBank } from "react-icons/bs";
 import { useAppContext } from "../context/useContext";
-import { CgAdd } from "react-icons/cg";
+import { CgAdd, CgRemove } from "react-icons/cg";
 import { BiInfoCircle } from "react-icons/bi";
 import AddCurrencyModal from "../components/modals/add-currency";
 import RemoveCurrencyModal from "../components/modals/remove-currency";
@@ -56,6 +56,7 @@ const Dashboard: React.FC = () => {
   const [isActivateWalletAlert, setIsActivateWalletAlert] =
     useState<boolean>(false);
   const [address, setAddress] = useState<string>("");
+  const [hasAutoAddedNGNC, setHasAutoAddedNGNC] = useState(false);
   const {
     setIsAddMoneyModalOpen,
     setIsAddCurrencyModalOpen,
@@ -82,6 +83,60 @@ const Dashboard: React.FC = () => {
     handleGetAllTrustLines();
     handleGetTransactionHistory();
   }, []);
+
+  const hasNGNC = walletAssets?.allWalletAssets.some(
+    (asset: any) => asset?.asset_code === "NGNC"
+  );
+  const hasXLM = walletAssets?.allWalletAssets.some(
+    (asset: any) => asset?.asset_code === "NATIVE"
+  );
+
+  // Check if XLM balance is at least 5
+  const xlmAsset = walletAssets?.allWalletAssets.find(
+    (asset: any) => asset?.asset_code === "NATIVE"
+  );
+  const xlmBalance = parseFloat(xlmAsset?.balance || 0);
+
+  useEffect(() => {
+    const autoAddNGNC = async () => {
+      if (walletAssets?.allWalletAssets?.length > 0 && !hasAutoAddedNGNC) {
+        const hasNGNC = walletAssets?.allWalletAssets.some(
+          (asset: any) => asset?.asset_code === "NGNC"
+        );
+        const hasXLM = walletAssets?.allWalletAssets.some(
+          (asset: any) => asset?.asset_code === "NATIVE"
+        );
+
+        // Check if XLM balance is at least 5
+        const xlmAsset = walletAssets?.allWalletAssets.find(
+          (asset: any) => asset?.asset_code === "NATIVE"
+        );
+        const xlmBalance = parseFloat(xlmAsset?.balance || 0);
+
+        if (hasXLM && !hasNGNC && user && xlmBalance >= 5) {
+          try {
+            setLoading(true);
+            const response = await addTrustLine("NGNC", user);
+            if (response.success) {
+              setMsg("NGNC automatically added to your wallet");
+              setAlertType("success");
+              setHasAutoAddedNGNC(true);
+              await handleGetMyAssets();
+              await handleGetAllTrustLines();
+            }
+          } catch (error: any) {
+            console.error("Failed to auto-add NGNC:", error);
+            setMsg("Failed to automatically add NGNC");
+            setAlertType("error");
+          } finally {
+            setLoading(false);
+          }
+        }
+      }
+    };
+
+    autoAddNGNC();
+  }, [walletAssets, user, hasAutoAddedNGNC]);
 
   useEffect(() => {
     const storedAllWalletTotalBalanceInSelectedCurrency = localStorage.getItem(
@@ -154,6 +209,7 @@ const Dashboard: React.FC = () => {
         return;
       }
       setWalletAssets(response?.data);
+      localStorage.setItem("walletAssets", JSON.stringify(response?.data));
     } catch (error: any) {
       if (
         error.message.includes(
@@ -373,17 +429,37 @@ const Dashboard: React.FC = () => {
   const removableAssets = walletAssets?.allWalletAssets?.filter(
     (asset: any) => asset?.asset_code !== "NATIVE"
   );
+  const allAssets: any[] = walletAssets?.allWalletAssets || [];
 
   return (
     <>
       {/* Main Content */}
       <main className="flex-1 p-4 sm:p-6 lg:p-8 text-gray-900 dark:text-gray-100">
         <TopNav page="Dashboard" />
-        {isActivateWalletAlert && (
-          <p className="bg-red-500 text-white p-4 rounded-lg text-center mb-4">
-            {activateWalletAlert}
-          </p>
+
+        {hasXLM && !hasNGNC && user && xlmBalance < 5 && (
+          <button
+            onClick={() => setIsAddMoneyModalOpen(true)}
+            className={`mb-4 underline rounded-lg text-center text-cyan-300`}
+          >
+            Account Inactive. This wallet needs a minimum balance of 5 XLM to be
+            created on the network. Activate your account to continue.
+          </button>
         )}
+        {msg &&
+          alertType &&
+          msg !==
+            "Account Inactive. This wallet needs a minimum balance of 5 XLM to be created on the network. Activate your account to continue." && (
+            <div
+              className={`mb-4 p-4 rounded-lg text-center ${
+                alertType === "success"
+                  ? "bg-green-500 text-white"
+                  : "bg-red-500 text-white"
+              }`}
+            >
+              {msg}
+            </div>
+          )}
 
         {/* Balances */}
         <section className="mt-6 bg-white dark:bg-gray-800 p-4 md:p-6 rounded-lg border border-[#D9D9D9] dark:border-gray-700">
@@ -459,8 +535,43 @@ const Dashboard: React.FC = () => {
 
             {/* Assets Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8 mb-6">
-              {walletAssets?.allWalletAssets?.map(
-                (asset: any, index: number) => (
+              {(() => {
+                // Get current assets
+
+                // Check if we need to show default assets
+                const shouldShowDefaults =
+                  allAssets.length === 0 ||
+                  (allAssets.length === 1 &&
+                    allAssets[0]?.asset_code === "NATIVE");
+
+                // Assets to display
+                let displayAssets = allAssets;
+
+                if (shouldShowDefaults) {
+                  const defaultNGNC = {
+                    asset_name: "NGNC",
+                    asset_code: "NGNC",
+                    image: "./images/nigeria.png",
+                    balance: "0",
+                    equivalentBalanceInUsd: "0",
+                    isDefault: true,
+                  };
+
+                  const defaultXLM = allAssets.find(
+                    (asset) => asset?.asset_code === "NATIVE"
+                  ) || {
+                    asset_name: "Lumens",
+                    asset_code: "NATIVE",
+                    image: "./images/stellar.png",
+                    balance: "0",
+                    equivalentBalanceInUsd: "0",
+                    isDefault: true,
+                  };
+
+                  displayAssets = [defaultXLM, defaultNGNC];
+                }
+
+                return displayAssets.map((asset: any, index: number) => (
                   <div
                     key={index}
                     style={{
@@ -477,20 +588,21 @@ const Dashboard: React.FC = () => {
                     <div className="flex justify-between items-center">
                       <div className="flex items-center p-3 gap-2 bg-[#E7F1F7] dark:bg-gray-700 rounded-full text-sm">
                         <img
-                          src={asset?.image}
+                          src={
+                            asset.asset_code === "NGNC"
+                              ? "./images/nigeria.png"
+                              : asset.asset_code === "NATIVE"
+                              ? "./images/stellar.png"
+                              : asset?.image
+                          }
                           alt={asset?.asset_name}
-                          className="w-5 h-5"
+                          className="w-5 h-5 rounded-full"
                         />
                         <span>{asset?.asset_name}</span>
                       </div>
-                      <button
-                        onClick={() => {
-                          if (asset?.asset_name.toUpperCase() === "LUMENS") return;
-                          setSelectedTrustLine(asset);
-                          setIsRemoveCurrencyModalOpen(true);
-                        }}
-                        className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full"
-                      >
+                      {/* Only show remove button for non-default, non-XLM assets */}
+
+                      <button className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
                         <BsBank
                           className="text-gray-900 cursor-pointer dark:text-gray-100"
                           size={16}
@@ -525,50 +637,80 @@ const Dashboard: React.FC = () => {
                             : asset?.asset_code}{" "}
                           {formateDecimal(asset?.balance || 0)}
                         </p>
-                        <p className="text-sm text-center text-[#1E1E1E dark:text-gray-300">
+                        <p className="text-sm text-center text-[#1E1E1E] dark:text-gray-300">
                           ${formateDecimal(asset?.equivalentBalanceInUsd || 0)}
                         </p>
                       </div>
                     </div>
+
+                    <div className="flex justify-end items-center">
+                      {!asset?.isDefault ||
+                        asset?.asset_code?.toUpperCase() !== "NATIVE" ||
+                        (asset?.asset_code?.toUpperCase() !== "NGNC" && (
+                          <button
+                            onClick={() => {
+                              setSelectedTrustLine(asset);
+                              setIsRemoveCurrencyModalOpen(true);
+                            }}
+                            className="bg-[#E7F1F7] flex items-center gap-2 ri dark:bg-gray-700 p-3 rounded-full"
+                          >
+                            <span className="text-[12px]">Remove Currency</span>
+                            <CgRemove
+                              className="text-gray-900 cursor-pointer dark:text-gray-100"
+                              size={16}
+                            />
+                          </button>
+                        ))}
+                    </div>
                   </div>
-                )
-              )}
+                ));
+              })()}
             </div>
 
             {/* Actions */}
             <div className="flex flex-wrap justify-center gap-3">
-              {availableAssets?.length > 0 && (
+              {hasXLM && !hasNGNC && user && xlmBalance < 5 ? (
                 <button
                   onClick={() => {
-                    setIsAddCurrencyModalOpen(true);
+                    setIsAddMoneyModalOpen(true);
                   }}
                   className="px-4 py-3 flex items-center gap-2 text-sm bg-white dark:bg-gray-800 border border-[#D9D9D9] dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
                 >
-                  Add Currency <Banknote size={16} />
+                  Activate Account
                 </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => {
+                      setIsAddCurrencyModalOpen(true);
+                    }}
+                    className="px-4 py-3 flex items-center gap-2 text-sm bg-white dark:bg-gray-800 border border-[#D9D9D9] dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                  >
+                    Add Currency <Banknote size={16} />
+                  </button>
+                  <button
+                    onClick={() => setIsAddMoneyModalOpen(true)}
+                    className="px-4 py-3 flex items-center gap-2 text-sm bg-white dark:bg-gray-800 border border-[#D9D9D9] dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                  >
+                    Add Money <CgAdd size={16} />
+                  </button>
+                  <button
+                    onClick={() => setIsSendMoneyModalOpen(true)}
+                    className="px-4 py-3 flex items-center gap-2 text-sm bg-white dark:bg-gray-800 border border-[#D9D9D9] dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                  >
+                    Send Money <Send size={16} />
+                  </button>
+                  <button
+                    onClick={() => navigate("/swap")}
+                    className="px-4 py-3 flex items-center gap-2 text-sm bg-white dark:bg-gray-800 border border-[#D9D9D9] dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                  >
+                    <ArrowRightLeft size={16} /> Convert Funds
+                  </button>
+                </>
               )}
-              <button
-                onClick={() => setIsAddMoneyModalOpen(true)}
-                className="px-4 py-3 flex items-center gap-2 text-sm bg-white dark:bg-gray-800 border border-[#D9D9D9] dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-              >
-                Add Money <CgAdd size={16} />
-              </button>
-              <button
-                onClick={() => setIsSendMoneyModalOpen(true)}
-                className="px-4 py-3 flex items-center gap-2 text-sm bg-white dark:bg-gray-800 border border-[#D9D9D9] dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-              >
-                Send Money <Send size={16} />
-              </button>
-              <button
-                onClick={() => navigate("/swap")}
-                className="px-4 py-3 flex items-center gap-2 text-sm bg-white dark:bg-gray-800 border border-[#D9D9D9] dark:border-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-              >
-                <ArrowRightLeft size={16} /> Convert Funds
-              </button>
             </div>
           </div>
         </section>
-
         {/* Transactions */}
         <TransactionTable NumberOfTx={3} isHistoryPage={false} />
       </main>

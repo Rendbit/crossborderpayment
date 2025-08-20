@@ -10,6 +10,7 @@ import { PUBLIC_ASSETS, TESTNET_ASSETS } from "../common/assets";
 import { WalletDecryption } from "../helpers/encryption-decryption.helper";
 import { WithdrawalEnum } from "../common/enums";
 import { generateConfirmationToken } from "../utils/token";
+import { fundAccount } from "./auth";
 
 const server = new StellarSdk.SorobanRpc.Server(
   process.env.STELLAR_NETWORK === "public"
@@ -833,6 +834,7 @@ export const strictSend = async (req: any, res: any) => {
   try {
     const user = req.user;
     let { desAddress, slippage, assetCode, amount } = req.body;
+
     // Ensure the slippage value is a number.
     slippage *= 1;
 
@@ -845,6 +847,37 @@ export const strictSend = async (req: any, res: any) => {
       });
     }
 
+    // Check if destination account exists/activated
+    let accountFunded = false;
+    try {
+      const url: string = `${
+        process.env.STELLAR_NETWORK == "public"
+          ? process.env.HORIZON_MAINNET_URL
+          : process.env.HORIZON_TESTNET_URL
+      }/accounts/${desAddress}`;
+
+      const resp = await fetch(url);
+      const walletAssets = await resp.json();
+
+      if (walletAssets.status === 404) {
+        const fundResult = await fundAccount(desAddress, amount?.toString());
+        if (fundResult?.status) accountFunded = true;
+      }
+    } catch (error: any) {
+      throw error;
+    }
+
+    // If we just funded the account, return success response immediately
+    if (accountFunded) {
+      return res.status(httpStatus.OK).json({
+        data: { hash: "account_funded" }, // You might want to use the actual hash from fundResult
+        message: "Destination account funded successfully",
+        status: httpStatus.OK,
+        success: true,
+      });
+    }
+
+    // Continue with strictSend if account already existed
     // Determine the source asset issuer based on the network configuration.
     const sourceAssetIssuer =
       process.env.STELLAR_NETWORK === "public"
@@ -869,6 +902,7 @@ export const strictSend = async (req: any, res: any) => {
     // Extract the hashed password from the account object.
     const hashedPassword = user.password;
     const paths = _paths.data.sendPaymentPath;
+
     // Decrypt the user's private key using their encrypted private key,
     // primary email, hashed password, and pin code.
     const decryptedPrivateKey = WalletDecryption.decryptPrivateKey(
@@ -926,13 +960,14 @@ export const strictSend = async (req: any, res: any) => {
       )
       .setTimeout(process.env.TIMEOUT) // Set the transaction timeout.
       .build(); // Build the transaction.
-    // Sign the transaction using the user's decrypted private key.
 
+    // Sign the transaction using the user's decrypted private key.
     const resp: any = await WalletHelper.execTranst(
       transaction,
       StellarSdk.Keypair.fromSecret(decryptedPrivateKey),
       "strictSend"
     );
+
     if (!resp.status) {
       return res.status(httpStatus.BAD_REQUEST).json({
         data: { hash: resp.details.hash },
