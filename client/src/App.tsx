@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from "react";
 import { HashRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { useAppContext } from "./context/useContext";
+import Profile from "./pages/Profile";
 
 // Lazy-loaded pages
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -81,6 +82,7 @@ const App: React.FC = () => {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/history" element={<History />} />
+            <Route path="/profile" element={<Profile />} />
           </Route>
 
           {/* Auth pages (no SideNav) */}

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import TopNav from "../components/top-nav/TopNav";
 import PrivacyAndSecurity from "../components/settings/PrivacyAndSecurity";
 import Notification from "../components/settings/Notification";
+import TwoFASecurity from "../components/settings/TwoFASecurity";
 
 const Setting: React.FC = () => {
   const [selectedSetings, setSelectedSetings] =
@@ -16,16 +17,16 @@ const Setting: React.FC = () => {
       <main className="flex-1 p-4 sm:p-6 lg:p-8 text-gray-900 dark:text-gray-100">
         <TopNav page="Setting" />
         <section className="mt-6 bg-white dark:bg-gray-800 border-[#D9D9D9] md:pt-8 pt-4 border-t dark:border-gray-700">
-          <div className="w-full bg-white dark:bg-[#1c2939] mb-6">
-            <div className="flex gap-[70px] items-start mb-6">
-              {["Notifications", "Privacy and Security"].map((item) => (
+          <div className="w-full bg-white dark:bg-[#1c2939] mb-10">
+            <div className="flex gap-[50px] items-start mb-6 border-b border-gray-200 dark:border-gray-700">
+              {["Notifications", "Privacy and Security", "2FA Security"].map((item) => (
                 <div
                   key={item}
                   onClick={() => handleSettingChange(item)}
                   className={`cursor-pointer flex flex-col pb-2
                     ${
                       selectedSetings === item
-                        ? "border-b-2 border-gray-200 dark:border-gray-700"
+                        ? "border-b-2 border-gray-200 dark:border-gray-700 px-[30px]"
                         : ""
                     }`}
                 >
@@ -41,8 +42,9 @@ const Setting: React.FC = () => {
           </div>
           <div>
             {selectedSetings === "Notifications" && <Notification />}
-            {selectedSetings === "Privacy and Security" && (
-              <PrivacyAndSecurity />
+            {selectedSetings === "Privacy and Security" && (<PrivacyAndSecurity />)}
+            {selectedSetings === "2FA Security" && (
+              <TwoFASecurity />
             )}
           </div>
         </section>

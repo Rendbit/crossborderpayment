@@ -1,7 +1,7 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
-import { X, ArrowRightIcon, LogOutIcon } from "lucide-react";
+import { X, ArrowRightIcon, LogOutIcon, User2Icon } from "lucide-react";
 import { GrDashboard } from "react-icons/gr";
 import {
   RiMoneyDollarCircleFill,
@@ -76,7 +76,7 @@ const SideNav: React.FC = () => {
       },
     },
   ];
-
+  
   const otherLinks = [
     {
       label: "Settings",
@@ -84,6 +84,14 @@ const SideNav: React.FC = () => {
       icon: <RiSettings3Fill />,
       onClick: () => {
         navigate("/settings");
+      },
+    },
+    {
+      label: "Profile",
+      path: "/profile",
+      icon: <User2Icon />,
+      onClick: () => {
+        navigate("/profile");
       },
     },
     // {
