@@ -180,7 +180,7 @@ const Notification: React.FC = () => {
               className="accent-[#0E7BB2] h-4 w-4 cursor-pointer hover:accent-[#0c5e89] disabled:opacity-100"
               readOnly
             />
-            <div>
+            <div className="text-left">
               <p className="text-md md:text-lg font-semibold text-gray-900 dark:text-white mb-1">
                 Light Mode (Default)
               </p>
@@ -201,7 +201,7 @@ const Notification: React.FC = () => {
               className="accent-[#0E7BB2] h-4 w-4 cursor-pointer hover:accent-[#0c5e89] disabled:opacity-100"
               readOnly
             />
-            <div>
+            <div className="text-left">
               <p className="text-md md:text-lg font-semibold text-gray-900 dark:text-white mb-1">
                 Dark Mode
               </p>
@@ -222,7 +222,7 @@ const Notification: React.FC = () => {
               className="accent-[#0E7BB2] h-4 w-4 cursor-pointer hover:accent-[#0c5e89] disabled:opacity-100"
               readOnly
             />
-            <div>
+            <div className="text-left">
               <p className="text-md md:text-lg font-semibold text-gray-900 dark:text-white mb-1">
                 System Mode
               </p>
