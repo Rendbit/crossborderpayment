@@ -19,6 +19,8 @@ interface AppContextProps {
   setIsRemoveCurrencyModalOpen: (open: boolean) => void;
   isAddMoneyModalOpen: boolean;
   setIsAddMoneyModalOpen: (open: boolean) => void;
+  isPrivateKeyModalOpen: boolean;
+  setIsPrivateKeyModalOpen: (open: boolean) => void;
   isSendMoneyModalOpen: boolean;
   setIsSendMoneyModalOpen: (open: boolean) => void;
   selectedCountryForTransfer: any;
@@ -45,6 +47,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   ] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState({});
   const [isAddMoneyModalOpen, setIsAddMoneyModalOpen] = useState(false);
+  const [isPrivateKeyModalOpen, setIsPrivateKeyModalOpen] = useState(false);
   const [isRemoveCurrencyModalOpen, setIsRemoveCurrencyModalOpen] =
     useState(false);
   const [isAddCurrencyModalOpen, setIsAddCurrencyModalOpen] = useState(false);
@@ -137,6 +140,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setSidebarOpen,
         isAddMoneyModalOpen,
         setIsAddMoneyModalOpen,
+        setIsPrivateKeyModalOpen,
+        isPrivateKeyModalOpen,
         isSendMoneyModalOpen,
         setIsSendMoneyModalOpen,
         selectedCountryForTransfer,
