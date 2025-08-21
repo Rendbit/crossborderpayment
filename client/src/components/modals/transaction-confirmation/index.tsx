@@ -42,7 +42,7 @@ const TransactionConfirmationModal: React.FC<
         <OTPInput
           value={transactionPin}
           inputType="password"
-          inputStyle={{ width: "80px" }}
+          inputStyle={{ width: "100px" }}
           onChange={setTransactionPin}
           numInputs={4}
           renderSeparator={<span style={{ visibility: "hidden" }}>---</span>}
