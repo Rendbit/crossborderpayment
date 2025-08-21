@@ -37,7 +37,7 @@ const PrivateKeyModal: React.FC<PrivateKeyModalProps> = ({
 
         {/* Modal Header */}
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-          Enter Password
+          Enter Pin
         </h2>
         <p className="text-gray-600 dark:text-gray-300 mb-6 border-b border-gray-200 dark:border-gray-700 pb-4 md:text-[16px] text-[14px]">
           Exporting your private key will reveal sensitive information about
@@ -46,9 +46,6 @@ const PrivateKeyModal: React.FC<PrivateKeyModalProps> = ({
           your assets.
         </p>
 
-        <p className="font-medium text-gray-900 dark:text-white">
-          Enter your pin
-        </p>
         <OTPInput
           value={transactionPin}
           inputType="password"

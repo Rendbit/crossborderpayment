@@ -18,10 +18,8 @@ const RemoveCurrencyModal: React.FC<RemoveCurrencyModalProps> = ({
   if (!selectedTrustLine) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      <div
-        className={`mx-3 w-full max-w-sm p-6 rounded-xl bg-white dark:bg-gray-800`}
-      >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-300/90 dark:bg-black/90">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-lg p-6 relative">
         <div className="text-center flex flex-col items-center mt-4">
           <img
             src={selectedTrustLine.image}
