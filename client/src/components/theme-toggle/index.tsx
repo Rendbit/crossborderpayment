@@ -16,10 +16,10 @@ export default function ThemeToggle({ type = "full" }: ThemeToggleProps) {
     >
       {type === "icon"
       ? theme === "light"
-        ? "🌙"
+        ? "🌙 Dark Mode"
         : theme === "dark"
-        ? "☀️"
-        : "🖥️"
+        ? "☀️ Light Mode"
+        : "System 🖥️"
       : type === "full"
       ? theme === "light"
         ? "🌙 Dark Mode"
