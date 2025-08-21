@@ -3,6 +3,7 @@ import { X } from "lucide-react";
 import { useAppContext } from "../../../context/useContext";
 import ArrayItemLoader from "../../loader/ArrayItemLoader";
 import { CgAdd } from "react-icons/cg";
+import { getAssetDisplayName } from "../../../utils";
 
 interface AddCurrencyModalProps {
   loadingPUBLIC_ASSETS: boolean;
@@ -61,7 +62,12 @@ const AddCurrencyModal: React.FC<AddCurrencyModalProps> = ({
               <ArrayItemLoader />
             ) : availableAssets?.length > 0 ? (
               availableAssets.map((key, index) => (
-                <div className="flex items-center justify-between" key={index}>
+                <div
+                  className={` items-center justify-between ${
+                    PUBLIC_ASSETS[key].code === "NGNC" ? "hidden" : "flex"
+                  }`}
+                  key={index}
+                >
                   <div className="flex items-center gap-3 py-2 px-3  cursor-pointer rounded-md">
                     <img
                       src={PUBLIC_ASSETS[key].image}
@@ -73,9 +79,7 @@ const AddCurrencyModal: React.FC<AddCurrencyModalProps> = ({
                         {PUBLIC_ASSETS[key].name}
                       </p>
                       <p className="text-[10px] text-gray-400">
-                        {PUBLIC_ASSETS[key].code === "native"
-                          ? "XLM"
-                          : PUBLIC_ASSETS[key].code}
+                        {getAssetDisplayName(PUBLIC_ASSETS[key].code)}
                       </p>
                     </div>
                   </div>
@@ -111,7 +115,7 @@ const AddCurrencyModal: React.FC<AddCurrencyModalProps> = ({
                   {selectedAsset.name}
                 </p>
                 <p className={`text-xs text-gray-700 dark:text-gray-300`}>
-                  {selectedAsset.code === "native" ? "XLM" : selectedAsset.code}
+                  {getAssetDisplayName(selectedAsset?.code)}
                 </p>
               </div>
             </div>
