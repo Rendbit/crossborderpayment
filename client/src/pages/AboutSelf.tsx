@@ -187,7 +187,7 @@ const AboutSelf: React.FC = () => {
                   <input
                     type="text"
                     defaultValue={country}
-                    placeholder="Nigeria"
+                    placeholder="Select country"
                     autoComplete="off"
                     className="outline-none  w-full text-white autofill:bg-transparent autofill:shadow-[0_0_0px_1000px_rgba(0,0,0,0)]"
                   />

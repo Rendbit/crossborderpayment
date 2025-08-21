@@ -598,6 +598,24 @@ export const createWallet = async (req: any, res: any) => {
     const user = req.user;
     const { pinCode, username, country } = req.body;
 
+    if (!username) {
+      return res.status(httpStatus.BAD_REQUEST).json({
+        message: "Username is required.",
+        status: httpStatus.BAD_REQUEST,
+        success: false,
+        data: null,
+      });
+    }
+
+    const existingUser = await User.findOne({ username }).lean();
+    if (existingUser) {
+      return res.status(httpStatus.CONFLICT).json({
+        message: "Username already exists.",
+        status: httpStatus.CONFLICT,
+        success: false,
+        data: null,
+      });
+    }
     // 👉 Check first: if user already has a wallet, do nothing else
     if (user.stellarPublicKey) {
       return res.status(httpStatus.CONFLICT).json({
