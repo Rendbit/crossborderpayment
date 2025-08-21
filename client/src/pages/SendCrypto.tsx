@@ -13,6 +13,7 @@ import Alert from "../components/alert/Alert";
 import { BsBank } from "react-icons/bs";
 import {
   formateDecimal,
+  formatNumberWithCommas,
   getAssetDisplayName,
   getMinimumSendAmount,
   getSpendableBalance,
@@ -74,9 +75,6 @@ const SendCrypto: React.FC = () => {
 
   const navigate = useNavigate();
 
-  // -------- Helpers --------
-  const formatNumberWithCommas = (n: number | string): string =>
-    Number(n || 0).toLocaleString();
 
   const clearAlerts = () => {
     setAlertType("");
@@ -725,11 +723,11 @@ const SendCrypto: React.FC = () => {
                     Max
                   </button>
                 </div>
-                {previewData?.fundResultMessage && (
+                {/* {previewData?.fundResultMessage && (
                   <p className="text-[12px] text-[#911a1a] mt-2">
                     {previewData?.fundResultMessage}
                   </p>
-                )}
+                )} */}
                 {labelFor(selectedAsset) && (
                   <p className="text-xs text-gray-500 mt-1 mb-6">
                     Min:{" "}
@@ -1049,7 +1047,7 @@ const SendCrypto: React.FC = () => {
       </main>
       {isRemoveTransactionConfirmationModalOpen && (
         <TransactionConfirmationModal
-          handlTransactionConfirmation={onNext}
+          handleTransactionConfirmation={onNext}
           loading={loadingSubmit}
           alertType={alertType}
         />

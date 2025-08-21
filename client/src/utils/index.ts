@@ -6,7 +6,6 @@ type WalletAsset = {
 
 const REQUIRED_XLM_BALANCE = import.meta.env.VITE_REQUIRED_XLM_BALANCE;
 
-
 const formateDecimal = (value: number) => {
   if (!value) return "0";
   const balanceStr = value.toString();
@@ -63,11 +62,15 @@ const getSpendableBalance = (asset: any): number => {
 
   const balance = Number(asset?.balance);
   if (labelFor(asset) === "XLM") {
-    const minRequired = REQUIRED_XLM_BALANCE ? Number(REQUIRED_XLM_BALANCE) : 3;
+    // const minRequired = REQUIRED_XLM_BALANCE ? Number(REQUIRED_XLM_BALANCE) : 3;
+    const minRequired = 0;
     return Math.max(0, balance - minRequired);
   }
   return balance;
 };
+const formatNumberWithCommas = (n: number | string): string =>
+  Number(n || 0).toLocaleString();
+
 export {
   formateDecimal,
   getAssetDisplayName,
@@ -75,4 +78,5 @@ export {
   getMinimumSendAmount,
   getMinimumSwapAmount,
   getSpendableBalance,
+  formatNumberWithCommas,
 };

@@ -644,7 +644,7 @@ const Swap: React.FC = () => {
       )}
       {isRemoveTransactionConfirmationModalOpen && (
         <TransactionConfirmationModal
-          handlTransactionConfirmation={handleSwapAssets}
+          handleTransactionConfirmation={handleSwapAssets}
           loading={loadingSwap}
           alertType={alertType}
         />

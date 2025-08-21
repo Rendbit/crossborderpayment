@@ -111,28 +111,16 @@ const AddCurrencyModal: React.FC<AddCurrencyModalProps> = ({
                 alt={selectedAsset.name}
               />
               <div>
-                <p
-                  className={`font-medium ${
-                    theme === "dark" ? "text-white" : "text-gray-900"
-                  }`}
-                >
+                <p className={`font-medium text-gray-700 dark:text-gray-300`}>
                   {selectedAsset.name}
                 </p>
-                <p
-                  className={`text-xs ${
-                    theme === "dark" ? "text-gray-300" : "text-gray-600"
-                  }`}
-                >
+                <p className={`text-xs text-gray-700 dark:text-gray-300`}>
                   {selectedAsset.code === "native" ? "XLM" : selectedAsset.code}
                 </p>
               </div>
             </div>
 
-            <p
-              className={`text-sm mt-6 text-center ${
-                theme === "dark" ? "text-white" : "text-gray-900"
-              }`}
-            >
+            <p className="text-sm mt-6 text-center text-gray-700 dark:text-gray-300">
               Are you sure you want to{" "}
               <span className="font-semibold">ADD</span> this asset to your list
               of trustlines?

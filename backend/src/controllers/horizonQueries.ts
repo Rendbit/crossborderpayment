@@ -213,7 +213,7 @@ export const getConversionRate = async (
       // Check if the asset data exists in the fetched data
       if (data.data && data.data[symbol]) {
         // Retrieve the conversion rates for the selected currency, USD, and NGN
-      
+
         const selectedCurrencyRate =
           data.data[symbol].quote[currencyType.trim().toUpperCase()].price;
         const usdRate = usdData?.data[symbol]?.quote?.USD?.price;
@@ -411,7 +411,10 @@ export const getAllWalletAssets = async (req: any, res: any) => {
         asset_name: assetName,
         asset_issuer: assetIssuer,
         symbol_id: symbolId,
-        balance: Number(data[i].balance),
+        balance:
+          assetIssuer === "native"
+            ? Number(data[i].balance) - 3
+            : Number(data[i].balance),
         trust_limit: Number(data[i].limit || 0),
         image: image,
       });

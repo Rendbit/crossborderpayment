@@ -15,7 +15,12 @@ import {
   getTransactionHistory,
   removeTrustLine,
 } from "../function/transaction";
-import { formateDecimal } from "../utils";
+import {
+  formateDecimal,
+  formatNumberWithCommas,
+  getAssetDisplayName,
+  getSpendableBalance,
+} from "../utils";
 import { Banknote, ArrowRightLeft, Send, Eye } from "lucide-react";
 import { BsBank } from "react-icons/bs";
 import { useAppContext } from "../context/useContext";
@@ -475,10 +480,10 @@ const Dashboard: React.FC = () => {
 
                 {/* Main Balance */}
                 <p className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white">
-                  {selectedCurrency} {currentPrice?.toFixed(2) || "loading..."}
+                  {selectedCurrency} {formatNumberWithCommas(currentPrice?.toFixed(2)) || "loading..."}
                 </p>
                 <p className="text-sm md:text-base text-gray-500 dark:text-gray-300">
-                  ≈ {convertPrice?.toFixed(2) || "loading..."} {convertCurrency}
+                  ≈ {formatNumberWithCommas(convertPrice?.toFixed(2)) || "loading..."} {convertCurrency}
                 </p>
               </div>
 
@@ -635,7 +640,7 @@ const Dashboard: React.FC = () => {
                           {asset?.asset_code === "NATIVE"
                             ? "XLM"
                             : asset?.asset_code}{" "}
-                          {formateDecimal(asset?.balance || 0)}
+                          {formateDecimal(getSpendableBalance(asset) || 0)}
                         </p>
                         <p className="text-sm text-center text-[#1E1E1E] dark:text-gray-300">
                           ${formateDecimal(asset?.equivalentBalanceInUsd || 0)}

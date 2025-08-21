@@ -29,18 +29,10 @@ const RemoveCurrencyModal: React.FC<RemoveCurrencyModalProps> = ({
             alt={selectedTrustLine?.asset_name}
           />
           <div>
-            <p
-              className={`font-medium ${
-                theme === "dark" ? "text-white" : "text-gray-900"
-              }`}
-            >
+            <p className={`font-medium text-gray-700 dark:text-gray-300`}>
               {selectedTrustLine?.asset_name}
             </p>
-            <p
-              className={`text-xs ${
-                theme === "dark" ? "text-gray-300" : "text-gray-600"
-              }`}
-            >
+            <p className={`text-xs text-gray-700 dark:text-gray-300`}>
               {selectedTrustLine?.asset_code === "NATIVE"
                 ? "XLM"
                 : selectedTrustLine?.asset_code}
@@ -48,11 +40,7 @@ const RemoveCurrencyModal: React.FC<RemoveCurrencyModalProps> = ({
           </div>
         </div>
 
-        <p
-          className={`text-sm mt-6 text-center ${
-            theme === "dark" ? "text-white" : "text-gray-900"
-          }`}
-        >
+        <p className="text-sm mt-6 text-center text-gray-700 dark:text-gray-300">
           Are you sure you want to <span className="font-semibold">REMOVE</span>{" "}
           this asset from your list of trustlines?
         </p>

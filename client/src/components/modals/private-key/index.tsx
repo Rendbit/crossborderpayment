@@ -1,26 +1,31 @@
-import React from "react";
-import { X, ArrowRight, Lock, EyeOff, Eye } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { X } from "lucide-react";
 import { useAppContext } from "../../../context/useContext";
 import { useNavigate } from "react-router-dom";
+import OTPInput from "react-otp-input";
 
-const PrivateKeyModal: React.FC = () => {
+interface PrivateKeyModalProps {
+  handleConfirmation: (transactionPin: string) => void;
+  loading: boolean;
+  showPrivateKey: any;
+}
+
+const PrivateKeyModal: React.FC<PrivateKeyModalProps> = ({
+  handleConfirmation,
+  loading,
+  showPrivateKey,
+}) => {
   const { setIsPrivateKeyModalOpen } = useAppContext();
-  const [showPin, setShowPin] = React.useState(false);
-  const [pinType, setPinType] = React.useState("password");
-  const navigate = useNavigate();
+  const [transactionPin, setTransactionPin] = useState<any>("");
 
-  const handleAddViaLumen = () => {
-    navigate("/deposit-crypto");
-    setIsPrivateKeyModalOpen(false);
-  };
-
-  const handleChooseRecipientCountry = () => {
-    navigate("/choose-recipient-deposit-country");
-    setIsPrivateKeyModalOpen(false);
-  };
+  useEffect(() => {
+    if (showPrivateKey) {
+      setIsPrivateKeyModalOpen(false);
+    }
+  }, [showPrivateKey]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-300/90 dark:bg-black/90">
       <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-lg p-6 relative">
         {/* Close Button */}
         <button
@@ -35,42 +40,43 @@ const PrivateKeyModal: React.FC = () => {
           Enter Password
         </h2>
         <p className="text-gray-600 dark:text-gray-300 mb-6 border-b border-gray-200 dark:border-gray-700 pb-4 md:text-[16px] text-[14px]">
-          Exporting your private key will reveal sensitive information about your wallet. Ensure you store it securely and never share it with anyone. Losing your private key may result in the permanent loss of your assets.
+          Exporting your private key will reveal sensitive information about
+          your wallet. Ensure you store it securely and never share it with
+          anyone. Losing your private key may result in the permanent loss of
+          your assets.
         </p>
 
-        {/* Options */}
-        <div className="flex flex-col gap-4">
-          {/* Option 1 */}
-            <div className="flex items-center gap-3">
-              <div className="text-left w-full">
-                <p className="font-medium text-gray-900 dark:text-white">
-                  Enter your pin
-                </p>
-                <div className="flex items-center gap-2 mt-2 border py-2 w-full border-gray-200 dark:border-gray-700 rounded-lg px-3">
-                    <div className="flex items-center gap-2 w-full">
-                        <Lock size={"15px"} className="text-gray-500 dark:text-gray-400" />
-                        <input type={pinType} placeholder="********" className="w-full outline-none text-gray-500 dark:text-gray-400"/>
-                    </div>
-                    {
-                        showPin ?
-                        <EyeOff onClick={() => {
-                            setPinType('password');
-                            setShowPin(false);
-                        }} size={"15px"} className="text-gray-500 dark:text-gray-400 cursor-pointer" />
-                        :
-                        <Eye onClick={() => {
-                            setPinType('text');
-                            setShowPin(true);
-                        }} size={"15px"} className="text-gray-500 dark:text-gray-400 cursor-pointer" />
-                    }
-                </div>
-                <div className="flex justify-end mt-5 gap-3">
-                    <button className="border border-[#E2E4E9] rounded-[10px] py-[6px] w-full text-gray-500 dark:text-gray-400">Discard</button>
-                    <button className="bg-[#375DFB] rounded-[10px] py-2 w-full text-white">Apply Changes</button>
-                </div>
-              </div>
-            </div>
-        </div>
+        <p className="font-medium text-gray-900 dark:text-white">
+          Enter your pin
+        </p>
+        <OTPInput
+          value={transactionPin}
+          inputType="password"
+          inputStyle={{ width: "100px" }}
+          onChange={setTransactionPin}
+          numInputs={4}
+          renderSeparator={<span style={{ visibility: "hidden" }}>---</span>}
+          renderInput={(props) => (
+            <input
+              {...props}
+              placeholder="0"
+              className="text-center text-gray-700 darktext-gray-300 focus:border-[#0E7BB2] bg-white/8 border-gray-300 dark:border-[white]/50  otp-input text-[26px] font-[600] outline-none h-[68px] rounded-md border placeholder:text-[#96969659] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+          )}
+        />
+
+        <button
+          onClick={() => {
+            handleConfirmation(transactionPin);
+          }}
+          disabled={loading || !transactionPin || transactionPin.length < 4}
+          className="hover:bg-[#0c5e89] bg-[#0E7BB2] mt-3 flex justify-center items-center rounded-[10px] py-2 w-full text-white"
+        >
+          Confirm
+          {loading && (
+            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          )}
+        </button>
       </div>
     </div>
   );

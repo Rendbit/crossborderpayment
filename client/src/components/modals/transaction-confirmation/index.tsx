@@ -4,14 +4,14 @@ import OTPInput from "react-otp-input";
 import { X } from "lucide-react";
 
 interface TransactionConfirmationModalProps {
-  handlTransactionConfirmation: (transactionPin: string) => void;
+  handleTransactionConfirmation: (transactionPin: string) => void;
   loading: boolean;
   alertType: string;
 }
 
 const TransactionConfirmationModal: React.FC<
   TransactionConfirmationModalProps
-> = ({ handlTransactionConfirmation, loading, alertType }) => {
+> = ({ handleTransactionConfirmation, loading, alertType }) => {
   const [transactionPin, setTransactionPin] = useState<any>("");
 
   const { theme, setIsRemoveTransactionConfirmationModalOpen } =
@@ -24,7 +24,7 @@ const TransactionConfirmationModal: React.FC<
   }, [alertType]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/90 dark:bg-black/90">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-300/90 dark:bg-black/90">
       <div
         className={`bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6 relative`}
       >
@@ -43,7 +43,7 @@ const TransactionConfirmationModal: React.FC<
         </p>
         <OTPInput
           value={transactionPin}
-          inputType="number"
+          inputType="password"
           inputStyle={{ width: "80px" }}
           onChange={setTransactionPin}
           numInputs={4}
@@ -52,7 +52,7 @@ const TransactionConfirmationModal: React.FC<
             <input
               {...props}
               placeholder="0"
-              className="text-center text-white bg-white/8  border-[white]/50  otp-input text-[26px] font-[600] outline-none h-[68px] rounded-md border placeholder:text-[#96969659] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              className="text-center text-gray-700 darktext-gray-300 bg-white/8 border-gray-300 focus:border-[#0E7BB2] dark:border-[white]/50  otp-input text-[26px] font-[600] outline-none h-[68px] rounded-md border placeholder:text-[#96969659] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
           )}
         />
@@ -64,7 +64,7 @@ const TransactionConfirmationModal: React.FC<
               : "hover:bg-[#0c5e89] bg-[#0E7BB2]"
           } text-white disabled:opacity-50`}
           onClick={() => {
-            handlTransactionConfirmation(transactionPin);
+            handleTransactionConfirmation(transactionPin);
           }}
           disabled={loading || !transactionPin || transactionPin.length < 4}
         >
