@@ -618,7 +618,7 @@ export const swapPreview = async (req: any, res: any) => {
           sourceAmount: sourceAmount,
           expectedDestinationAmount: desAmount,
           minimumReceived: destMin,
-          slippage: slippage + "%",
+          slippage: slippage,
           fee: process.env.FEE,
           network: process.env.STELLAR_NETWORK,
           exchangeRate: (

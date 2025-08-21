@@ -265,7 +265,7 @@ const Login: React.FC = () => {
                         placeholder="hello@rendbit.com"
                         autoComplete="off"
                         name="email-field"
-                        className="outline-none w-full"
+                        className="outline-none w-full "
                       />
                     </div>
                   </div>

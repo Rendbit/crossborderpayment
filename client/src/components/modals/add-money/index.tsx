@@ -16,7 +16,7 @@ const AddMoneyModal: React.FC = () => {
   };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-300/90 dark:bg-black/90">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-lg p-6 relative">
+      <div className="bg-white mx-5 dark:bg-gray-800 rounded-2xl w-full max-w-lg p-6 relative">
         {/* Close Button */}
         <button
           className="absolute bg-gray-100 dark:bg-gray-700 rounded-full p-1 text-[1rem] top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100"

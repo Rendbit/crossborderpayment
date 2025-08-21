@@ -120,20 +120,34 @@ const Swap: React.FC = () => {
     bootstrapAssets();
   }, []);
 
+  // Effect for triggering preview when all inputs are available
+  useEffect(() => {
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      if (Number(sourceAmount) > 0) {
+        handleSwapAssetsPreview();
+      }
+    }, 500);
+
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, [selectedAsset, sourceAmount]);
+
   // When user types amount, debounce preview
   const handleSourceAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    console.log({ value });
     if (!/^(?:\d*(?:\.|,)??\d*)$/.test(value)) return; // allow numbers & dot
     setSourceAmount(value);
     setDescAmount("");
     setExchangeRate("");
     setSwapAssetPreview(null);
-
-    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-    typingTimeoutRef.current = setTimeout(() => {
-      if (Number(value) > 0) handleSwapAssetsPreview();
-    }, 500);
   };
 
   const handleMax = () => {
@@ -167,18 +181,14 @@ const Swap: React.FC = () => {
 
   // -------- API: Preview --------
   async function handleSwapAssetsPreview(overrideAmount?: string) {
+
     const amount = overrideAmount ?? sourceAmount;
     const numericAmount = Number(amount);
 
     if (!amount || numericAmount <= 0) return;
 
     // Validate minimum amount
-    console.log({
-      sourceAmount: Number(sourceAmount),
-      getMinimumSwapAmount: getMinimumSwapAmount(
-        selectedAsset?.asset_code.toUpperCase()
-      ),
-    });
+
     if (
       Number(sourceAmount) <
       getMinimumSwapAmount(selectedAsset?.asset_code.toUpperCase())
@@ -545,27 +555,49 @@ const Swap: React.FC = () => {
 
             {/* Preview Details */}
             {swapAssetPreview && (
-              <div className="p-3 mb-4 rounded-lg bg-gray-100 dark:bg-gray-700 text-sm">
-                <p>
-                  Rate: 1 {getAssetDisplayName(selectedAsset?.asset_code)} ≈{" "}
-                  {rateExchange}{" "}
-                  {getAssetDisplayName(selectedAssetReceive?.asset_code)}
-                </p>
-                <p>
-                  Expected: {formateDecimal(Number(descAmount) || 0)}{" "}
-                  {getAssetDisplayName(selectedAssetReceive?.asset_code)}
-                </p>
-                <p>Min Received: {swapAssetPreview.minimumReceived}</p>
-                <p>
-                  From: {sourceAmount}{" "}
-                  {getAssetDisplayName(selectedAsset.asset_code)}{" "}
-                </p>
-                <p>
-                  To: {swapAssetPreview.minimumReceived}{" "}
-                  {getAssetDisplayName(selectedAssetReceive.asset_code)}{" "}
-                </p>
-                <p>Fee: {Number(swapAssetPreview.fee) / 10000000} XLM</p>
-                <p>Slippage: {swapAssetPreview.slippage}</p>
+              <div className="p-3 mb-4 rounded-lg bg-gray-100 dark:bg-gray-700 text-sm space-y-2">
+                <div className="flex justify-between">
+                  <span>Rate:</span>
+                  <span>
+                    1 {getAssetDisplayName(selectedAsset?.asset_code)} ≈{" "}
+                    {rateExchange}{" "}
+                    {getAssetDisplayName(selectedAssetReceive?.asset_code)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span>Expected:</span>
+                  <span>
+                    {formatNumberWithCommas(
+                      formateDecimal(Number(descAmount) || 0)
+                    )}{" "}
+                    {getAssetDisplayName(selectedAssetReceive?.asset_code)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span>Min Received:</span>
+                  <span>
+                    {formatNumberWithCommas(swapAssetPreview?.minimumReceived)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span>Fee:</span>
+                  <span>
+                    {formatNumberWithCommas(
+                      Number(swapAssetPreview?.fee) / 10000000
+                    )}{" "}
+                    XLM
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span>Slippage:</span>
+                  <span>
+                    {formatNumberWithCommas(swapAssetPreview?.slippage)} %
+                  </span>
+                </div>
               </div>
             )}
 
@@ -602,7 +634,7 @@ const Swap: React.FC = () => {
                   handleSwapAssetsPreview();
                 }}
               >
-                {loadingPreview ? "Previewing…" : "Next"}
+                {loadingPreview ? "Fetching quote…" : "Next"}
               </button>
             ) : (
               <button
@@ -634,7 +666,7 @@ const Swap: React.FC = () => {
                   setIsRemoveTransactionConfirmationModalOpen(true);
                 }}
               >
-                <span>{loadingSwap ? "Swapping…" : "Swap"}</span>
+                <span>{loadingPreview ? "Fetching quote…"  : loadingSwap ? "Swapping…" : "Swap"}</span>
               </button>
             )}
 
