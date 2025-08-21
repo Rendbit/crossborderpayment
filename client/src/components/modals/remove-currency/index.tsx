@@ -47,11 +47,8 @@ const RemoveCurrencyModal: React.FC<RemoveCurrencyModalProps> = ({
 
         <div className="flex gap-4 mt-6">
           <button
-            className={`p-3 rounded-lg w-full ${
-              theme === "dark"
-                ? "bg-red-600 hover:bg-red-700"
-                : "bg-red-500 hover:bg-red-600"
-            } text-white disabled:opacity-50`}
+            className={`p-3 rounded-lg w-full
+              text-gray-700 dark:text-gray-300 border border-gray-700 dark:border-gray-300 disabled:opacity-50`}
             onClick={() => {
               setSelectedAsset(null);
               setIsRemoveCurrencyModalOpen(false);

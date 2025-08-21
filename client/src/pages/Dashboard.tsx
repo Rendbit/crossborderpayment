@@ -458,8 +458,8 @@ const Dashboard: React.FC = () => {
             <div
               className={`mb-4 p-4 rounded-lg text-center ${
                 alertType === "success"
-                  ? "bg-green-500 text-white"
-                  : "bg-red-500 text-white"
+                  ? "bg-[#435ec9] text-[#0a143f]"
+                  : "bg-[#b04242] text-[#5d0d0d]"
               }`}
             >
               {msg}
