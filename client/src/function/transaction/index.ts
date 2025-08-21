@@ -19,10 +19,7 @@ const getTransactionHistory = async (token: string) => {
     }
     const uniqueTransactions = Array.from(
       new Map(
-        data.data.transactions.map((item: any) => [
-          item.transaction_hash,
-          item,
-        ])
+        data.data.transactions.map((item: any) => [item.transaction_hash, item])
       ).values()
     );
     localStorage.setItem(
@@ -126,7 +123,8 @@ const swapAssets = async (
   sourceAssetCode: string,
   desAssetCode: string,
   sourceAmount: number,
-  slippage: number
+  slippage: number,
+  pinCode: string
 ) => {
   try {
     const res = await fetch(
@@ -143,6 +141,7 @@ const swapAssets = async (
           desAssetCode,
           sourceAmount,
           slippage,
+          pinCode,
         }),
       }
     );
@@ -215,7 +214,7 @@ const removeTrustLine = async (assetCode: string, token: string) => {
         }),
       }
     );
-    console.log({res})
+    console.log({ res });
     const data = await res.json();
     if (!res.ok) {
       throw new Error(data.message || "Failed to remove trustline");
@@ -254,17 +253,16 @@ const addTrustLine = async (assetCode: string, token: string) => {
   }
 };
 
-
-
 /**
  * Execute a strict send transaction
  */
- const strictSend = async (
+const strictSend = async (
   token: string,
   assetCode: string,
   amount: number,
   desAddress: string,
-  slippage: number
+  slippage: number,
+  pinCode: string
 ) => {
   try {
     const res = await fetch(`${BASE_URL}/transaction/strictSend`, {
@@ -279,6 +277,7 @@ const addTrustLine = async (assetCode: string, token: string) => {
         amount,
         desAddress,
         slippage,
+        pinCode,
       }),
     });
 
@@ -298,7 +297,7 @@ const addTrustLine = async (assetCode: string, token: string) => {
 /**
  * Preview a strict send transaction
  */
- const strictSendPreview = async (
+const strictSendPreview = async (
   token: string,
   assetCode: string,
   amount: number,
@@ -343,7 +342,8 @@ const strictReceive = async (
   desAssetCode: string,
   desAmount: number,
   desAddress: string,
-  slippage: number
+  slippage: number,
+  pinCode: string
 ) => {
   try {
     const res = await fetch(`${BASE_URL}/transaction/strictReceive`, {
@@ -359,6 +359,7 @@ const strictReceive = async (
         desAmount,
         desAddress,
         slippage,
+        pinCode,
       }),
     });
 
@@ -416,7 +417,6 @@ const strictReceivePreview = async (
   }
 };
 
-
 export {
   getTransactionHistory,
   getFiatTransactionHistory,
@@ -428,5 +428,5 @@ export {
   strictReceivePreview,
   strictSend,
   strictReceive,
-  strictSendPreview
+  strictSendPreview,
 };

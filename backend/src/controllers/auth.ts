@@ -683,38 +683,112 @@ export const fundWithFriendbot = async (publicKey: string) => {
   }
 };
 
-export const fundAccount = async (destination: string, amount: string) => {
+export const fundAccountPreview = async (destination: string) => {
+  let balanceError = "";
   try {
-    // Load the funding account and fetch base fee for the transaction
-    const account = await server.loadAccount(fundingKey.publicKey());
+    // First check if destination account exists
+    let destinationExists = true;
+    try {
+      await server.loadAccount(destination);
+    } catch (err: any) {
+      if (err.response?.status === 404) {
+        destinationExists = false;
+      } else {
+        throw err; // unexpected error
+      }
+    }
+
+    //  If destination is NOT activated → force error
+    if (!destinationExists) {
+      balanceError = `Account doesn't exist on the ledger. You need to fund it in order to send/receive assets`;
+      return { status: false, balanceError };
+    }
+
+    return { status: true };
+  } catch (error: any) {
+    throw new Error(
+      balanceError ? balanceError : "Error preparing funding preview"
+    );
+  }
+};
+
+export const fundAccount = async (
+  destination: string,
+  amount: string,
+  key: string
+) => {
+  try {
+    const sourceKeypair = StellarSdk.Keypair.fromSecret(key);
+
+    // Load funding account
+    const account = await server.loadAccount(sourceKeypair.publicKey());
     const fee = await server.fetchBaseFee();
 
-    // Create a transaction to fund the account with starting balance
-    const transaction = await new StellarSdk.TransactionBuilder(account, {
+    // Fetch baseReserve dynamically
+    const latestLedger = await server.ledgers().order("desc").limit(1).call();
+    const baseReserve =
+      parseFloat(latestLedger.records[0].base_reserve_in_stroops) / 10000000;
+
+    let operation;
+    try {
+      await server.loadAccount(destination); // 404 if not found
+      console.log("Funding existing account");
+
+      operation = StellarSdk.Operation.payment({
+        destination,
+        asset: StellarSdk.Asset.native(),
+        amount,
+      });
+    } catch (e: any) {
+      if (e?.response?.status === 404) {
+        console.log("Creating new account");
+
+        const nativeBalance = parseFloat(
+          account.balances.find((b: any) => b.asset_type === "native")
+            ?.balance || "0"
+        );
+
+        const minBalance = (2 + account.subentry_count) * baseReserve;
+        const spendable = nativeBalance - minBalance;
+
+        if (spendable < parseFloat(amount) + fee / 10000000) {
+          throw new Error(
+            `Funding account does not have enough *spendable* XLM.
+Total balance: ${nativeBalance} XLM
+Minimum reserve: ${minBalance} XLM
+Spendable: ${spendable} XLM
+Required: ${parseFloat(amount) + fee / 10000000} XLM`
+          );
+        }
+
+        operation = StellarSdk.Operation.createAccount({
+          destination,
+          startingBalance: parseFloat(amount).toFixed(7),
+        });
+      } else {
+        throw e;
+      }
+    }
+
+    const transaction = new StellarSdk.TransactionBuilder(account, {
       fee,
       networkPassphrase:
         process.env.STELLAR_NETWORK === "public"
           ? StellarSdk.Networks.PUBLIC
           : StellarSdk.Networks.TESTNET,
     })
-      .addOperation(
-        StellarSdk.Operation.createAccount({
-          destination,
-          startingBalance: amount,
-        })
-      )
+      .addOperation(operation)
       .setTimeout(30)
       .build();
 
-    // Sign and submit the transaction to the Stellar network
-    await transaction.sign(fundingKey);
-    const transactionResult = await server.submitTransaction(transaction);
+    // Sign transaction
+    transaction.sign(sourceKeypair);
 
-    // Return the transaction result
+    const transactionResult = await server.submitTransaction(transaction);
     return { status: true, transactionResult };
-  } catch (error) {
-    console.log("Error funding account", error);
-    throw new Error("Error funding account");
+  } catch (error: any) {
+    console.error("Error funding account: ", error.response?.data || error);
+    return { status: false, error: error.response?.data || error.message };
   }
 };
 

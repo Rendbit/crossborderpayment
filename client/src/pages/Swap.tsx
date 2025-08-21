@@ -138,12 +138,13 @@ const Swap: React.FC = () => {
 
   const handleMax = () => {
     if (!selectedAsset) return;
-    const max = Number(selectedAsset.balance) || 0;
+    const max = getSpendableBalance(selectedAsset);
     if (max <= 0) return;
     setSourceAmount(String(max));
     setDescAmount("");
     setExchangeRate("");
     setSwapAssetPreview(null);
+
     // immediate preview
     handleSwapAssetsPreview(String(max));
   };
@@ -166,25 +167,25 @@ const Swap: React.FC = () => {
 
   // -------- API: Preview --------
   async function handleSwapAssetsPreview(overrideAmount?: string) {
-    if (!selectedAsset || !selectedAssetReceive) {
-      setAlertType("error");
-      setMsg("Please select both From and To assets before entering amount.");
-      return;
-    }
-
     const amount = overrideAmount ?? sourceAmount;
     const numericAmount = Number(amount);
 
     if (!amount || numericAmount <= 0) return;
 
     // Validate minimum amount
-    const amountError = validateAmount(numericAmount, selectedAsset.asset_code);
-    if (amountError) {
-      setAlertType("error");
-      setMsg(amountError);
+    console.log({
+      sourceAmount: Number(sourceAmount),
+      getMinimumSwapAmount: getMinimumSwapAmount(
+        selectedAsset?.asset_code.toUpperCase()
+      ),
+    });
+    if (
+      Number(sourceAmount) <
+      getMinimumSwapAmount(selectedAsset?.asset_code.toUpperCase())
+    ) {
+      setNext(false);
       return;
     }
-
     if (selectedAsset.asset_code === selectedAssetReceive.asset_code) {
       setAlertType("error");
       setMsg("Please select different assets.");
@@ -242,7 +243,7 @@ const Swap: React.FC = () => {
   }
 
   // -------- API: Swap --------
-  async function handleSwapAssets() {
+  async function handleSwapAssets(transactionPin: string) {
     if (!selectedAsset || !selectedAssetReceive) {
       setAlertType("error");
       setMsg("Please select assets to swap.");
@@ -286,7 +287,8 @@ const Swap: React.FC = () => {
         selectedAsset.asset_code,
         selectedAssetReceive.asset_code,
         numericAmount,
-        Number(slippage)
+        Number(slippage),
+        transactionPin
       );
 
       if (!response?.success) {
@@ -476,11 +478,11 @@ const Swap: React.FC = () => {
                     selectedAsset.asset_code?.toUpperCase()
                   ) === "XLM"
                     ? `
-        ${selectedAsset.balance} 
+        ${formatNumberWithCommas(getSpendableBalance(selectedAsset))} 
         ${getAssetDisplayName(selectedAsset.asset_code?.toUpperCase())}
       `
                     : `
-        ${formateDecimal(selectedAsset.balance)} 
+        ${formatNumberWithCommas(getSpendableBalance(selectedAsset))} 
         ${getAssetDisplayName(selectedAsset.asset_code?.toUpperCase())}
       `}
                 </p>
@@ -554,6 +556,14 @@ const Swap: React.FC = () => {
                   {getAssetDisplayName(selectedAssetReceive?.asset_code)}
                 </p>
                 <p>Min Received: {swapAssetPreview.minimumReceived}</p>
+                <p>
+                  From: {sourceAmount}{" "}
+                  {getAssetDisplayName(selectedAsset.asset_code)}{" "}
+                </p>
+                <p>
+                  To: {swapAssetPreview.minimumReceived}{" "}
+                  {getAssetDisplayName(selectedAssetReceive.asset_code)}{" "}
+                </p>
                 <p>Fee: {Number(swapAssetPreview.fee) / 10000000} XLM</p>
                 <p>Slippage: {swapAssetPreview.slippage}</p>
               </div>
@@ -568,17 +578,59 @@ const Swap: React.FC = () => {
                   !selectedAssetReceive ||
                   !sourceAmount ||
                   loadingPreview ||
-                  loadingSwap
+                  loadingSwap ||
+                  Number(sourceAmount) <
+                    getMinimumSwapAmount(selectedAsset.asset_code.toUpperCase())
                 }
-                onClick={() => handleSwapAssetsPreview()}
+                onClick={() => {
+                  if (!selectedAsset || !selectedAssetReceive) {
+                    setAlertType("error");
+                    setMsg(
+                      "Please select both From and To assets before entering amount."
+                    );
+                    return;
+                  }
+                  const amountError = validateAmount(
+                    Number(sourceAmount),
+                    selectedAsset.asset_code
+                  );
+                  if (amountError) {
+                    setAlertType("error");
+                    setMsg(amountError);
+                    return;
+                  }
+                  handleSwapAssetsPreview();
+                }}
               >
                 {loadingPreview ? "Previewing…" : "Next"}
               </button>
             ) : (
               <button
                 className="flex gap-2 justify-center items-center bg-[#0E7BB2] text-white p-3 rounded-lg w-full mt-4 cursor-pointer disabled:opacity-50"
-                disabled={!sourceAmount || !descAmount || loadingSwap}
+                disabled={
+                  !sourceAmount ||
+                  !descAmount ||
+                  loadingSwap ||
+                  Number(sourceAmount) <
+                    getMinimumSwapAmount(selectedAsset.asset_code.toUpperCase())
+                }
                 onClick={() => {
+                  if (!selectedAsset || !selectedAssetReceive) {
+                    setAlertType("error");
+                    setMsg(
+                      "Please select both From and To assets before entering amount."
+                    );
+                    return;
+                  }
+                  const amountError = validateAmount(
+                    Number(sourceAmount),
+                    selectedAsset.asset_code
+                  );
+                  if (amountError) {
+                    setAlertType("error");
+                    setMsg(amountError);
+                    return;
+                  }
                   setIsRemoveTransactionConfirmationModalOpen(true);
                 }}
               >
@@ -594,6 +646,7 @@ const Swap: React.FC = () => {
         <TransactionConfirmationModal
           handlTransactionConfirmation={handleSwapAssets}
           loading={loadingSwap}
+          alertType={alertType}
         />
       )}
     </>

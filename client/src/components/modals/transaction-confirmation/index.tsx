@@ -1,20 +1,27 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAppContext } from "../../../context/useContext";
 import OTPInput from "react-otp-input";
 import { X } from "lucide-react";
 
 interface TransactionConfirmationModalProps {
-  handlTransactionConfirmation: () => void;
+  handlTransactionConfirmation: (transactionPin: string) => void;
   loading: boolean;
+  alertType: string;
 }
 
 const TransactionConfirmationModal: React.FC<
   TransactionConfirmationModalProps
-> = ({ handlTransactionConfirmation, loading }) => {
+> = ({ handlTransactionConfirmation, loading, alertType }) => {
   const [transactionPin, setTransactionPin] = useState<any>("");
 
   const { theme, setIsRemoveTransactionConfirmationModalOpen } =
     useAppContext();
+
+  useEffect(() => {
+    if (alertType === "success") {
+      setIsRemoveTransactionConfirmationModalOpen(false);
+    }
+  }, [alertType]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/90 dark:bg-black/90">
@@ -56,7 +63,9 @@ const TransactionConfirmationModal: React.FC<
               ? "hover:bg-[#0c5e89] bg-[#0E7BB2]"
               : "hover:bg-[#0c5e89] bg-[#0E7BB2]"
           } text-white disabled:opacity-50`}
-          onClick={handlTransactionConfirmation}
+          onClick={() => {
+            handlTransactionConfirmation(transactionPin);
+          }}
           disabled={loading || !transactionPin || transactionPin.length < 4}
         >
           Confirm

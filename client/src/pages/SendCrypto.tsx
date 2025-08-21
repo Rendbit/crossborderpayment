@@ -18,6 +18,8 @@ import {
   getSpendableBalance,
   labelFor,
 } from "../utils";
+import TransactionConfirmationModal from "../components/modals/transaction-confirmation";
+import { useAppContext } from "../context/useContext";
 
 type Mode = "sendExact" | "receiveExact";
 
@@ -36,6 +38,10 @@ const numberRegex = /^(?:\d*(?:[.,]\d*)?)$/;
 const SendCrypto: React.FC = () => {
   const [mode, setMode] = useState<Mode>("sendExact");
   const token = Cookies.get("token") || "";
+  const {
+    setIsRemoveTransactionConfirmationModalOpen,
+    isRemoveTransactionConfirmationModalOpen,
+  } = useAppContext();
 
   // DATA
   const [assets, setAssets] = useState<AssetsResponse | null>(null);
@@ -93,7 +99,7 @@ const SendCrypto: React.FC = () => {
     setDestAmount("");
   };
 
-  // -------- Load assets --------
+  // Load assets
   useEffect(() => {
     (async () => {
       try {
@@ -164,7 +170,7 @@ const SendCrypto: React.FC = () => {
   const gateReady =
     !!assets?.allWalletAssets?.length && !loadingWalletAssets && !!token;
 
-  // -------- Effect for triggering preview when all inputs are available --------
+  // Effect for triggering preview when all inputs are available
   useEffect(() => {
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
@@ -203,7 +209,6 @@ const SendCrypto: React.FC = () => {
     destAmount,
   ]);
 
-  // -------- Amount change handlers --------
   const handleSourceAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(",", ".");
     if (!numberRegex.test(value)) return;
@@ -253,7 +258,6 @@ const SendCrypto: React.FC = () => {
     }
   };
 
-  // -------- PREVIEWS --------
   const validateCommon = (): boolean => {
     clearAlerts();
 
@@ -408,8 +412,7 @@ const SendCrypto: React.FC = () => {
     }
   };
 
-  // -------- SUBMIT --------
-  const onNext = async () => {
+  const onNext = async (transactionPin: string) => {
     clearAlerts();
 
     if (!validateCommon()) return;
@@ -450,7 +453,8 @@ const SendCrypto: React.FC = () => {
           selectedAsset!.asset_code,
           amt,
           address.trim(),
-          Number(slippage)
+          Number(slippage),
+          transactionPin
         );
 
         if (!exec?.success) {
@@ -476,7 +480,7 @@ const SendCrypto: React.FC = () => {
           "success",
           `Sent ${formatNumberWithCommas(amt)} ${labelFor(
             selectedAsset
-          )}. Tx: ${exec.data?.hash || "success"}`
+          )}.`
         );
 
         setSelectedAsset(null);
@@ -520,7 +524,8 @@ const SendCrypto: React.FC = () => {
           selectedAssetReceive!.asset_code,
           dAmt,
           address.trim(),
-          Number(slippage)
+          Number(slippage),
+          transactionPin
         );
 
         if (!exec?.success) {
@@ -546,7 +551,7 @@ const SendCrypto: React.FC = () => {
           "success",
           `Receiver will get ${formatNumberWithCommas(dAmt)} ${labelFor(
             selectedAssetReceive
-          )}. Tx: ${exec.data?.hash || "success"}`
+          )}.`
         );
 
         setSelectedAsset(null);
@@ -563,15 +568,14 @@ const SendCrypto: React.FC = () => {
     }
   };
 
-  // -------- UI --------
   return (
     <>
       <EmptyTopNav />
       <main className="flex items-center justify-center min-h-screen p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
         <div
-          className={`mt-5 w-full max-w-md bg-[white] dark:bg-gray-800  rounded-2xl shadow-lg p-6 ${
+          className={` w-full max-w-md bg-[white] dark:bg-gray-800  rounded-2xl shadow-lg p-6 ${
             canProceed && mode !== "sendExact" && "mt-[80px]"
-          }`}
+          } ${previewData?.fundResultMessage ? "mt-[80px]" : "mt-5"}`}
         >
           {/* Header */}
           <div className="text-center mb-6">
@@ -721,6 +725,11 @@ const SendCrypto: React.FC = () => {
                     Max
                   </button>
                 </div>
+                {previewData?.fundResultMessage && (
+                  <p className="text-[12px] text-[#911a1a] mt-2">
+                    {previewData?.fundResultMessage}
+                  </p>
+                )}
                 {labelFor(selectedAsset) && (
                   <p className="text-xs text-gray-500 mt-1 mb-6">
                     Min:{" "}
@@ -752,13 +761,23 @@ const SendCrypto: React.FC = () => {
                     )}
                   </label>
                   <select
-                    value={selectedAsset?.asset_code || ""}
+                    value={
+                      selectedAssetReceive?.asset_code ===
+                      selectedAsset?.asset_code
+                        ? ""
+                        : selectedAsset?.asset_code || ""
+                    }
                     onChange={(e) => {
-                      console.log("Sender asset changed:", e.target.value);
                       const a = assets?.allWalletAssets?.find(
                         (x) => x.asset_code === e.target.value
                       );
                       setSelectedAsset(a || null);
+
+                      if (a) {
+                        if (a.asset_code === selectedAssetReceive?.asset_code) {
+                          setSelectedAssetReceive(null);
+                        }
+                      }
                       resetPreviewAndNumbers();
                     }}
                     className="w-full border rounded-lg p-2 focus:outline-0 focus:border-[#0E7BB2] dark:bg-gray-800 dark:border-gray-700 dark:text-white"
@@ -786,35 +805,36 @@ const SendCrypto: React.FC = () => {
                     Receiver Gets (asset)
                   </label>
                   <select
-                    value={selectedAssetReceive?.asset_code || ""}
+                    value={
+                      selectedAssetReceive?.asset_code ===
+                      selectedAsset?.asset_code
+                        ? ""
+                        : selectedAssetReceive?.asset_code || ""
+                    }
                     onChange={(e) => {
-                      console.log("Receiver asset changed:", e.target.value);
-                      console.log("Filtered assets:", filteredReceiveAssets);
-                      
                       // Find the asset in the full list, not just filtered
                       const a = assets?.allWalletAssets?.find(
                         (x) => x.asset_code === e.target.value
                       );
-                      
+
+                      setSelectedAssetReceive(a);
                       if (a) {
-                        setSelectedAssetReceive(a);
-                        resetPreviewAndNumbers();
-                      } else {
-                        console.error("Asset not found:", e.target.value);
+                        if (a.asset_code === selectedAsset?.asset_code) {
+                          setSelectedAsset(null);
+                        }
                       }
+                      resetPreviewAndNumbers();
                     }}
                     className="w-full border rounded-lg p-2 focus:outline-0 focus:border-[#0E7BB2] dark:bg-gray-800 dark:border-gray-700 dark:text-white"
                   >
                     <option value="" disabled>
                       {loadingWalletAssets ? "Loading..." : "Select asset"}
                     </option>
-                    {assets?.allWalletAssets
-                      ?.filter((a) => a.asset_code !== selectedAsset?.asset_code)
-                      .map((a) => (
-                        <option key={a.asset_code} value={a.asset_code}>
-                          {getAssetDisplayName(a.asset_code?.toUpperCase())}{" "}
-                        </option>
-                      ))}
+                    {assets?.allWalletAssets?.map((a) => (
+                      <option key={a.asset_code} value={a.asset_code}>
+                        {getAssetDisplayName(a.asset_code?.toUpperCase())}{" "}
+                      </option>
+                    ))}
                   </select>
                   {/* FIX: Added balance display for receiver asset */}
                   <p className="text-xs text-gray-500 mt-1">
@@ -1009,7 +1029,7 @@ const SendCrypto: React.FC = () => {
                     : Number(destAmount)
                 );
               } else {
-                onNext();
+                setIsRemoveTransactionConfirmationModalOpen(true);
               }
             }}
             className={`${
@@ -1027,6 +1047,13 @@ const SendCrypto: React.FC = () => {
         </div>
         {msg && <Alert msg={msg} setMsg={setMsg} alertType={alertType} />}
       </main>
+      {isRemoveTransactionConfirmationModalOpen && (
+        <TransactionConfirmationModal
+          handlTransactionConfirmation={onNext}
+          loading={loadingSubmit}
+          alertType={alertType}
+        />
+      )}
     </>
   );
 };
