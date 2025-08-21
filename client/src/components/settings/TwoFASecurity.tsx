@@ -9,16 +9,16 @@ const TwoFASecurity: React.FC = () => {
     };
 
     const methods = [
-        {
-            name: "SMS Code",
-            description: "Receive a one-time verification code via SMS to enter during login.",
-            icon: "./image/sms.svg"
-        },
-        {
-            name: "Email Code",
-            description: "Get a temporary verification code sent to your email for added security.",
-            icon: "./image/email.svg"
-        },
+        // {
+        //     name: "SMS Code",
+        //     description: "Receive a one-time verification code via SMS to enter during login.",
+        //     icon: "./image/sms.svg"
+        // },
+        // {
+        //     name: "Email Code",
+        //     description: "Get a temporary verification code sent to your email for added security.",
+        //     icon: "./image/email.svg"
+        // },
         {
             name: "Authenticator App",
             description: "Use an authenticator app to generate time-based verification codes for login.",
@@ -36,7 +36,7 @@ const TwoFASecurity: React.FC = () => {
             methods.map((method, index) => (
                 <div 
                     key={index}
-                    className={`cursor-pointer flex items-center gap-4 mb-4 mt-[1rem] border ${selectedMethod === method.name ? 'border-blue-500' : 'border-gray-200'} dark:${selectedMethod === method.name ? 'border-blue-500' : 'border-gray-700'} px-[14px] py-5 rounded-[10px]`}
+                    className={`cursor-pointer flex items-center gap-4 mb-4 mt-[1rem] border ${selectedMethod === method.name ? 'border-[#0E7BB2]' : 'border-gray-200'} dark:${selectedMethod === method.name ? 'border-[#0E7BB2]' : 'border-gray-700'} px-[14px] py-5 rounded-[10px]`}
                     onClick={() => handleMethodChange(method.name)}
                 >
                     <img src={method.icon} alt={method.name} />
@@ -47,7 +47,7 @@ const TwoFASecurity: React.FC = () => {
                 </div>
             ))
         }
-        <button className="bg-[#375DFB] w-full text-white px-4 py-2 rounded-lg transition-colors duration-300">
+        <button className="bg-[#0E7BB2] w-full text-white px-4 py-2 rounded-lg transition-colors duration-300">
           Enable 2FA Security
         </button>
     </div>

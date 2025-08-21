@@ -234,261 +234,255 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
 
   return (
     <>
-      {isActivateWalletAlert ? (
-        <p className="text-black text-center flex justify-center items-center text-[20px] p-5 bg-red-300 rounded-md my-2">
-          {isActivateWalletAlert && activateWalletAlert}
-        </p>
-      ) : (
-        <section className="mt-6 bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg border border-[#E2E4E9] dark:border-gray-700">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-            <div>
-              <h3 className="text-lg font-semibold">Recent Transactions</h3>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                Display the recent transactions in the table below.
-              </p>
+      <section className="mt-6 bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg border border-[#E2E4E9] dark:border-gray-700">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+          <div>
+            <h3 className="text-lg font-semibold">Recent Transactions</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Display the recent transactions in the table below.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            {/* Search */}
+            <div className="relative flex-1 sm:flex-none">
+              <Search
+                className="absolute left-2 top-2.5 text-gray-400 dark:text-gray-500"
+                size={16}
+              />
+              <input
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                className="pl-8 pr-3 py-2 border focus:outline-0 focus:border-[#0E7BB2]  border-[#E2E4E9] dark:border-gray-700 rounded-lg text-sm w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
+                placeholder="Search transaction..."
+              />
             </div>
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              {/* Search */}
-              <div className="relative flex-1 sm:flex-none">
-                <Search
-                  className="absolute left-2 top-2.5 text-gray-400 dark:text-gray-500"
-                  size={16}
-                />
-                <input
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                  className="pl-8 pr-3 py-2 border focus:outline-0 focus:border-[#0E7BB2]  border-[#E2E4E9] dark:border-gray-700 rounded-lg text-sm w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
-                  placeholder="Search transaction..."
-                />
-              </div>
 
-              {/* Date filter */}
-              <div className="relative">
-                <input
-                  type="date"
-                  value={filterDate}
-                  onChange={(e) => setFilterDate(e.target.value)}
-                  className={`px-2 py-2 border focus:outline-0 focus:border-[#0E7BB2] cursor-pointer border-[#E2E4E9] dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 peer
+            {/* Date filter */}
+            <div className="relative">
+              <input
+                type="date"
+                value={filterDate}
+                onChange={(e) => setFilterDate(e.target.value)}
+                className={`px-2 py-2 border focus:outline-0 focus:border-[#0E7BB2] cursor-pointer border-[#E2E4E9] dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 peer
       ${
         !filterDate &&
         "[&::-webkit-datetime-edit]:invisible [&::-webkit-calendar-picker-indicator]:opacity-100"
       }`}
-                />
-                {!filterDate && (
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">
-                    Sort Date
-                  </span>
-                )}
-              </div>
-
-              {/* Type filter */}
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value)}
-                className="px-2 py-2 border cursor-pointer focus:outline-0 focus:border-[#0E7BB2] border-[#E2E4E9] dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              >
-                <option value="all">All Transactions</option>
-                <option value="send">Send</option>
-                <option value="receive">Receive</option>
-                <option value="swap">Swap</option>
-                <option value="add currency">Add Currency</option>
-                <option value="remove currency">Remove Currency</option>
-                <option value="create account">Create Account</option>
-                <option value="account merge">Account Merge</option>
-              </select>
-
-              {!isHistoryPage && (
-                <button
-                  onClick={() => navigate("/history")}
-                  className="px-3 py-2 border border-[#E2E4E9] dark:border-gray-700 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700"
-                >
-                  See All
-                </button>
+              />
+              {!filterDate && (
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none">
+                  Sort Date
+                </span>
               )}
             </div>
-          </div>
 
-          {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left text-gray-500  dark:text-gray-400">
-                  <th
-                    className="pb-2 cursor-pointer"
-                    onClick={() => handleSort("to")}
-                  >
-                    <div className="flex items-center">
-                      <span>To / From </span> {renderSortArrow("to")}
-                    </div>
-                  </th>
-                  <th
-                    className="pb-2 cursor-pointer"
-                    onClick={() => handleSort("amountSent")}
-                  >
-                    <div className="flex items-center">
-                      <span>Amount </span> {renderSortArrow("amountSent")}
-                    </div>
-                  </th>
-                  <th
-                    className="pb-2 cursor-pointer"
-                    onClick={() => handleSort("tokenSent")}
-                  >
-                    <div className="flex items-center">
-                      <span>Token </span> {renderSortArrow("tokenSent")}
-                    </div>
-                  </th>
-                  <th
-                    className="pb-2 cursor-pointer"
-                    onClick={() => handleSort("date")}
-                  >
-                    <div className="flex items-center">
-                      <span>Date & Time</span> {renderSortArrow("date")}
-                    </div>
-                  </th>
-                  <th
-                    className="pb-2 cursor-pointer"
-                    onClick={() => handleSort("type")}
-                  >
-                    <div className="flex items-center">
-                      <span>Type</span> {renderSortArrow("type")}
-                    </div>
-                  </th>
+            {/* Type filter */}
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              className="px-2 py-2 border cursor-pointer focus:outline-0 focus:border-[#0E7BB2] border-[#E2E4E9] dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            >
+              <option value="all">All Transactions</option>
+              <option value="send">Send</option>
+              <option value="receive">Receive</option>
+              <option value="swap">Swap</option>
+              <option value="add currency">Add Currency</option>
+              <option value="remove currency">Remove Currency</option>
+              <option value="create account">Create Account</option>
+              <option value="account merge">Account Merge</option>
+            </select>
+
+            {!isHistoryPage && (
+              <button
+                onClick={() => navigate("/history")}
+                className="px-3 py-2 border border-[#E2E4E9] dark:border-gray-700 rounded-lg text-sm hover:bg-gray-50 dark:hover:bg-gray-700"
+              >
+                See All
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-gray-500  dark:text-gray-400">
+                <th
+                  className="pb-2 cursor-pointer"
+                  onClick={() => handleSort("to")}
+                >
+                  <div className="flex items-center">
+                    <span>To / From </span> {renderSortArrow("to")}
+                  </div>
+                </th>
+                <th
+                  className="pb-2 cursor-pointer"
+                  onClick={() => handleSort("amountSent")}
+                >
+                  <div className="flex items-center">
+                    <span>Amount </span> {renderSortArrow("amountSent")}
+                  </div>
+                </th>
+                <th
+                  className="pb-2 cursor-pointer"
+                  onClick={() => handleSort("tokenSent")}
+                >
+                  <div className="flex items-center">
+                    <span>Token </span> {renderSortArrow("tokenSent")}
+                  </div>
+                </th>
+                <th
+                  className="pb-2 cursor-pointer"
+                  onClick={() => handleSort("date")}
+                >
+                  <div className="flex items-center">
+                    <span>Date & Time</span> {renderSortArrow("date")}
+                  </div>
+                </th>
+                <th
+                  className="pb-2 cursor-pointer"
+                  onClick={() => handleSort("type")}
+                >
+                  <div className="flex items-center">
+                    <span>Type</span> {renderSortArrow("type")}
+                  </div>
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700 items-center">
+              {loading ? (
+                <tr>
+                  <ArrayTableLoader number={5} />
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700 items-center">
-                {loading ? (
-                  <tr>
-                    <ArrayTableLoader number={5} />
-                  </tr>
-                ) : currentTransactions.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="py-6 text-center text-gray-400">
-                      No transactions found.
+              ) : currentTransactions.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-6 text-center text-gray-400">
+                    No transactions found.
+                  </td>
+                </tr>
+              ) : (
+                currentTransactions.map((tx: any, idx: number) => (
+                  <tr
+                    key={idx}
+                    className="hover:bg-gray-50 cursor-pointer dark:hover:bg-gray-700 transition"
+                  >
+                    {/* From/To */}
+                    <td className="py-3 font-medium break-all">
+                      {tx?.type === "receive" ? (
+                        <>
+                          From: {tx?.from?.slice(0, 6)}...
+                          {tx?.from?.slice(-6)}
+                        </>
+                      ) : (
+                        <>
+                          To: {tx?.to?.slice(0, 6)}...
+                          {tx?.to?.slice(-6)}
+                        </>
+                      )}
+                    </td>
+
+                    {/* Amount */}
+                    <td>{tx?.amountReceived || tx?.amountSent || tx?.fee}</td>
+
+                    {/* Token */}
+                    <td>{tx?.tokenReceived || tx?.tokenSent}</td>
+
+                    {/* Date */}
+                    <td>{formatDate(tx?.date)}</td>
+
+                    {/* Type */}
+                    <td className="flex items-center py-2 gap-1 capitalize">
+                      {tx?.type?.includes("swap") ? (
+                        <div className="flex items-center gap-2">
+                          <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
+                            <ArrowRightLeft size={14} />
+                          </span>
+                          <span>Swap</span>
+                        </div>
+                      ) : tx?.type === "receive" ? (
+                        <div className="flex items-center gap-2">
+                          <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
+                            <Globe size={14} />
+                          </span>
+                          <span>Receive</span>
+                        </div>
+                      ) : tx?.type === "send" ? (
+                        <div className="flex items-center gap-2">
+                          <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
+                            <ArrowUpRight size={14} />
+                          </span>
+                          <span>Send</span>
+                        </div>
+                      ) : tx?.type === "add currency" ? (
+                        <div className="flex items-center gap-2">
+                          <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
+                            <Plus size={14} />
+                          </span>
+                          <span>Add Currency</span>
+                        </div>
+                      ) : tx?.type === "remove currency" ? (
+                        <div className="flex items-center gap-2">
+                          <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
+                            <Minus size={14} />
+                          </span>
+                          <span>Remove Currency</span>
+                        </div>
+                      ) : tx?.type === "create account" ? (
+                        <div className="flex items-center gap-2">
+                          <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
+                            <UserPlus size={14} />
+                          </span>
+                          <span>Create Account</span>
+                        </div>
+                      ) : tx?.type === "account merge" ? (
+                        <div className="flex items-center gap-2">
+                          <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
+                            <UserMinus size={14} />
+                          </span>
+                          <span>Account Merge</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
+                            <Globe size={14} />
+                          </span>
+                          <span>{tx?.type}</span>
+                        </div>
+                      )}
                     </td>
                   </tr>
-                ) : (
-                  currentTransactions.map((tx: any, idx: number) => (
-                    <tr
-                      key={idx}
-                      className="hover:bg-gray-50 cursor-pointer dark:hover:bg-gray-700 transition"
-                    >
-                      {/* From/To */}
-                      <td className="py-3 font-medium break-all">
-                        {tx?.type === "receive" ? (
-                          <>
-                            From: {tx?.from?.slice(0, 6)}...
-                            {tx?.from?.slice(-6)}
-                          </>
-                        ) : (
-                          <>
-                            To: {tx?.to?.slice(0, 6)}...
-                            {tx?.to?.slice(-6)}
-                          </>
-                        )}
-                      </td>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
 
-                      {/* Amount */}
-                      <td>{tx?.amountReceived || tx?.amountSent || tx?.fee}</td>
-
-                      {/* Token */}
-                      <td>{tx?.tokenReceived || tx?.tokenSent}</td>
-
-                      {/* Date */}
-                      <td>{formatDate(tx?.date)}</td>
-
-                      {/* Type */}
-                      <td className="flex items-center py-2 gap-1 capitalize">
-                        {tx?.type?.includes("swap") ? (
-                          <div className="flex items-center gap-2">
-                            <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
-                              <ArrowRightLeft size={14} />
-                            </span>
-                            <span>Swap</span>
-                          </div>
-                        ) : tx?.type === "receive" ? (
-                          <div className="flex items-center gap-2">
-                            <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
-                              <Globe size={14} />
-                            </span>
-                            <span>Receive</span>
-                          </div>
-                        ) : tx?.type === "send" ? (
-                          <div className="flex items-center gap-2">
-                            <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
-                              <ArrowUpRight size={14} />
-                            </span>
-                            <span>Send</span>
-                          </div>
-                        ) : tx?.type === "add currency" ? (
-                          <div className="flex items-center gap-2">
-                            <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
-                              <Plus size={14} />
-                            </span>
-                            <span>Add Currency</span>
-                          </div>
-                        ) : tx?.type === "remove currency" ? (
-                          <div className="flex items-center gap-2">
-                            <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
-                              <Minus size={14} />
-                            </span>
-                            <span>Remove Currency</span>
-                          </div>
-                        ) : tx?.type === "create account" ? (
-                          <div className="flex items-center gap-2">
-                            <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
-                              <UserPlus size={14} />
-                            </span>
-                            <span>Create Account</span>
-                          </div>
-                        ) : tx?.type === "account merge" ? (
-                          <div className="flex items-center gap-2">
-                            <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
-                              <UserMinus size={14} />
-                            </span>
-                            <span>Account Merge</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-2">
-                            <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
-                              <Globe size={14} />
-                            </span>
-                            <span>{tx?.type}</span>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-4">
+            <button
+              onClick={handlePrevPage}
+              disabled={currentPage === 1}
+              className="px-4 py-2 text-sm bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-40"
+            >
+              Previous
+            </button>
+            <span className="text-gray-500 dark:text-gray-400">
+              Page <span className="font-semibold">{currentPage}</span> of{" "}
+              <span className="font-semibold">{totalPages}</span>
+            </span>
+            <button
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 text-sm bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-40"
+            >
+              Next
+            </button>
           </div>
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4">
-              <button
-                onClick={handlePrevPage}
-                disabled={currentPage === 1}
-                className="px-4 py-2 text-sm bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-40"
-              >
-                Previous
-              </button>
-              <span className="text-gray-500 dark:text-gray-400">
-                Page <span className="font-semibold">{currentPage}</span> of{" "}
-                <span className="font-semibold">{totalPages}</span>
-              </span>
-              <button
-                onClick={handleNextPage}
-                disabled={currentPage === totalPages}
-                className="px-4 py-2 text-sm bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-40"
-              >
-                Next
-              </button>
-            </div>
-          )}
-        </section>
-      )}
+        )}
+      </section>
       {msg && <Alert msg={msg} setMsg={setMsg} alertType={alertType} />}
     </>
   );

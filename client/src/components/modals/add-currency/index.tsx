@@ -38,10 +38,8 @@ const AddCurrencyModal: React.FC<AddCurrencyModalProps> = ({
     <>
       {/* Main Add Currency Modal */}
       {!selectedAsset && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-          <div
-            className={`bg-white dark:bg-gray-800 rounded-2xl w-full max-w-md p-6 relative`}
-          >
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-300/90 dark:bg-black/90">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-lg p-6 relative">
             {/* Close Button */}
             <button
               className="absolute bg-gray-100 dark:bg-gray-700 rounded-full p-1 text-[1rem] top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-gray-100"
@@ -100,10 +98,8 @@ const AddCurrencyModal: React.FC<AddCurrencyModalProps> = ({
 
       {/* Confirmation Modal */}
       {selectedAsset && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
-          <div
-            className={`mx-3 w-full max-w-sm p-6 rounded-xl bg-white dark:bg-gray-800`}
-          >
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-300/90 dark:bg-black/90">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-lg p-6 relative">
             <div className="text-center flex flex-col items-center mt-4">
               <img
                 src={selectedAsset.image}
@@ -111,28 +107,16 @@ const AddCurrencyModal: React.FC<AddCurrencyModalProps> = ({
                 alt={selectedAsset.name}
               />
               <div>
-                <p
-                  className={`font-medium ${
-                    theme === "dark" ? "text-white" : "text-gray-900"
-                  }`}
-                >
+                <p className={`font-medium text-gray-700 dark:text-gray-300`}>
                   {selectedAsset.name}
                 </p>
-                <p
-                  className={`text-xs ${
-                    theme === "dark" ? "text-gray-300" : "text-gray-600"
-                  }`}
-                >
+                <p className={`text-xs text-gray-700 dark:text-gray-300`}>
                   {selectedAsset.code === "native" ? "XLM" : selectedAsset.code}
                 </p>
               </div>
             </div>
 
-            <p
-              className={`text-sm mt-6 text-center ${
-                theme === "dark" ? "text-white" : "text-gray-900"
-              }`}
-            >
+            <p className="text-sm mt-6 text-center text-gray-700 dark:text-gray-300">
               Are you sure you want to{" "}
               <span className="font-semibold">ADD</span> this asset to your list
               of trustlines?
@@ -140,11 +124,9 @@ const AddCurrencyModal: React.FC<AddCurrencyModalProps> = ({
 
             <div className="flex gap-4 mt-6">
               <button
-                className={`p-3 rounded-lg w-full ${
-                  theme === "dark"
-                    ? "bg-red-600 hover:bg-red-700"
-                    : "bg-red-500 hover:bg-red-600"
-                } text-white disabled:opacity-50`}
+                className={`p-3 rounded-lg w-full text-gray-700 dark:text-gray-300
+                    border border-gray-700 dark:border-gray-300
+                    disabled:opacity-50`}
                 onClick={() => setSelectedAsset(null)}
                 disabled={loading}
               >

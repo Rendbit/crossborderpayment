@@ -11,6 +11,16 @@ import {
 import EmptyTopNav from "../components/top-nav/EmptyTopNav";
 import Alert from "../components/alert/Alert";
 import { BsBank } from "react-icons/bs";
+import {
+  formateDecimal,
+  formatNumberWithCommas,
+  getAssetDisplayName,
+  getMinimumSendAmount,
+  getSpendableBalance,
+  labelFor,
+} from "../utils";
+import TransactionConfirmationModal from "../components/modals/transaction-confirmation";
+import { useAppContext } from "../context/useContext";
 
 type Mode = "sendExact" | "receiveExact";
 
@@ -29,15 +39,18 @@ const numberRegex = /^(?:\d*(?:[.,]\d*)?)$/;
 const SendCrypto: React.FC = () => {
   const [mode, setMode] = useState<Mode>("sendExact");
   const token = Cookies.get("token") || "";
+  const {
+    setIsRemoveTransactionConfirmationModalOpen,
+    isRemoveTransactionConfirmationModalOpen,
+  } = useAppContext();
 
   // DATA
   const [assets, setAssets] = useState<AssetsResponse | null>(null);
   const [loadingWalletAssets, setLoadingWalletAssets] = useState<boolean>(true);
 
   // SELECTIONS
-  const [selectedAsset, setSelectedAsset] = useState<WalletAsset | null>(null);
-  const [selectedAssetReceive, setSelectedAssetReceive] =
-    useState<WalletAsset | null>(null);
+  const [selectedAsset, setSelectedAsset] = useState<any>(null);
+  const [selectedAssetReceive, setSelectedAssetReceive] = useState<any>(null);
 
   // ADDRESS
   const [address, setAddress] = useState<string>("");
@@ -62,9 +75,6 @@ const SendCrypto: React.FC = () => {
 
   const navigate = useNavigate();
 
-  // -------- Helpers --------
-  const formatNumberWithCommas = (n: number | string): string =>
-    Number(n || 0).toLocaleString();
 
   const clearAlerts = () => {
     setAlertType("");
@@ -87,10 +97,7 @@ const SendCrypto: React.FC = () => {
     setDestAmount("");
   };
 
-  const labelFor = (a?: WalletAsset | null) =>
-    a ? (a.asset_code === "NATIVE" ? "XLM" : a.asset_code) : "";
-
-  // -------- Load assets --------
+  // Load assets
   useEffect(() => {
     (async () => {
       try {
@@ -161,7 +168,7 @@ const SendCrypto: React.FC = () => {
   const gateReady =
     !!assets?.allWalletAssets?.length && !loadingWalletAssets && !!token;
 
-  // -------- Effect for triggering preview when all inputs are available --------
+  // Effect for triggering preview when all inputs are available
   useEffect(() => {
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
@@ -200,7 +207,6 @@ const SendCrypto: React.FC = () => {
     destAmount,
   ]);
 
-  // -------- Amount change handlers --------
   const handleSourceAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(",", ".");
     if (!numberRegex.test(value)) return;
@@ -217,7 +223,7 @@ const SendCrypto: React.FC = () => {
 
   const handleSourceAmountMax = () => {
     if (!selectedAsset) return;
-    const max = Number(selectedAsset.balance) || 0;
+    const max = getSpendableBalance(selectedAsset);
     if (max <= 0) return;
     const v = max.toString();
     setSourceAmount(v);
@@ -226,7 +232,7 @@ const SendCrypto: React.FC = () => {
 
   const handleDestAmountMax = () => {
     if (!selectedAssetReceive) return;
-    const max = Number(selectedAssetReceive.balance) || 0;
+    const max = getSpendableBalance(selectedAssetReceive);
     if (max <= 0) return;
     const v = max.toString();
     setDestAmount(v);
@@ -250,7 +256,6 @@ const SendCrypto: React.FC = () => {
     }
   };
 
-  // -------- PREVIEWS --------
   const validateCommon = (): boolean => {
     clearAlerts();
 
@@ -287,8 +292,20 @@ const SendCrypto: React.FC = () => {
     const amt = amountOverride ?? Number(sourceAmount);
     if (!amt || amt <= 0) return;
 
-    if (Number(selectedAsset?.balance || 0) < amt) {
-      raise("error", "Insufficient balance for this amount.");
+    // Check against spendable balance, not total balance
+    const spendableBalance = getSpendableBalance(selectedAsset);
+    if (spendableBalance < amt) {
+      raise("error", "Insufficient spendable balance for this amount.");
+      return;
+    }
+
+    // Check minimum amount
+    const minAmount = getMinimumSendAmount(labelFor(selectedAsset));
+    if (amt < minAmount) {
+      raise(
+        "error",
+        `Minimum amount is ${minAmount} ${labelFor(selectedAsset)}`
+      );
       return;
     }
 
@@ -340,6 +357,16 @@ const SendCrypto: React.FC = () => {
     const dAmt = destAmtOverride ?? Number(destAmount);
     if (!dAmt || dAmt <= 0) return;
 
+    // Check minimum amount
+    const minAmount = getMinimumSendAmount(labelFor(selectedAssetReceive));
+    if (dAmt < minAmount) {
+      raise(
+        "error",
+        `Minimum amount is ${minAmount} ${labelFor(selectedAssetReceive)}`
+      );
+      return;
+    }
+
     setLoadingPreview(true);
     try {
       const resp = await strictReceivePreview(
@@ -383,8 +410,7 @@ const SendCrypto: React.FC = () => {
     }
   };
 
-  // -------- SUBMIT --------
-  const onNext = async () => {
+  const onNext = async (transactionPin: string) => {
     clearAlerts();
 
     if (!validateCommon()) return;
@@ -400,8 +426,21 @@ const SendCrypto: React.FC = () => {
         raise("error", "Enter a valid amount to send.");
         return;
       }
-      if (Number(selectedAsset?.balance || 0) < amt) {
-        raise("error", "Insufficient balance.");
+
+      // Check against spendable balance, not total balance
+      const spendableBalance = getSpendableBalance(selectedAsset);
+      if (spendableBalance < amt) {
+        raise("error", "Insufficient spendable balance.");
+        return;
+      }
+
+      // Check minimum amount
+      const minAmount = getMinimumSendAmount(labelFor(selectedAsset));
+      if (amt < minAmount) {
+        raise(
+          "error",
+          `Minimum amount is ${minAmount} ${labelFor(selectedAsset)}`
+        );
         return;
       }
 
@@ -412,7 +451,8 @@ const SendCrypto: React.FC = () => {
           selectedAsset!.asset_code,
           amt,
           address.trim(),
-          Number(slippage)
+          Number(slippage),
+          transactionPin
         );
 
         if (!exec?.success) {
@@ -438,7 +478,7 @@ const SendCrypto: React.FC = () => {
           "success",
           `Sent ${formatNumberWithCommas(amt)} ${labelFor(
             selectedAsset
-          )}. Tx: ${exec.data?.hash || "success"}`
+          )}.`
         );
 
         setSelectedAsset(null);
@@ -464,6 +504,16 @@ const SendCrypto: React.FC = () => {
         return;
       }
 
+      // Check minimum amount
+      const minAmount = getMinimumSendAmount(labelFor(selectedAssetReceive));
+      if (dAmt < minAmount) {
+        raise(
+          "error",
+          `Minimum amount is ${minAmount} ${labelFor(selectedAssetReceive)}`
+        );
+        return;
+      }
+
       setLoadingSubmit(true);
       try {
         const exec = await strictReceive(
@@ -472,7 +522,8 @@ const SendCrypto: React.FC = () => {
           selectedAssetReceive!.asset_code,
           dAmt,
           address.trim(),
-          Number(slippage)
+          Number(slippage),
+          transactionPin
         );
 
         if (!exec?.success) {
@@ -498,7 +549,7 @@ const SendCrypto: React.FC = () => {
           "success",
           `Receiver will get ${formatNumberWithCommas(dAmt)} ${labelFor(
             selectedAssetReceive
-          )}. Tx: ${exec.data?.hash || "success"}`
+          )}.`
         );
 
         setSelectedAsset(null);
@@ -515,15 +566,14 @@ const SendCrypto: React.FC = () => {
     }
   };
 
-  // -------- UI --------
   return (
     <>
       <EmptyTopNav />
       <main className="flex items-center justify-center min-h-screen p-4 sm:p-6 lg:p-8 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
         <div
-          className={`mt-5 w-full max-w-md bg-[white] dark:bg-gray-800  rounded-2xl shadow-lg p-6 ${
+          className={` w-full max-w-md bg-[white] dark:bg-gray-800  rounded-2xl shadow-lg p-6 ${
             canProceed && mode !== "sendExact" && "mt-[80px]"
-          }`}
+          } ${previewData?.fundResultMessage ? "mt-[80px]" : "mt-5"}`}
         >
           {/* Header */}
           <div className="text-center mb-6">
@@ -575,6 +625,39 @@ const SendCrypto: React.FC = () => {
           {/* Amount Inputs */}
           {mode === "sendExact" ? (
             <>
+              {/* Balance (only when From selected) */}
+              {selectedAsset && (
+                <div className="flex items-center justify-between bg-white dark:bg-gray-700 rounded-lg px-4 py-3 mb-4">
+                  <div className="flex items-center gap-3">
+                    {selectedAsset?.image && (
+                      <img
+                        src={
+                          selectedAsset.asset_code === "NATIVE"
+                            ? "./images/stellar.png"
+                            : selectedAsset.asset_code === "NGNC"
+                            ? "./images/nigeria.png"
+                            : selectedAsset.image
+                        }
+                        alt={selectedAsset.asset_code}
+                        className="w-5 h-5 rounded-full"
+                      />
+                    )}
+                    <div>
+                      <p className="text-sm font-medium">
+                        {getAssetDisplayName(selectedAsset.asset_code)}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Spendable Balance
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 px-3 py-1 rounded-full">
+                    {getAssetDisplayName(selectedAsset.asset_code)}{" "}
+                    {formatNumberWithCommas(getSpendableBalance(selectedAsset))}{" "}
+                  </span>
+                </div>
+              )}
+
               {/* Asset Selectors */}
               <div className="grid grid-cols-1 gap-3 mb-4">
                 <div>
@@ -597,14 +680,10 @@ const SendCrypto: React.FC = () => {
                     </option>
                     {assets?.allWalletAssets?.map((a) => (
                       <option key={a.asset_code} value={a.asset_code}>
-                        {a.asset_code === "NATIVE" ? "XLM" : a.asset_code}
+                        {getAssetDisplayName(a.asset_code?.toUpperCase())}
                       </option>
                     ))}
                   </select>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Balance: {formatNumberWithCommas(currentBalance)}{" "}
-                    {labelFor(selectedAsset)}
-                  </p>
                 </div>
               </div>
               {/* Receiver Address */}
@@ -644,9 +723,26 @@ const SendCrypto: React.FC = () => {
                     Max
                   </button>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Min: 0.0000001 | Max: your available balance
-                </p>
+                {/* {previewData?.fundResultMessage && (
+                  <p className="text-[12px] text-[#911a1a] mt-2">
+                    {previewData?.fundResultMessage}
+                  </p>
+                )} */}
+                {labelFor(selectedAsset) && (
+                  <p className="text-xs text-gray-500 mt-1 mb-6">
+                    Min:{" "}
+                    {getMinimumSendAmount(
+                      selectedAsset.asset_code?.toUpperCase()
+                    )}{" "}
+                    {getAssetDisplayName(
+                      selectedAsset.asset_code?.toUpperCase()
+                    )}{" "}
+                    | Max: {formateDecimal(getSpendableBalance(selectedAsset))}{" "}
+                    {getAssetDisplayName(
+                      selectedAsset.asset_code?.toUpperCase()
+                    )}
+                  </p>
+                )}
               </div>
             </>
           ) : (
@@ -663,12 +759,23 @@ const SendCrypto: React.FC = () => {
                     )}
                   </label>
                   <select
-                    value={selectedAsset?.asset_code || ""}
+                    value={
+                      selectedAssetReceive?.asset_code ===
+                      selectedAsset?.asset_code
+                        ? ""
+                        : selectedAsset?.asset_code || ""
+                    }
                     onChange={(e) => {
                       const a = assets?.allWalletAssets?.find(
                         (x) => x.asset_code === e.target.value
                       );
                       setSelectedAsset(a || null);
+
+                      if (a) {
+                        if (a.asset_code === selectedAssetReceive?.asset_code) {
+                          setSelectedAssetReceive(null);
+                        }
+                      }
                       resetPreviewAndNumbers();
                     }}
                     className="w-full border rounded-lg p-2 focus:outline-0 focus:border-[#0E7BB2] dark:bg-gray-800 dark:border-gray-700 dark:text-white"
@@ -678,13 +785,16 @@ const SendCrypto: React.FC = () => {
                     </option>
                     {assets?.allWalletAssets?.map((a) => (
                       <option key={a.asset_code} value={a.asset_code}>
-                        {a.asset_code === "NATIVE" ? "XLM" : a.asset_code}
+                        {getAssetDisplayName(a.asset_code?.toUpperCase())}{" "}
                       </option>
                     ))}
                   </select>
                   <p className="text-xs text-gray-500 mt-1">
-                    Balance: {formatNumberWithCommas(currentBalance)}{" "}
-                    {labelFor(selectedAsset)}
+                    Spendable Balance:{" "}
+                    {formatNumberWithCommas(getSpendableBalance(selectedAsset))}{" "}
+                    {getAssetDisplayName(
+                      selectedAsset?.asset_code?.toUpperCase()
+                    )}
                   </p>
                 </div>
 
@@ -693,12 +803,24 @@ const SendCrypto: React.FC = () => {
                     Receiver Gets (asset)
                   </label>
                   <select
-                    value={selectedAssetReceive?.asset_code || ""}
+                    value={
+                      selectedAssetReceive?.asset_code ===
+                      selectedAsset?.asset_code
+                        ? ""
+                        : selectedAssetReceive?.asset_code || ""
+                    }
                     onChange={(e) => {
-                      const a = filteredReceiveAssets.find(
+                      // Find the asset in the full list, not just filtered
+                      const a = assets?.allWalletAssets?.find(
                         (x) => x.asset_code === e.target.value
                       );
-                      setSelectedAssetReceive(a || null);
+
+                      setSelectedAssetReceive(a);
+                      if (a) {
+                        if (a.asset_code === selectedAsset?.asset_code) {
+                          setSelectedAsset(null);
+                        }
+                      }
                       resetPreviewAndNumbers();
                     }}
                     className="w-full border rounded-lg p-2 focus:outline-0 focus:border-[#0E7BB2] dark:bg-gray-800 dark:border-gray-700 dark:text-white"
@@ -706,18 +828,21 @@ const SendCrypto: React.FC = () => {
                     <option value="" disabled>
                       {loadingWalletAssets ? "Loading..." : "Select asset"}
                     </option>
-                    {filteredReceiveAssets.map((a) => (
+                    {assets?.allWalletAssets?.map((a) => (
                       <option key={a.asset_code} value={a.asset_code}>
-                        {a.asset_code === "NATIVE" ? "XLM" : a.asset_code}
+                        {getAssetDisplayName(a.asset_code?.toUpperCase())}{" "}
                       </option>
                     ))}
                   </select>
+                  {/* FIX: Added balance display for receiver asset */}
                   <p className="text-xs text-gray-500 mt-1">
-                    Balance:{" "}
+                    Spendable Balance:{" "}
                     {formatNumberWithCommas(
-                      Number(selectedAssetReceive?.balance)
+                      getSpendableBalance(selectedAssetReceive)
                     )}{" "}
-                    {labelFor(selectedAssetReceive)}
+                    {getAssetDisplayName(
+                      selectedAssetReceive?.asset_code?.toUpperCase()
+                    )}
                   </p>
                 </div>
               </div>
@@ -760,9 +885,15 @@ const SendCrypto: React.FC = () => {
                     Max
                   </button>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
-                  Min: 0.0000001 | Max: your available balance
-                </p>
+                {/* FIX: This now correctly shows min/max for the receiver asset */}
+                {selectedAssetReceive && (
+                  <p className="text-xs text-gray-500 mt-1 mb-6">
+                    Min: {getMinimumSendAmount(labelFor(selectedAssetReceive))}{" "}
+                    {labelFor(selectedAssetReceive)} | Max:{" "}
+                    {formateDecimal(getSpendableBalance(selectedAssetReceive))}{" "}
+                    {labelFor(selectedAssetReceive)}
+                  </p>
+                )}
               </div>
 
               {/* You Send (estimated) */}
@@ -896,7 +1027,7 @@ const SendCrypto: React.FC = () => {
                     : Number(destAmount)
                 );
               } else {
-                onNext();
+                setIsRemoveTransactionConfirmationModalOpen(true);
               }
             }}
             className={`${
@@ -914,6 +1045,13 @@ const SendCrypto: React.FC = () => {
         </div>
         {msg && <Alert msg={msg} setMsg={setMsg} alertType={alertType} />}
       </main>
+      {isRemoveTransactionConfirmationModalOpen && (
+        <TransactionConfirmationModal
+          handleTransactionConfirmation={onNext}
+          loading={loadingSubmit}
+          alertType={alertType}
+        />
+      )}
     </>
   );
 };

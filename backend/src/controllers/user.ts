@@ -353,7 +353,6 @@ export const exportPrivateKey = async (req: any, res: any) => {
 
     if (!user.pinCode) throw new Error("Please create a pin code");
     if (pinCode !== user.pinCode) throw new Error("Invalid pin code");
-    console.log(user.encryptedPrivateKey);
     const decryptedPrivateKey = WalletDecryption.decryptPrivateKey(
       user.encryptedPrivateKey,
       `${user.primaryEmail}${user.password}${pinCode}`

@@ -10,6 +10,7 @@ import { PUBLIC_ASSETS, TESTNET_ASSETS } from "../common/assets";
 import { WalletDecryption } from "../helpers/encryption-decryption.helper";
 import { WithdrawalEnum } from "../common/enums";
 import { generateConfirmationToken } from "../utils/token";
+import { fundAccount, fundAccountPreview } from "./auth";
 
 const server = new StellarSdk.SorobanRpc.Server(
   process.env.STELLAR_NETWORK === "public"
@@ -328,8 +329,16 @@ export const payment = async (req: any, res: any) => {
       accountNumber,
       accountName,
       bankName,
+      pinCode,
     } = req.body;
     const user = req.user;
+    if (pinCode !== user.pinCode)
+      return res.status(httpStatus.BAD_REQUEST).json({
+        data: {},
+        message: "Invalid transaction pin",
+        status: httpStatus.BAD_REQUEST,
+        success: false,
+      });
     // Ensure the asset code is in uppercase.
     assetCode = assetCode.toUpperCase();
 
@@ -590,7 +599,6 @@ export const swapPreview = async (req: any, res: any) => {
     });
 
     const paths = _paths.data.sendPaymentPath;
-    console.log(paths);
     const desAmount = paths?.filter(
       (pth: any) =>
         pth.destination_asset_type === desAssetIssuer ||
@@ -636,8 +644,18 @@ export const swapPreview = async (req: any, res: any) => {
 
 export const swap = async (req: any, res: any) => {
   try {
-    let { slippage, sourceAssetCode, desAssetCode, sourceAmount } = req.body;
+    let { slippage, sourceAssetCode, desAssetCode, sourceAmount, pinCode } =
+      req.body;
     const user = req.user;
+
+    if (pinCode !== user.pinCode)
+      return res.status(httpStatus.BAD_REQUEST).json({
+        data: {},
+        message: "Invalid transaction pin",
+        status: httpStatus.BAD_REQUEST,
+        success: false,
+      });
+
     // Ensure the slippage value is a number.
     slippage *= 1;
 
@@ -671,15 +689,14 @@ export const swap = async (req: any, res: any) => {
       user.encryptedPrivateKey,
       `${user.primaryEmail}${hashedPassword}${user.pinCode}`
     );
+    const _paths = paths.data.sendPaymentPath;
 
     // Calculate the destination amount based on the provided amount or the paths.
-    const desAmount =
-      sourceAmount ||
-      paths.filter(
-        (pth: any) =>
-          pth.destination_asset_type === desAssetIssuer ||
-          desAssetCode.startsWith(pth.destination_asset_code)
-      )[0].payload.desAmount;
+    const desAmount = _paths?.filter(
+      (pth: any) =>
+        pth.destination_asset_type === desAssetIssuer ||
+        desAssetCode.startsWith(pth.destination_asset_code)
+    )[0].destination_amount;
 
     // Create the source asset object.
     const sourceAsset =
@@ -770,6 +787,16 @@ export const strictSendPreview = async (req: any, res: any) => {
       });
     }
 
+    // Check if destination account exists/activated
+    let fundResultMessage = "";
+    try {
+      const checkFunded: any = await fundAccountPreview(desAddress);
+      if (!checkFunded?.status) fundResultMessage = checkFunded?.balanceError;
+    } catch (error: any) {
+      fundResultMessage = error;
+      throw error;
+    }
+
     const sourceAssetIssuer =
       process.env.STELLAR_NETWORK === "public"
         ? PUBLIC_ASSETS[assetCode as keyof typeof PUBLIC_ASSETS].issuer
@@ -813,6 +840,7 @@ export const strictSendPreview = async (req: any, res: any) => {
           slippage: slippage,
           fee: process.env.FEE,
           network: process.env.STELLAR_NETWORK,
+          fundResultMessage,
         },
       },
       message: "Strict send preview generated successfully.",
@@ -832,117 +860,154 @@ export const strictSendPreview = async (req: any, res: any) => {
 export const strictSend = async (req: any, res: any) => {
   try {
     const user = req.user;
-    let { desAddress, slippage, assetCode, amount } = req.body;
-    // Ensure the slippage value is a number.
-    slippage *= 1;
+    let { desAddress, slippage, assetCode, amount, pinCode } = req.body;
 
-    // Validate the destination Stellar address.
-    if (!WalletHelper.isValidStellarAddress(desAddress)) {
+    if (pinCode !== user.pinCode) {
       return res.status(httpStatus.BAD_REQUEST).json({
-        message: "Invalid Address",
+        message: "Invalid transaction pin",
         status: httpStatus.BAD_REQUEST,
         success: false,
       });
     }
 
-    // Determine the source asset issuer based on the network configuration.
+    // Ensure numeric slippage
+    slippage = Number(slippage);
+
+    // Validate destination address
+    if (!WalletHelper.isValidStellarAddress(desAddress)) {
+      return res.status(httpStatus.BAD_REQUEST).json({
+        message: "Invalid Stellar address",
+        status: httpStatus.BAD_REQUEST,
+        success: false,
+      });
+    }
+
+    // 1️⃣ Check if destination exists, otherwise fund it
+    let destinationExists = true;
+    try {
+      const checkAccount = await fundAccountPreview(desAddress);
+      if (!checkAccount?.status) destinationExists = false;
+    } catch (err: any) {
+      if (err?.response?.status === 404) {
+        destinationExists = false;
+      } else {
+        throw err;
+      }
+    }
+
+    const decryptedPrivateKey = WalletDecryption.decryptPrivateKey(
+      user.encryptedPrivateKey,
+      `${user.primaryEmail}${user.password}${user.pinCode}`
+    );
+
+    if (!destinationExists) {
+      const fundResult: any = await fundAccount(
+        desAddress,
+        parseFloat(amount).toFixed(7).toString(),
+        decryptedPrivateKey
+      );
+      if (fundResult.status) {
+        return res.status(httpStatus.OK).json({
+          data: { hash: fundResult.transactionResult.hash },
+          message: "Destination account funded successfully",
+          status: httpStatus.OK,
+          success: true,
+        });
+      } else {
+        return res.status(httpStatus.BAD_REQUEST).json({
+          data: {},
+          message: "Failed to fund destination account",
+          status: httpStatus.BAD_REQUEST,
+          success: false,
+        });
+      }
+    }
+
+    // 2️⃣ Continue with path payment strict send
     const sourceAssetIssuer =
       process.env.STELLAR_NETWORK === "public"
         ? PUBLIC_ASSETS[assetCode as keyof typeof PUBLIC_ASSETS].issuer
         : TESTNET_ASSETS[assetCode as keyof typeof TESTNET_ASSETS].issuer;
 
-    // Determine the destination asset issuer based on the network configuration.
     const desAssetIssuer =
       process.env.STELLAR_NETWORK === "public"
         ? PUBLIC_ASSETS[assetCode as keyof typeof PUBLIC_ASSETS].issuer
         : TESTNET_ASSETS[assetCode as keyof typeof TESTNET_ASSETS].issuer;
 
-    // Find the payment path from the source asset to the destination asset.
     const _paths: any = await WalletHelper.sendPaymentPath({
       sourceAssetCode: assetCode,
       sourceAssetIssuer,
       desAssetCode: assetCode,
       desAssetIssuer,
-      amount: amount.toString(),
+      amount: parseFloat(amount).toFixed(7).toString(),
     });
 
-    // Extract the hashed password from the account object.
-    const hashedPassword = user.password;
     const paths = _paths.data.sendPaymentPath;
-    // Decrypt the user's private key using their encrypted private key,
-    // primary email, hashed password, and pin code.
-    const decryptedPrivateKey = WalletDecryption.decryptPrivateKey(
-      user.encryptedPrivateKey,
-      `${user.primaryEmail}${hashedPassword}${user.pinCode}`
-    );
 
-    // Calculate the destination amount based on the provided amount or the paths.
-    const _desAmount: any =
-      amount ||
-      paths.filter(
-        (pth: any) =>
-          pth.destination_asset_type === desAssetIssuer ||
-          assetCode.startsWith(pth.destination_asset_code)
-      )[0].destination_amount;
+    const _desAmount: any = paths.find(
+      (pth: any) =>
+        pth.destination_asset_type === desAssetIssuer ||
+        assetCode.startsWith(pth.destination_asset_code)
+    )?.destination_amount;
 
-    // Create the source asset object.
+    if (!_desAmount) {
+      return res.status(httpStatus.BAD_REQUEST).json({
+        message: "No valid payment path found",
+        status: httpStatus.BAD_REQUEST,
+        success: false,
+      });
+    }
+
     const sourceAsset =
       assetCode !== "NATIVE"
         ? new StellarSdk.Asset(assetCode, sourceAssetIssuer)
         : StellarSdk.Asset.native();
 
-    // Create the destination asset object.
     const desAsset =
       assetCode !== "NATIVE"
         ? new StellarSdk.Asset(assetCode, desAssetIssuer)
         : StellarSdk.Asset.native();
 
-    // Calculate the minimum destination amount considering the slippage.
     const destMin = (((100 - slippage) * parseFloat(_desAmount)) / 100).toFixed(
       7
     );
 
-    // Fetch the source account details from the Stellar network using the user's public key.
     const sourceAccount = await server.getAccount(user.stellarPublicKey);
 
-    // Construct the strict send payment transaction.
     const transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
-      fee: process.env.FEE, // Set the transaction fee.
-      // Set the network passphrase based on the network configuration.
+      fee: process.env.FEE,
       networkPassphrase:
         process.env.STELLAR_NETWORK === "public"
           ? Networks.PUBLIC
           : Networks.TESTNET,
     })
       .addOperation(
-        // Add the path payment strict send operation to the transaction.
         StellarSdk.Operation.pathPaymentStrictSend({
-          sendAsset: sourceAsset, // Set the source asset.
-          sendAmount: amount.toString(), // Set the source amount.
-          destination: desAddress, // Set the destination address.
-          destAsset: desAsset, // Set the destination asset.
-          destMin: destMin, // Set the minimum destination amount.
+          sendAsset: sourceAsset,
+          sendAmount: parseFloat(amount).toFixed(7).toString(),
+          destination: desAddress,
+          destAsset: desAsset,
+          destMin,
         })
       )
-      .setTimeout(process.env.TIMEOUT) // Set the transaction timeout.
-      .build(); // Build the transaction.
-    // Sign the transaction using the user's decrypted private key.
+      .setTimeout(process.env.TIMEOUT)
+      .build();
 
     const resp: any = await WalletHelper.execTranst(
       transaction,
       StellarSdk.Keypair.fromSecret(decryptedPrivateKey),
       "strictSend"
     );
+
     if (!resp.status) {
       return res.status(httpStatus.BAD_REQUEST).json({
-        data: { hash: resp.details.hash },
+        data: resp.details,
         message: resp.userMessage || resp.msg,
         status: httpStatus.BAD_REQUEST,
         success: false,
       });
     }
 
-    // Return the transaction response.
     return res.status(httpStatus.OK).json({
       data: { hash: resp.hash },
       message: resp.userMessage || resp.msg,
@@ -950,7 +1015,7 @@ export const strictSend = async (req: any, res: any) => {
       success: true,
     });
   } catch (error: any) {
-    console.log("Error handling strict send.", error);
+    console.error("Error handling strict send.", error.response?.data || error);
     return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
       message: error.message || "Error handling strict send.",
       status: httpStatus.INTERNAL_SERVER_ERROR,
@@ -990,7 +1055,7 @@ export const strictReceivePreview = async (req: any, res: any) => {
       sourceAssetIssuer,
       desAssetCode,
       desAssetIssuer,
-      amount: desAmount,
+      amount: desAmount?.toFixed(7)?.toString(),
     });
 
     const paths = _paths?.data?.receivePaymentPath || [];
@@ -1043,9 +1108,22 @@ export const strictReceivePreview = async (req: any, res: any) => {
 
 export const strictReceive = async (req: any, res: any) => {
   try {
-    let { slippage, desAddress, sourceAssetCode, desAssetCode, desAmount } =
-      req.body;
+    let {
+      slippage,
+      desAddress,
+      sourceAssetCode,
+      desAssetCode,
+      desAmount,
+      pinCode,
+    } = req.body;
     const user = req.user;
+    if (pinCode !== user.pinCode)
+      return res.status(httpStatus.BAD_REQUEST).json({
+        data: {},
+        message: "Invalid transaction pin",
+        status: httpStatus.BAD_REQUEST,
+        success: false,
+      });
     slippage = parseFloat(slippage) || 0;
 
     // ✅ Validate destination address
@@ -1081,7 +1159,7 @@ export const strictReceive = async (req: any, res: any) => {
       sourceAssetIssuer,
       desAssetCode,
       desAssetIssuer,
-      amount: desAmount,
+      amount: desAmount?.toFixed(7)?.toString(),
     });
 
     const paths = _paths?.data?.receivePaymentPath || [];
@@ -1132,7 +1210,7 @@ export const strictReceive = async (req: any, res: any) => {
           sendMax,
           destination: desAddress,
           destAsset: desAsset,
-          destAmount: desAmount.toString(),
+          destAmount: desAmount?.toFixed(7)?.toString(),
         })
       )
       .setTimeout(parseInt(process.env.TIMEOUT || "60", 10))

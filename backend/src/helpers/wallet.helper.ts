@@ -485,6 +485,8 @@ export class WalletHelper {
           ? process.env.HORIZON_MAINNET_URL
           : process.env.HORIZON_TESTNET_URL
       }/paths/strict-send`;
+      // Ensure max 7 decimal places, convert to string
+      const formattedAmount = Number(amount).toFixed(7);
 
       // Append query parameters for destination and source assets
       url += `?destination_assets=${
@@ -497,7 +499,7 @@ export class WalletHelper {
           : sourceAssetCode.length <= 4
           ? "credit_alphanum4"
           : "credit_alphanum12"
-      }&source_amount=${amount}`;
+      }&source_amount=${formattedAmount}`;
 
       // Include source asset issuer and code if not "native"
       if (sourceAssetIssuer !== "native")
@@ -507,6 +509,7 @@ export class WalletHelper {
       const resp = await fetch(url);
       const resps = await resp.json();
       if (!resp.ok) {
+        console.log(resps);
         throw new Error("Error sending payment path."); // Handle non-OK responses
       }
 
