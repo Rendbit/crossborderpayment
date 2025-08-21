@@ -18,13 +18,13 @@ export default function ThemeToggle({ type = "full" }: ThemeToggleProps) {
       ? theme === "light"
         ? "🌙 Dark Mode"
         : theme === "dark"
-        ? "☀️ Light Mode"
-        : "System 🖥️"
+        ? "🖥️ System Mode"
+        : "☀️ Light Mode"
       : type === "full"
       ? theme === "light"
         ? "🌙 Dark Mode"
         : theme === "dark"
-        ? "🖥️ System"
+        ? "🖥️ System Mode"
         : "☀️ Light Mode"
       : null}
     </button>
