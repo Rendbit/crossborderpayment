@@ -14,7 +14,6 @@ import { Key, User } from "lucide-react";
 
 const CreateAccount: React.FC = () => {
   const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -87,10 +86,10 @@ const CreateAccount: React.FC = () => {
   };
 
   return (
-    <div className="relative bg-[#F9F9F9] min-h-screen">
+    <div className="relative bg-gray-100 dark:bg-gray-800">
       <div className="flex items-center justify-between w-full md:pr-[100px] pr-[20px]">
         <AuthNav />
-        <div className="text-center text-[14px]">
+        <div className="text-center text-black dark:text-gray-300 text-[14px]">
           Already have an account?{" "}
           <Link to="/login" className="text-[#0E7BB2] underline ml-1">
             Log in
@@ -104,7 +103,7 @@ const CreateAccount: React.FC = () => {
           alt=""
         />
         <div className="flex flex-col justify-center items-center relative z-[11]">
-          <div className="bg-white shadow shadow-[#585C5F1A] px-4 sm:px-6 pt-8 pb-5 rounded-[18px] w-full sm:w-[450px]">
+          <div className="bg-[white] dark:bg-gray-900 shadow shadow-[#585C5F1A] px-4 sm:px-6 pt-8 pb-5 rounded-[18px] w-full sm:w-[450px]">
             <div className="top-bg relative top-[50px] sm:flex items-center justify-center w-[300px] mx-auto">
               <img
                 src="./image/CustomRegisterIcon.svg"
@@ -113,8 +112,10 @@ const CreateAccount: React.FC = () => {
               />
             </div>
             <div className="text-center mb-12 mt-[-30px] relative z-[100]">
-              <h2 className="text-[18px] md:text-[24px] text-[#0A0D14] mb-2">Create a new account</h2>
-              <p className="text-[#525866] text-[14px]">
+              <h2 className="text-[18px] md:text-[24px] text-black dark:text-gray-300 mb-2">
+                Create a new account
+              </h2>
+              <p className="text-black dark:text-gray-300 text-[14px]">
                 Enter your details to register.
               </p>
             </div>
@@ -139,89 +140,71 @@ const CreateAccount: React.FC = () => {
                 <div className="h-[1px] bg-[#ffffff] w-full"></div>
               </div> */}
 
-                <div className="w-[100%]">
-                  <label className="text-[#0A0D14] font-[500] text-[14px] mb-2 ml-1 block">
-                    Username
-                  </label>
-                  <div className="border border-[#E2E4E9] text-[#868C98] px-2 py-[7px] rounded-[6px] gap-2 flex items-center justify-between w-full">
-                    <User />
-                    <input
-                      type="text"
-                      onChange={(e) => setUsername(e.target.value)}
-                      disabled={loading}
-                      placeholder="John Doe"
-                      autoComplete="off"
-                      name="username-field"
-                      className="outline-none w-full"
-                    />
+              <div className="w-[100%] mt-6">
+                <label className="text-black dark:text-gray-300 font-[500] text-[14px] mb-2 ml-1 block">
+                  Email Address
+                </label>
+                <div className="border border-[#E2E4E9] text-[#868C98] px-2 py-[7px] rounded-[6px] gap-2 flex items-center justify-between w-full">
+                  <MdEmail />
+                  <input
+                    type="text"
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={loading}
+                    placeholder="hello@rendbit.com"
+                    autoComplete="off"
+                    name="email-field"
+                    className="outline-none w-full"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-6">
+                <label className="text-black dark:text-gray-300 font-[500] text-[14px] mb-2 ml-1 block">
+                  Password
+                </label>
+                <div className="border border-[#E2E4E9] text-[#868C98] px-2 py-[7px] rounded-[6px] gap-2 flex items-center justify-between w-full">
+                  <Key />
+                  <input
+                    type={passwordType}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={loading}
+                    placeholder="********"
+                    autoComplete="new-password"
+                    name="password-field"
+                    className="outline-none w-full"
+                  />
+                  <div>
+                    {passwordType === "password" ? (
+                      <GoEye
+                        className="cursor-pointer text-[#868C98]"
+                        onClick={() => setPasswordType("text")}
+                      />
+                    ) : (
+                      <GoEyeClosed
+                        className="cursor-pointer text-[#868C98]"
+                        onClick={() => setPasswordType("password")}
+                      />
+                    )}
                   </div>
                 </div>
+              </div>
 
-                <div className="w-[100%] mt-6">
-                  <label className="text-[#0A0D14] font-[500] text-[14px] mb-2 ml-1 block">
-                    Email Address
-                  </label>
-                  <div className="border border-[#E2E4E9] text-[#868C98] px-2 py-[7px] rounded-[6px] gap-2 flex items-center justify-between w-full">
-                    <MdEmail />
-                    <input
-                      type="text"
-                      onChange={(e) => setEmail(e.target.value)}
-                      disabled={loading}
-                      placeholder="hello@rendbit.com"
-                      autoComplete="off"
-                      name="email-field"
-                      className="outline-none w-full"
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-6">
-                  <label className="text-[#0A0D14] font-[500] text-[14px] mb-2 ml-1 block">
-                    Password
-                  </label>
-                  <div className="border border-[#E2E4E9] text-[#868C98] px-2 py-[7px] rounded-[6px] gap-2 flex items-center justify-between w-full">
-                    <Key />
-                    <input
-                      type={passwordType}
-                      onChange={(e) => setPassword(e.target.value)}
-                      disabled={loading}
-                      placeholder="********"
-                      autoComplete="new-password"
-                      name="password-field"
-                      className="outline-none w-full"
-                    />
-                    <div>
-                      {passwordType === "password" ? (
-                        <GoEye
-                          className="cursor-pointer text-[#868C98]"
-                          onClick={() => setPasswordType("text")}
-                        />
-                      ) : (
-                        <GoEyeClosed
-                          className="cursor-pointer text-[#868C98]"
-                          onClick={() => setPasswordType("password")}
-                        />
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-6">
-                  <label className="text-[#0A0D14] font-[500] text-[14px] mb-2 ml-1 block">
-                    Confirm Password
-                  </label>
-                  <div className="border border-[#E2E4E9] text-[#868C98] px-2 py-[7px] rounded-[6px] gap-2 flex items-center justify-between w-full">
-                    <Key />
-                    <input
-                      type={confirmPasswordType}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      disabled={loading}
-                      placeholder="********"
-                      autoComplete="new-password"
-                      name="password-field"
-                      className="outline-none w-full"
-                    />
-                    <div>
+              <div className="mt-6">
+                <label className="text-black dark:text-gray-300 font-[500] text-[14px] mb-2 ml-1 block">
+                  Confirm Password
+                </label>
+                <div className="border border-[#E2E4E9] text-[#868C98] px-2 py-[7px] rounded-[6px] gap-2 flex items-center justify-between w-full">
+                  <Key />
+                  <input
+                    type={confirmPasswordType}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    disabled={loading}
+                    placeholder="********"
+                    autoComplete="new-password"
+                    name="password-field"
+                    className="outline-none w-full"
+                  />
+                  <div>
                     {confirmPasswordType === "password" ? (
                       <GoEye
                         className="cursor-pointer text-[#868C98]"
@@ -233,11 +216,13 @@ const CreateAccount: React.FC = () => {
                         onClick={() => setConfirmPasswordType("password")}
                       />
                     )}
-                    </div>
                   </div>
                 </div>
+              </div>
 
-                <p className="text-[#525866] text-[12px] mt-1">Must contain 1 uppercase letter, 1 number, min. 8 characters.</p>
+              <p className="text-[#525866] text-[12px] mt-1">
+                Must contain 1 uppercase letter, 1 number, min. 8 characters.
+              </p>
 
               <button
                 onClick={handleAccountCreation}
@@ -259,7 +244,7 @@ const CreateAccount: React.FC = () => {
                 By clicking Register, you agree to accept Rendbit
                 <Link
                   to="#"
-                  className="block text-[#0A0D14] underline ml-1"
+                  className="block text-black dark:text-gray-300 underline ml-1"
                 >
                   Terms and Conditions
                 </Link>
@@ -277,8 +262,7 @@ const CreateAccount: React.FC = () => {
       </div> */}
       <div className="mt-[50px] mb-5 sm:mx-10 flex sm:flex-row flex-col sm:gap-0 gap-3 items-center justify-between">
         <p className="text-[#525866] text-[14px]">
-          &copy; {new Date().getFullYear()} RendBit. All rights
-          reserved.
+          &copy; {new Date().getFullYear()} RendBit. All rights reserved.
         </p>
         <div className="text-[#525866] text-[14px] flex items-center gap-4">
           <Link to="#" className="flex items-center gap-[2px]">

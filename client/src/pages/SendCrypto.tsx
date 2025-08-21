@@ -75,7 +75,6 @@ const SendCrypto: React.FC = () => {
 
   const navigate = useNavigate();
 
-
   const clearAlerts = () => {
     setAlertType("");
     setMsg("");
@@ -476,9 +475,7 @@ const SendCrypto: React.FC = () => {
 
         raise(
           "success",
-          `Sent ${formatNumberWithCommas(amt)} ${labelFor(
-            selectedAsset
-          )}.`
+          `Sent ${formatNumberWithCommas(amt)} ${labelFor(selectedAsset)}.`
         );
 
         setSelectedAsset(null);

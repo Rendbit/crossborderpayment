@@ -355,7 +355,7 @@ const Swap: React.FC = () => {
       <EmptyTopNav />
 
       {/* Block UI until assets are available */}
-      {!gateReady ? (
+      {!gateReady && !msg ? (
         <main className="flex items-center justify-center min-h-screen p-6 bg-gray-50 dark:bg-gray-900">
           <div className="flex flex-col items-center gap-4">
             <div className="h-10 w-10 rounded-full border-4 border-gray-300 dark:border-gray-700 border-t-transparent animate-spin" />

@@ -89,6 +89,8 @@ const Dashboard: React.FC = () => {
     handleGetTransactionHistory();
   }, []);
 
+  console.log({ walletAssets });
+
   const hasNGNC = walletAssets?.allWalletAssets.some(
     (asset: any) => asset?.asset_code === "NGNC"
   );
@@ -441,16 +443,18 @@ const Dashboard: React.FC = () => {
       {/* Main Content */}
       <main className="flex-1 p-4 sm:p-6 lg:p-8 text-gray-900 dark:text-gray-100">
         <TopNav page="Dashboard" />
-
-        {hasXLM && !hasNGNC && user && xlmBalance < 5 && (
-          <button
-            onClick={() => setIsAddMoneyModalOpen(true)}
-            className={`mb-4 underline rounded-lg text-center text-cyan-300`}
-          >
-            Account Inactive. This wallet needs a minimum balance of 5 XLM to be
-            created on the network. Activate your account to continue.
-          </button>
-        )}
+        {msg ===
+          " Fund your wallet with at least 5 XLM to activate your account" ||
+          (msg ===
+            "Account Inactive. This wallet needs a minimum balance of 5 XLM to be created on the network. Activate your account to continue." && (
+            <button
+              onClick={() => setIsAddMoneyModalOpen(true)}
+              className={`mb-4 underline rounded-lg text-center text-[#0E7BB2]`}
+            >
+              Account Inactive. This wallet needs a minimum balance of 5 XLM to
+              be created on the network. Activate your account to continue.
+            </button>
+          ))}
         {msg &&
           alertType &&
           msg !==
@@ -458,7 +462,7 @@ const Dashboard: React.FC = () => {
             <div
               className={`mb-4 p-4 rounded-lg text-center ${
                 alertType === "success"
-                  ? "bg-[#435ec9] text-[#0a143f]"
+                  ? "bg-[#0E7BB2] text-[#0a143f]"
                   : "bg-[#b04242] text-[#5d0d0d]"
               }`}
             >
@@ -480,10 +484,15 @@ const Dashboard: React.FC = () => {
 
                 {/* Main Balance */}
                 <p className="text-2xl md:text-4xl font-bold text-gray-900 dark:text-white">
-                  {selectedCurrency} {formatNumberWithCommas(currentPrice?.toFixed(2)) || "loading..."}
+                  {selectedCurrency}{" "}
+                  {formatNumberWithCommas(currentPrice?.toFixed(2)) ||
+                    "loading..."}
                 </p>
                 <p className="text-sm md:text-base text-gray-500 dark:text-gray-300">
-                  ≈ {formatNumberWithCommas(convertPrice?.toFixed(2)) || "loading..."} {convertCurrency}
+                  ≈{" "}
+                  {formatNumberWithCommas(convertPrice?.toFixed(2)) ||
+                    "loading..."}{" "}
+                  {convertCurrency}
                 </p>
               </div>
 
@@ -600,10 +609,10 @@ const Dashboard: React.FC = () => {
                               ? "./images/stellar.png"
                               : asset?.image
                           }
-                          alt={asset?.asset_name}
+                          alt={getAssetDisplayName(asset?.asset_code)}
                           className="w-5 h-5 rounded-full"
                         />
-                        <span>{asset?.asset_name}</span>
+                        <span>{getAssetDisplayName(asset?.asset_code)}</span>
                       </div>
                       {/* Only show remove button for non-default, non-XLM assets */}
 
@@ -627,19 +636,15 @@ const Dashboard: React.FC = () => {
                             balance
                           </p>
                           <BiInfoCircle
-                            title={`${
-                              asset?.asset_code === "NATIVE"
-                                ? "XLM"
-                                : asset?.asset_code
-                            } balance`}
+                            title={`${getAssetDisplayName(
+                              asset?.asset_code
+                            )} balance`}
                             className="cursor-pointer"
                           />
                         </div>
 
                         <p className="text-2xl text-[#1E1E1E] dark:text-gray-400 text-center font-bold">
-                          {asset?.asset_code === "NATIVE"
-                            ? "XLM"
-                            : asset?.asset_code}{" "}
+                          {getAssetDisplayName(asset?.asset_code)}{" "}
                           {formateDecimal(getSpendableBalance(asset) || 0)}
                         </p>
                         <p className="text-sm text-center text-[#1E1E1E] dark:text-gray-300">
@@ -650,22 +655,24 @@ const Dashboard: React.FC = () => {
 
                     <div className="flex justify-end items-center">
                       {!asset?.isDefault ||
-                        asset?.asset_code?.toUpperCase() !== "NATIVE" ||
-                        (asset?.asset_code?.toUpperCase() !== "NGNC" && (
-                          <button
-                            onClick={() => {
-                              setSelectedTrustLine(asset);
-                              setIsRemoveCurrencyModalOpen(true);
-                            }}
-                            className="bg-[#E7F1F7] flex items-center gap-2 ri dark:bg-gray-700 p-3 rounded-full"
-                          >
-                            <span className="text-[12px]">Remove Currency</span>
-                            <CgRemove
-                              className="text-gray-900 cursor-pointer dark:text-gray-100"
-                              size={16}
-                            />
-                          </button>
-                        ))}
+                        (asset?.asset_code?.toUpperCase() !== "NATIVE" &&
+                          asset?.asset_code?.toUpperCase() !== "NGNC" && (
+                            <button
+                              onClick={() => {
+                                setSelectedTrustLine(asset);
+                                setIsRemoveCurrencyModalOpen(true);
+                              }}
+                              className="bg-[#E7F1F7] flex items-center gap-2 ri dark:bg-gray-700 p-3 rounded-full"
+                            >
+                              <span className="text-[12px]">
+                                Remove Currency
+                              </span>
+                              <CgRemove
+                                className="text-gray-900 cursor-pointer dark:text-gray-100"
+                                size={16}
+                              />
+                            </button>
+                          ))}
                     </div>
                   </div>
                 ));
@@ -674,7 +681,10 @@ const Dashboard: React.FC = () => {
 
             {/* Actions */}
             <div className="flex flex-wrap justify-center gap-3">
-              {hasXLM && !hasNGNC && user && xlmBalance < 5 ? (
+              {msg ===
+                " Fund your wallet with at least 5 XLM to activate your account" ||
+              msg ===
+                "Account Inactive. This wallet needs a minimum balance of 5 XLM to be created on the network. Activate your account to continue." ? (
                 <button
                   onClick={() => {
                     setIsAddMoneyModalOpen(true);
