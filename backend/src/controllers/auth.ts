@@ -1,6 +1,5 @@
 import * as bcrypt from "bcryptjs";
 import { authenticator } from "otplib";
-import StellarSdk from "stellar-sdk";
 import { WalletEncryption } from "../helpers/encryption-decryption.helper";
 import { User } from "../models/User";
 import httpStatus from "http-status";
@@ -15,15 +14,12 @@ import { UserTask } from "../models/UserTask";
 import { Task } from "../models/Task";
 import { emitEvent } from "../microservices/rabbitmq";
 import { internalCacheService } from "../microservices/redis";
+import { Asset, Horizon, Keypair, Networks, Operation, TransactionBuilder } from "stellar-sdk";
 
-const server =
-  process.env.STELLAR_NETWORK === "public"
-    ? new StellarSdk.Server(process.env.HORIZON_MAINNET_URL)
-    : new StellarSdk.Server(process.env.HORIZON_TESTNET_URL);
-const fundingKey =
-  process.env.STELLAR_NETWORK === "public"
-    ? StellarSdk.Keypair.fromSecret(process.env.FUNDING_KEY_SECRET)
-    : StellarSdk.Keypair.fromSecret(process.env.FUNDING_TESTNET_KEY_SECRET);
+// const server =
+//   `${process.env.STELLAR_NETWORK}` === "public"
+//     ? new StellarSdk.Server(process.env.HORIZON_MAINNET_URL)
+//     : new StellarSdk.Server(process.env.HORIZON_TESTNET_URL);
 
 export const login = async (req: any, res: any) => {
   try {
@@ -626,17 +622,17 @@ export const createWallet = async (req: any, res: any) => {
       });
     }
 
-    // ✅ Now safe to proceed: generate a new Stellar keypair
-    const keypair = StellarSdk.Keypair.random();
+    //  Now safe to proceed: generate a new Stellar keypair
+    const keypair = Keypair.random();
 
-    // ✅ Fund the account depending on network
-    // if (process.env.STELLAR_NETWORK !== "public") {
+    //  Fund the account depending on network
+    // if (`${process.env.STELLAR_NETWORK}` !== "public") {
     //   await fundWithFriendbot(keypair.publicKey());
     // } else {
     //   await fundAccount(keypair.publicKey());
     // }
 
-    // ✅ Encrypt and save wallet to user
+    //  Encrypt and save wallet to user
     const hashedPasword = user.password;
     const [_user, account] = await Promise.all([
       User.findById(user._id).lean(),
@@ -663,7 +659,7 @@ export const createWallet = async (req: any, res: any) => {
     const jwt = await JwtHelper.signToken(user);
     const refreshToken = await JwtHelper.refreshJWT(user);
 
-    // ✅ Return the wallet and tokens
+    //  Return the wallet and tokens
     return res.status(httpStatus.OK).json({
       data: {
         ...account,
@@ -704,6 +700,11 @@ export const fundWithFriendbot = async (publicKey: string) => {
 export const fundAccountPreview = async (destination: string) => {
   let balanceError = "";
   try {
+    const server = new Horizon.Server(
+      `${process.env.STELLAR_NETWORK}` === "public"
+        ? `${process.env.STELLAR_PUBLIC_SERVER}`
+        : `${process.env.STELLAR_TESTNET_SERVER}`
+    );
     // First check if destination account exists
     let destinationExists = true;
     try {
@@ -724,6 +725,7 @@ export const fundAccountPreview = async (destination: string) => {
 
     return { status: true };
   } catch (error: any) {
+    console.log({ error });
     throw new Error(
       balanceError ? balanceError : "Error preparing funding preview"
     );
@@ -736,7 +738,12 @@ export const fundAccount = async (
   key: string
 ) => {
   try {
-    const sourceKeypair = StellarSdk.Keypair.fromSecret(key);
+    const server = new Horizon.Server(
+      `${process.env.STELLAR_NETWORK}` === "public"
+        ? `${process.env.STELLAR_PUBLIC_SERVER}`
+        : `${process.env.STELLAR_TESTNET_SERVER}`
+    );
+    const sourceKeypair = Keypair.fromSecret(key);
 
     // Load funding account
     const account = await server.loadAccount(sourceKeypair.publicKey());
@@ -745,16 +752,16 @@ export const fundAccount = async (
     // Fetch baseReserve dynamically
     const latestLedger = await server.ledgers().order("desc").limit(1).call();
     const baseReserve =
-      parseFloat(latestLedger.records[0].base_reserve_in_stroops) / 10000000;
+      parseFloat(`${latestLedger.records[0].base_reserve_in_stroops}`) / 10000000;
 
     let operation;
     try {
       await server.loadAccount(destination); // 404 if not found
       console.log("Funding existing account");
 
-      operation = StellarSdk.Operation.payment({
+      operation = Operation.payment({
         destination,
-        asset: StellarSdk.Asset.native(),
+        asset: Asset.native(),
         amount,
       });
     } catch (e: any) {
@@ -779,7 +786,7 @@ Required: ${parseFloat(amount) + fee / 10000000} XLM`
           );
         }
 
-        operation = StellarSdk.Operation.createAccount({
+        operation = Operation.createAccount({
           destination,
           startingBalance: parseFloat(amount).toFixed(7),
         });
@@ -788,12 +795,12 @@ Required: ${parseFloat(amount) + fee / 10000000} XLM`
       }
     }
 
-    const transaction = new StellarSdk.TransactionBuilder(account, {
-      fee,
+    const transaction = new TransactionBuilder(account, {
+      fee: fee.toString(),
       networkPassphrase:
-        process.env.STELLAR_NETWORK === "public"
-          ? StellarSdk.Networks.PUBLIC
-          : StellarSdk.Networks.TESTNET,
+        `${process.env.STELLAR_NETWORK}` === "public"
+          ? Networks.PUBLIC
+          : Networks.TESTNET,
     })
       .addOperation(operation)
       .setTimeout(30)

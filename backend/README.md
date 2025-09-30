@@ -19,7 +19,7 @@ Millions of Africans face daily hurdles when sending or receiving money. High fe
 
 We leverage Stellar’s blockchain technology to power secure, scalable financial services:
 
-### ✅ Implemented SEPs
+###  Implemented SEPs
 
 - **SEP-1** – Provides metadata about our services for easier third-party integrations  
 - **SEP-10** – Enables secure, passwordless login via public-private key authentication  

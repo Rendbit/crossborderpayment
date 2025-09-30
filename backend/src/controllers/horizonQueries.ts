@@ -348,7 +348,7 @@ export const getAllWalletAssets = async (req: any, res: any) => {
       AllWalletAssetsQuerySchema.parse(req.query);
 
     const url: string = `${
-      process.env.STELLAR_NETWORK == "public"
+      `${process.env.STELLAR_NETWORK}` == "public"
         ? process.env.HORIZON_MAINNET_URL
         : process.env.HORIZON_TESTNET_URL
     }/accounts/${user.stellarPublicKey}`;
@@ -631,12 +631,12 @@ export const getPath = async (req: any, res: any): Promise<any> => {
       GetPathSchema.parse(req.body);
     // Determine the asset issuers based on the network configuration
     const sourceAssetIssuer =
-      process.env.STELLAR_NETWORK === "public"
+      `${process.env.STELLAR_NETWORK}` === "public"
         ? PUBLIC_ASSETS[sourceAssetCode as keyof typeof PUBLIC_ASSETS].issuer
         : TESTNET_ASSETS[sourceAssetCode as keyof typeof TESTNET_ASSETS].issuer;
 
     const desAssetIssuer =
-      process.env.STELLAR_NETWORK === "public"
+      `${process.env.STELLAR_NETWORK}` === "public"
         ? PUBLIC_ASSETS[desAssetCode as keyof typeof PUBLIC_ASSETS].issuer
         : TESTNET_ASSETS[desAssetCode as keyof typeof TESTNET_ASSETS].issuer;
 
@@ -697,7 +697,7 @@ export const fetchAssets = async (req: any, res: any): Promise<any> => {
     // Fetch assets from the Stellar Expert API based on the search criteria
     const resp = await fetch(
       `https://api.stellar.expert/explorer/${
-        process.env.STELLAR_NETWORK
+        `${process.env.STELLAR_NETWORK}`
       }/asset?${new URLSearchParams({
         search: assetCode,
         sort: "rating",

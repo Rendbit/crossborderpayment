@@ -84,7 +84,7 @@ export async function startEmailConsumers(channel: any) {
       }
     });
 
-    console.log("✅ Email consumers started...");
+    console.log(" Email consumers started...");
   } catch (err: any) {
     console.error("❌ Failed to start email consumers:", err.message);
   }
