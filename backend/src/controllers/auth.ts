@@ -1,6 +1,5 @@
 import * as bcrypt from "bcryptjs";
 import { authenticator } from "otplib";
-import StellarSdk from "stellar-sdk";
 import { WalletEncryption } from "../helpers/encryption-decryption.helper";
 import { User } from "../models/User";
 import httpStatus from "http-status";
@@ -15,15 +14,12 @@ import { UserTask } from "../models/UserTask";
 import { Task } from "../models/Task";
 import { emitEvent } from "../microservices/rabbitmq";
 import { internalCacheService } from "../microservices/redis";
+import { Asset, Horizon, Keypair, Networks, Operation, TransactionBuilder } from "stellar-sdk";
 
-const server =
-  process.env.STELLAR_NETWORK === "public"
-    ? new StellarSdk.Server(process.env.HORIZON_MAINNET_URL)
-    : new StellarSdk.Server(process.env.HORIZON_TESTNET_URL);
-const fundingKey =
-  process.env.STELLAR_NETWORK === "public"
-    ? StellarSdk.Keypair.fromSecret(process.env.FUNDING_KEY_SECRET)
-    : StellarSdk.Keypair.fromSecret(process.env.FUNDING_TESTNET_KEY_SECRET);
+// const server =
+//   `${process.env.STELLAR_NETWORK}` === "public"
+//     ? new StellarSdk.Server(process.env.HORIZON_MAINNET_URL)
+//     : new StellarSdk.Server(process.env.HORIZON_TESTNET_URL);
 
 export const login = async (req: any, res: any) => {
   try {
@@ -598,6 +594,24 @@ export const createWallet = async (req: any, res: any) => {
     const user = req.user;
     const { pinCode, username, country } = req.body;
 
+    if (!username) {
+      return res.status(httpStatus.BAD_REQUEST).json({
+        message: "Username is required.",
+        status: httpStatus.BAD_REQUEST,
+        success: false,
+        data: null,
+      });
+    }
+
+    const existingUser = await User.findOne({ username }).lean();
+    if (existingUser) {
+      return res.status(httpStatus.CONFLICT).json({
+        message: "Username already exists.",
+        status: httpStatus.CONFLICT,
+        success: false,
+        data: null,
+      });
+    }
     // 👉 Check first: if user already has a wallet, do nothing else
     if (user.stellarPublicKey) {
       return res.status(httpStatus.CONFLICT).json({
@@ -608,17 +622,17 @@ export const createWallet = async (req: any, res: any) => {
       });
     }
 
-    // ✅ Now safe to proceed: generate a new Stellar keypair
-    const keypair = StellarSdk.Keypair.random();
+    //  Now safe to proceed: generate a new Stellar keypair
+    const keypair = Keypair.random();
 
-    // ✅ Fund the account depending on network
-    // if (process.env.STELLAR_NETWORK !== "public") {
+    //  Fund the account depending on network
+    // if (`${process.env.STELLAR_NETWORK}` !== "public") {
     //   await fundWithFriendbot(keypair.publicKey());
     // } else {
     //   await fundAccount(keypair.publicKey());
     // }
 
-    // ✅ Encrypt and save wallet to user
+    //  Encrypt and save wallet to user
     const hashedPasword = user.password;
     const [_user, account] = await Promise.all([
       User.findById(user._id).lean(),
@@ -645,7 +659,7 @@ export const createWallet = async (req: any, res: any) => {
     const jwt = await JwtHelper.signToken(user);
     const refreshToken = await JwtHelper.refreshJWT(user);
 
-    // ✅ Return the wallet and tokens
+    //  Return the wallet and tokens
     return res.status(httpStatus.OK).json({
       data: {
         ...account,
@@ -683,38 +697,123 @@ export const fundWithFriendbot = async (publicKey: string) => {
   }
 };
 
-export const fundAccount = async (destination: string) => {
+export const fundAccountPreview = async (destination: string) => {
+  let balanceError = "";
   try {
-    // Load the funding account and fetch base fee for the transaction
-    const account = await server.loadAccount(fundingKey.publicKey());
+    const server = new Horizon.Server(
+      `${process.env.STELLAR_NETWORK}` === "public"
+        ? `${process.env.STELLAR_PUBLIC_SERVER}`
+        : `${process.env.STELLAR_TESTNET_SERVER}`
+    );
+    // First check if destination account exists
+    let destinationExists = true;
+    try {
+      await server.loadAccount(destination);
+    } catch (err: any) {
+      if (err.response?.status === 404) {
+        destinationExists = false;
+      } else {
+        throw err; // unexpected error
+      }
+    }
+
+    //  If destination is NOT activated → force error
+    if (!destinationExists) {
+      balanceError = `Account doesn't exist on the ledger. You need to fund it in order to send/receive assets`;
+      return { status: false, balanceError };
+    }
+
+    return { status: true };
+  } catch (error: any) {
+    console.log({ error });
+    throw new Error(
+      balanceError ? balanceError : "Error preparing funding preview"
+    );
+  }
+};
+
+export const fundAccount = async (
+  destination: string,
+  amount: string,
+  key: string
+) => {
+  try {
+    const server = new Horizon.Server(
+      `${process.env.STELLAR_NETWORK}` === "public"
+        ? `${process.env.STELLAR_PUBLIC_SERVER}`
+        : `${process.env.STELLAR_TESTNET_SERVER}`
+    );
+    const sourceKeypair = Keypair.fromSecret(key);
+
+    // Load funding account
+    const account = await server.loadAccount(sourceKeypair.publicKey());
     const fee = await server.fetchBaseFee();
 
-    // Create a transaction to fund the account with starting balance
-    const transaction = await new StellarSdk.TransactionBuilder(account, {
-      fee,
-      networkPassphrase:
-        process.env.STELLAR_NETWORK === "public"
-          ? StellarSdk.Networks.PUBLIC
-          : StellarSdk.Networks.TESTNET,
-    })
-      .addOperation(
-        StellarSdk.Operation.createAccount({
+    // Fetch baseReserve dynamically
+    const latestLedger = await server.ledgers().order("desc").limit(1).call();
+    const baseReserve =
+      parseFloat(`${latestLedger.records[0].base_reserve_in_stroops}`) / 10000000;
+
+    let operation;
+    try {
+      await server.loadAccount(destination); // 404 if not found
+      console.log("Funding existing account");
+
+      operation = Operation.payment({
+        destination,
+        asset: Asset.native(),
+        amount,
+      });
+    } catch (e: any) {
+      if (e?.response?.status === 404) {
+        console.log("Creating new account");
+
+        const nativeBalance = parseFloat(
+          account.balances.find((b: any) => b.asset_type === "native")
+            ?.balance || "0"
+        );
+
+        const minBalance = (2 + account.subentry_count) * baseReserve;
+        const spendable = nativeBalance - minBalance;
+
+        if (spendable < parseFloat(amount) + fee / 10000000) {
+          throw new Error(
+            `Funding account does not have enough *spendable* XLM.
+Total balance: ${nativeBalance} XLM
+Minimum reserve: ${minBalance} XLM
+Spendable: ${spendable} XLM
+Required: ${parseFloat(amount) + fee / 10000000} XLM`
+          );
+        }
+
+        operation = Operation.createAccount({
           destination,
-          startingBalance: "5",
-        })
-      )
+          startingBalance: parseFloat(amount).toFixed(7),
+        });
+      } else {
+        throw e;
+      }
+    }
+
+    const transaction = new TransactionBuilder(account, {
+      fee: fee.toString(),
+      networkPassphrase:
+        `${process.env.STELLAR_NETWORK}` === "public"
+          ? Networks.PUBLIC
+          : Networks.TESTNET,
+    })
+      .addOperation(operation)
       .setTimeout(30)
       .build();
 
-    // Sign and submit the transaction to the Stellar network
-    await transaction.sign(fundingKey);
-    const transactionResult = await server.submitTransaction(transaction);
+    // Sign transaction
+    transaction.sign(sourceKeypair);
 
-    // Return the transaction result
-    return transactionResult;
-  } catch (error) {
-    console.log("Error funding account", error);
-    throw new Error("Error funding account");
+    const transactionResult = await server.submitTransaction(transaction);
+    return { status: true, transactionResult };
+  } catch (error: any) {
+    console.error("Error funding account: ", error.response?.data || error);
+    return { status: false, error: error.response?.data || error.message };
   }
 };
 

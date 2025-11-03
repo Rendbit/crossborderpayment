@@ -213,10 +213,11 @@ export const getConversionRate = async (
       // Check if the asset data exists in the fetched data
       if (data.data && data.data[symbol]) {
         // Retrieve the conversion rates for the selected currency, USD, and NGN
+
         const selectedCurrencyRate =
           data.data[symbol].quote[currencyType.trim().toUpperCase()].price;
-        const usdRate = usdData.data[symbol].quote.USD.price;
-        const ngnRate = ngnData.data[symbol].quote.NGN.price;
+        const usdRate = usdData?.data[symbol]?.quote?.USD?.price;
+        const ngnRate = ngnData?.data[symbol]?.quote?.NGN?.price;
 
         // Calculate the equivalent balances for the token in USD, NGN, and the selected currency
         token.equivalentBalanceInUsd =
@@ -347,7 +348,7 @@ export const getAllWalletAssets = async (req: any, res: any) => {
       AllWalletAssetsQuerySchema.parse(req.query);
 
     const url: string = `${
-      process.env.STELLAR_NETWORK == "public"
+      `${process.env.STELLAR_NETWORK}` == "public"
         ? process.env.HORIZON_MAINNET_URL
         : process.env.HORIZON_TESTNET_URL
     }/accounts/${user.stellarPublicKey}`;
@@ -357,7 +358,8 @@ export const getAllWalletAssets = async (req: any, res: any) => {
 
     if (walletAssets.status === 404) {
       return res.status(httpStatus.NOT_FOUND).json({
-        message: "Wallet not found",
+        message:
+          "Account Inactive. This wallet needs a minimum balance of 5 XLM to be created on the network. Activate your account to continue.",
         success: false,
       });
     }
@@ -409,7 +411,10 @@ export const getAllWalletAssets = async (req: any, res: any) => {
         asset_name: assetName,
         asset_issuer: assetIssuer,
         symbol_id: symbolId,
-        balance: Number(data[i].balance),
+        balance:
+          assetIssuer === "native"
+            ? Number(data[i].balance) - 3
+            : Number(data[i].balance),
         trust_limit: Number(data[i].limit || 0),
         image: image,
       });
@@ -626,12 +631,12 @@ export const getPath = async (req: any, res: any): Promise<any> => {
       GetPathSchema.parse(req.body);
     // Determine the asset issuers based on the network configuration
     const sourceAssetIssuer =
-      process.env.STELLAR_NETWORK === "public"
+      `${process.env.STELLAR_NETWORK}` === "public"
         ? PUBLIC_ASSETS[sourceAssetCode as keyof typeof PUBLIC_ASSETS].issuer
         : TESTNET_ASSETS[sourceAssetCode as keyof typeof TESTNET_ASSETS].issuer;
 
     const desAssetIssuer =
-      process.env.STELLAR_NETWORK === "public"
+      `${process.env.STELLAR_NETWORK}` === "public"
         ? PUBLIC_ASSETS[desAssetCode as keyof typeof PUBLIC_ASSETS].issuer
         : TESTNET_ASSETS[desAssetCode as keyof typeof TESTNET_ASSETS].issuer;
 
@@ -692,7 +697,7 @@ export const fetchAssets = async (req: any, res: any): Promise<any> => {
     // Fetch assets from the Stellar Expert API based on the search criteria
     const resp = await fetch(
       `https://api.stellar.expert/explorer/${
-        process.env.STELLAR_NETWORK
+        `${process.env.STELLAR_NETWORK}`
       }/asset?${new URLSearchParams({
         search: assetCode,
         sort: "rating",

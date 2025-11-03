@@ -8,9 +8,18 @@ interface AlertProps {
 
 const Alert: React.FC<AlertProps> = ({ alertType, msg, setMsg }) => {
   useEffect(() => {
-    setTimeout(() => {
-      setMsg(false);
-    }, 8000);
+    if (
+      msg ===
+        " Fund your wallet with at least 5 XLM to activate your account" ||
+      msg ===
+        "Account Inactive. This wallet needs a minimum balance of 5 XLM to be created on the network. Activate your account to continue."
+    ) {
+      setMsg(msg);
+    } else {
+      setTimeout(() => {
+        setMsg(false);
+      }, 8000);
+    }
   }, []);
 
   return (

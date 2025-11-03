@@ -18,10 +18,8 @@ const RemoveCurrencyModal: React.FC<RemoveCurrencyModalProps> = ({
   if (!selectedTrustLine) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      <div
-        className={`mx-3 w-full max-w-sm p-6 rounded-xl bg-white dark:bg-gray-800`}
-      >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-gray-300/90 dark:bg-black/90">
+      <div className="bg-white mx-5 dark:bg-gray-800 rounded-2xl w-full max-w-lg p-6 relative">
         <div className="text-center flex flex-col items-center mt-4">
           <img
             src={selectedTrustLine.image}
@@ -29,18 +27,10 @@ const RemoveCurrencyModal: React.FC<RemoveCurrencyModalProps> = ({
             alt={selectedTrustLine?.asset_name}
           />
           <div>
-            <p
-              className={`font-medium ${
-                theme === "dark" ? "text-white" : "text-gray-900"
-              }`}
-            >
+            <p className={`font-medium text-gray-700 dark:text-gray-300`}>
               {selectedTrustLine?.asset_name}
             </p>
-            <p
-              className={`text-xs ${
-                theme === "dark" ? "text-gray-300" : "text-gray-600"
-              }`}
-            >
+            <p className={`text-xs text-gray-700 dark:text-gray-300`}>
               {selectedTrustLine?.asset_code === "NATIVE"
                 ? "XLM"
                 : selectedTrustLine?.asset_code}
@@ -48,22 +38,15 @@ const RemoveCurrencyModal: React.FC<RemoveCurrencyModalProps> = ({
           </div>
         </div>
 
-        <p
-          className={`text-sm mt-6 text-center ${
-            theme === "dark" ? "text-white" : "text-gray-900"
-          }`}
-        >
+        <p className="text-sm mt-6 text-center text-gray-700 dark:text-gray-300">
           Are you sure you want to <span className="font-semibold">REMOVE</span>{" "}
           this asset from your list of trustlines?
         </p>
 
         <div className="flex gap-4 mt-6">
           <button
-            className={`p-3 rounded-lg w-full ${
-              theme === "dark"
-                ? "bg-red-600 hover:bg-red-700"
-                : "bg-red-500 hover:bg-red-600"
-            } text-white disabled:opacity-50`}
+            className={`p-3 rounded-lg w-full
+              text-gray-700 dark:text-gray-300 border border-gray-700 dark:border-gray-300 disabled:opacity-50`}
             onClick={() => {
               setSelectedAsset(null);
               setIsRemoveCurrencyModalOpen(false);

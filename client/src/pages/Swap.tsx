@@ -5,11 +5,23 @@ import { getMyAssets } from "../function/horizonQuery";
 import { useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
 import { swapAssets, swapAssetsPreview } from "../function/transaction";
-import { formateDecimal } from "../utils";
+import {
+  formateDecimal,
+  getAssetDisplayName,
+  getMinimumSwapAmount,
+  getSpendableBalance,
+  labelFor,
+} from "../utils";
 import Alert from "../components/alert/Alert";
+import TransactionConfirmationModal from "../components/modals/transaction-confirmation";
+import { useAppContext } from "../context/useContext";
 
 const Swap: React.FC = () => {
   const user = Cookies.get("token");
+  const {
+    setIsRemoveTransactionConfirmationModalOpen,
+    isRemoveTransactionConfirmationModalOpen,
+  } = useAppContext();
 
   // DATA
   const [assets, setAssets] = useState<any>(null);
@@ -108,52 +120,89 @@ const Swap: React.FC = () => {
     bootstrapAssets();
   }, []);
 
+  // Effect for triggering preview when all inputs are available
+  useEffect(() => {
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      if (Number(sourceAmount) > 0) {
+        handleSwapAssetsPreview();
+      }
+    }, 500);
+
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, [selectedAsset, sourceAmount]);
+
   // When user types amount, debounce preview
   const handleSourceAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    console.log({ value });
     if (!/^(?:\d*(?:\.|,)??\d*)$/.test(value)) return; // allow numbers & dot
     setSourceAmount(value);
     setDescAmount("");
     setExchangeRate("");
     setSwapAssetPreview(null);
-
-    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-    typingTimeoutRef.current = setTimeout(() => {
-      if (Number(value) > 0) handleSwapAssetsPreview();
-    }, 500);
   };
 
   const handleMax = () => {
     if (!selectedAsset) return;
-    const max = Number(selectedAsset.balance) || 0;
+    const max = getSpendableBalance(selectedAsset);
     if (max <= 0) return;
     setSourceAmount(String(max));
     setDescAmount("");
     setExchangeRate("");
     setSwapAssetPreview(null);
+
     // immediate preview
     handleSwapAssetsPreview(String(max));
   };
 
-  // -------- API: Preview --------
-  async function handleSwapAssetsPreview(overrideAmount?: string) {
-    if (!selectedAsset || !selectedAssetReceive) {
-      setAlertType("error");
-      setMsg("Please select both From and To assets before entering amount.");
-      return;
+  // -------- Validation --------
+  const validateAmount = (amount: number, assetCode: string): string | null => {
+    const minAmount = getMinimumSwapAmount(assetCode);
+    const assetName = getAssetDisplayName(assetCode);
+
+    if (amount < minAmount) {
+      return `Minimum swap amount for ${assetName} is ${minAmount}`;
     }
 
-    const amount = overrideAmount ?? sourceAmount;
-    if (!amount || Number(amount) <= 0) return;
+    if (amount < 0.0000001) {
+      return "The amount is too small.";
+    }
 
+    return null;
+  };
+
+  // -------- API: Preview --------
+  async function handleSwapAssetsPreview(overrideAmount?: string) {
+
+    const amount = overrideAmount ?? sourceAmount;
+    const numericAmount = Number(amount);
+
+    if (!amount || numericAmount <= 0) return;
+
+    // Validate minimum amount
+
+    if (
+      Number(sourceAmount) <
+      getMinimumSwapAmount(selectedAsset?.asset_code.toUpperCase())
+    ) {
+      setNext(false);
+      return;
+    }
     if (selectedAsset.asset_code === selectedAssetReceive.asset_code) {
       setAlertType("error");
       setMsg("Please select different assets.");
       return;
     }
 
-    if (Number(selectedAsset.balance) < Number(amount)) {
+    if (Number(selectedAsset.balance) < numericAmount) {
       setAlertType("error");
       setMsg("Insufficient balance.");
       return;
@@ -168,7 +217,7 @@ const Swap: React.FC = () => {
         user,
         selectedAsset.asset_code,
         selectedAssetReceive.asset_code,
-        Number(amount),
+        numericAmount,
         Number(slippage)
       );
 
@@ -204,7 +253,7 @@ const Swap: React.FC = () => {
   }
 
   // -------- API: Swap --------
-  async function handleSwapAssets() {
+  async function handleSwapAssets(transactionPin: string) {
     if (!selectedAsset || !selectedAssetReceive) {
       setAlertType("error");
       setMsg("Please select assets to swap.");
@@ -217,21 +266,25 @@ const Swap: React.FC = () => {
       return;
     }
 
-    if (!sourceAmount || Number(sourceAmount) <= 0) {
+    const numericAmount = Number(sourceAmount);
+
+    if (!sourceAmount || numericAmount <= 0) {
       setAlertType("error");
       setMsg("Please enter a valid amount.");
       return;
     }
 
-    if (Number(selectedAsset.balance) < Number(sourceAmount)) {
+    // Validate minimum amount
+    const amountError = validateAmount(numericAmount, selectedAsset.asset_code);
+    if (amountError) {
       setAlertType("error");
-      setMsg("Insufficient balance.");
+      setMsg(amountError);
       return;
     }
 
-    if (Number(sourceAmount) < 0.0000001) {
+    if (Number(selectedAsset.balance) < numericAmount) {
       setAlertType("error");
-      setMsg("The amount is too small.");
+      setMsg("Insufficient balance.");
       return;
     }
 
@@ -243,8 +296,9 @@ const Swap: React.FC = () => {
         user,
         selectedAsset.asset_code,
         selectedAssetReceive.asset_code,
-        Number(sourceAmount),
-        Number(slippage)
+        numericAmount,
+        Number(slippage),
+        transactionPin
       );
 
       if (!response?.success) {
@@ -270,11 +324,15 @@ const Swap: React.FC = () => {
 
       setAlertType("success");
       setMsg(
-        `${selectedAsset.asset_code} ${formatNumberWithCommas(
+        `${getAssetDisplayName(
+          selectedAsset.asset_code
+        )} ${formatNumberWithCommas(
           sourceAmount
-        )} swapped to ${formatNumberWithCommas(Number(descAmount))} ${
+        )} swapped to ${formatNumberWithCommas(
+          Number(descAmount)
+        )} ${getAssetDisplayName(
           selectedAssetReceive?.asset_code
-        } successfully.`
+        )} successfully.`
       );
 
       // Reset state
@@ -307,7 +365,7 @@ const Swap: React.FC = () => {
       <EmptyTopNav />
 
       {/* Block UI until assets are available */}
-      {!gateReady ? (
+      {!gateReady && !msg ? (
         <main className="flex items-center justify-center min-h-screen p-6 bg-gray-50 dark:bg-gray-900">
           <div className="flex flex-col items-center gap-4">
             <div className="h-10 w-10 rounded-full border-4 border-gray-300 dark:border-gray-700 border-t-transparent animate-spin" />
@@ -333,37 +391,40 @@ const Swap: React.FC = () => {
             <p className="text-center text-sm text-gray-500 dark:text-gray-400 mb-6">
               Choose your crypto and wait for the transaction to complete.{" "}
               <br />
-              Leave at least <span className="font-medium">1.5XLM</span> for gas
-              fee
+              Keep at least <span className="font-medium">3 XLM</span> as
+              minimum balance for gas.
             </p>
 
             {/* Balance (only when From selected) */}
+
             {selectedAsset && (
               <div className="flex items-center justify-between bg-white dark:bg-gray-700 rounded-lg px-4 py-3 mb-4">
                 <div className="flex items-center gap-3">
                   {selectedAsset?.image && (
                     <img
-                      src={selectedAsset.image}
+                      src={
+                        selectedAsset.asset_code === "NATIVE"
+                          ? "./images/stellar.png"
+                          : selectedAsset.asset_code === "NGNC"
+                          ? "./images/nigeria.png"
+                          : selectedAsset.image
+                      }
                       alt={selectedAsset.asset_code}
                       className="w-5 h-5 rounded-full"
                     />
                   )}
                   <div>
                     <p className="text-sm font-medium">
-                      {selectedAsset.asset_code === "NATIVE"
-                        ? "XLM"
-                        : selectedAsset.asset_code}
+                      {getAssetDisplayName(selectedAsset.asset_code)}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Available Balance
+                      Spendable Balance
                     </p>
                   </div>
                 </div>
                 <span className="text-xs font-semibold text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-600 px-3 py-1 rounded-full">
-                  {selectedAsset.asset_code === "NATIVE"
-                    ? "XLM"
-                    : selectedAsset.asset_code}{" "}
-                  {formateDecimal(selectedAsset.balance || 0)}
+                  {getAssetDisplayName(selectedAsset.asset_code)}{" "}
+                  {formatNumberWithCommas(getSpendableBalance(selectedAsset))}{" "}
                 </span>
               </div>
             )}
@@ -391,7 +452,7 @@ const Swap: React.FC = () => {
                   <option value="">Select</option>
                   {assets?.allWalletAssets?.map((asset: any, index: number) => (
                     <option key={index} value={asset.asset_code}>
-                      {asset.asset_code === "NATIVE" ? "XLM" : asset.asset_code}
+                      {getAssetDisplayName(asset.asset_code)}
                     </option>
                   ))}
                 </select>
@@ -404,6 +465,7 @@ const Swap: React.FC = () => {
                   disabled={!selectedAsset || loadingPreview || loadingSwap}
                   onChange={handleSourceAmountChange}
                 />
+
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -416,6 +478,25 @@ const Swap: React.FC = () => {
                   Max
                 </button>
               </div>
+              {selectedAsset?.asset_code && (
+                <p className="text-xs text-gray-500 mt-1 mb-6">
+                  Min:{" "}
+                  {getMinimumSwapAmount(selectedAsset.asset_code.toUpperCase())}{" "}
+                  {getAssetDisplayName(selectedAsset.asset_code?.toUpperCase())}{" "}
+                  | Max:{" "}
+                  {getAssetDisplayName(
+                    selectedAsset.asset_code?.toUpperCase()
+                  ) === "XLM"
+                    ? `
+        ${formatNumberWithCommas(getSpendableBalance(selectedAsset))} 
+        ${getAssetDisplayName(selectedAsset.asset_code?.toUpperCase())}
+      `
+                    : `
+        ${formatNumberWithCommas(getSpendableBalance(selectedAsset))} 
+        ${getAssetDisplayName(selectedAsset.asset_code?.toUpperCase())}
+      `}
+                </p>
+              )}
             </div>
 
             {/* To Amount */}
@@ -440,7 +521,7 @@ const Swap: React.FC = () => {
                   <option value="">Select</option>
                   {filteredReceiveAssets?.map((asset: any, index: number) => (
                     <option key={index} value={asset.asset_code}>
-                      {asset.asset_code === "NATIVE" ? "XLM" : asset.asset_code}
+                      {getAssetDisplayName(asset.asset_code)}
                     </option>
                   ))}
                 </select>
@@ -456,7 +537,7 @@ const Swap: React.FC = () => {
             </div>
 
             {/* Slippage */}
-            <div className="mb-6">
+            <div>
               <label className="block text-sm font-medium mb-1">Slippage</label>
               <input
                 id="small-range"
@@ -474,26 +555,49 @@ const Swap: React.FC = () => {
 
             {/* Preview Details */}
             {swapAssetPreview && (
-              <div className="p-3 mb-4 rounded-lg bg-gray-100 dark:bg-gray-700 text-sm">
-                <p>
-                  Rate: 1{" "}
-                  {selectedAsset?.asset_code === "NATIVE"
-                    ? "XLM"
-                    : selectedAsset?.asset_code}{" "}
-                  ≈ {rateExchange}{" "}
-                  {selectedAssetReceive?.asset_code === "NATIVE"
-                    ? "XLM"
-                    : selectedAssetReceive?.asset_code}
-                </p>
-                <p>
-                  Expected: {formateDecimal(Number(descAmount) || 0)}{" "}
-                  {selectedAssetReceive?.asset_code === "NATIVE"
-                    ? "XLM"
-                    : selectedAssetReceive?.asset_code}
-                </p>
-                <p>Min Received: {swapAssetPreview.minimumReceived}</p>
-                <p>Fee: {swapAssetPreview.fee}</p>
-                <p>Slippage: {swapAssetPreview.slippage}</p>
+              <div className="p-3 mb-4 rounded-lg bg-gray-100 dark:bg-gray-700 text-sm space-y-2">
+                <div className="flex justify-between">
+                  <span>Rate:</span>
+                  <span>
+                    1 {getAssetDisplayName(selectedAsset?.asset_code)} ≈{" "}
+                    {rateExchange}{" "}
+                    {getAssetDisplayName(selectedAssetReceive?.asset_code)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span>Expected:</span>
+                  <span>
+                    {formatNumberWithCommas(
+                      formateDecimal(Number(descAmount) || 0)
+                    )}{" "}
+                    {getAssetDisplayName(selectedAssetReceive?.asset_code)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span>Min Received:</span>
+                  <span>
+                    {formatNumberWithCommas(swapAssetPreview?.minimumReceived)}
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span>Fee:</span>
+                  <span>
+                    {formatNumberWithCommas(
+                      Number(swapAssetPreview?.fee) / 10000000
+                    )}{" "}
+                    XLM
+                  </span>
+                </div>
+
+                <div className="flex justify-between">
+                  <span>Slippage:</span>
+                  <span>
+                    {formatNumberWithCommas(swapAssetPreview?.slippage)} %
+                  </span>
+                </div>
               </div>
             )}
 
@@ -506,25 +610,76 @@ const Swap: React.FC = () => {
                   !selectedAssetReceive ||
                   !sourceAmount ||
                   loadingPreview ||
-                  loadingSwap
+                  loadingSwap ||
+                  Number(sourceAmount) <
+                    getMinimumSwapAmount(selectedAsset.asset_code.toUpperCase())
                 }
-                onClick={() => handleSwapAssetsPreview()}
+                onClick={() => {
+                  if (!selectedAsset || !selectedAssetReceive) {
+                    setAlertType("error");
+                    setMsg(
+                      "Please select both From and To assets before entering amount."
+                    );
+                    return;
+                  }
+                  const amountError = validateAmount(
+                    Number(sourceAmount),
+                    selectedAsset.asset_code
+                  );
+                  if (amountError) {
+                    setAlertType("error");
+                    setMsg(amountError);
+                    return;
+                  }
+                  handleSwapAssetsPreview();
+                }}
               >
-                {loadingPreview ? "Previewing…" : "Next"}
+                {loadingPreview ? "Fetching quote…" : "Next"}
               </button>
             ) : (
               <button
                 className="flex gap-2 justify-center items-center bg-[#0E7BB2] text-white p-3 rounded-lg w-full mt-4 cursor-pointer disabled:opacity-50"
-                disabled={!sourceAmount || !descAmount || loadingSwap}
-                onClick={handleSwapAssets}
+                disabled={
+                  !sourceAmount ||
+                  !descAmount ||
+                  loadingSwap ||
+                  Number(sourceAmount) <
+                    getMinimumSwapAmount(selectedAsset.asset_code.toUpperCase())
+                }
+                onClick={() => {
+                  if (!selectedAsset || !selectedAssetReceive) {
+                    setAlertType("error");
+                    setMsg(
+                      "Please select both From and To assets before entering amount."
+                    );
+                    return;
+                  }
+                  const amountError = validateAmount(
+                    Number(sourceAmount),
+                    selectedAsset.asset_code
+                  );
+                  if (amountError) {
+                    setAlertType("error");
+                    setMsg(amountError);
+                    return;
+                  }
+                  setIsRemoveTransactionConfirmationModalOpen(true);
+                }}
               >
-                <span>{loadingSwap ? "Swapping…" : "Swap"}</span>
+                <span>{loadingPreview ? "Fetching quote…"  : loadingSwap ? "Swapping…" : "Swap"}</span>
               </button>
             )}
 
             {msg && <Alert msg={msg} setMsg={setMsg} alertType={alertType} />}
           </div>
         </main>
+      )}
+      {isRemoveTransactionConfirmationModalOpen && (
+        <TransactionConfirmationModal
+          handleTransactionConfirmation={handleSwapAssets}
+          loading={loadingSwap}
+          alertType={alertType}
+        />
       )}
     </>
   );
