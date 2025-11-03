@@ -4,13 +4,31 @@ import { CopyIcon, Link } from "lucide-react";
 import { useAppContext } from "../context/useContext";
 import PrivateKeyModal from "../components/modals/private-key";
 import { FiExternalLink } from "react-icons/fi";
+import Alert from "../components/alert/Alert";
 
 const Profile: React.FC = () => {
+
+    const [msg, setMsg] = useState("");
+    const [alertType, setAlertType] = useState("");
 
       const {
         isPrivateKeyModalOpen,
         setIsPrivateKeyModalOpen
       } = useAppContext();
+
+      const userData = localStorage.getItem('userData') ? JSON.parse(localStorage.getItem('userData')!) : null;
+
+      async function copyWalletAddrss (text: string) {
+        try {
+          await navigator.clipboard.writeText(text);
+          setAlertType('success')
+          setMsg('Address coppied successfully')
+        } catch (err) {
+          setAlertType('error')
+          setMsg('Failed to copy')
+          console.error('Failed to copy:', err);
+        }
+      }
 
   return (
     <>
@@ -23,14 +41,19 @@ const Profile: React.FC = () => {
             <div className="flex gap-[10px] items-start">
                 <img src="./image/avatar.svg" alt="" />
                 <div>
-                    <p className="text-[#0A0D14] dark:text-gray-200 font-[600]">Charles Thompson</p>
-                    <p className="text-[#525866] dark:text-gray-100 text-sm">charles@rendbit.com</p>
+                    <p className="text-[#0A0D14] dark:text-gray-200 font-[600]">{userData?.username}</p>
+                    <p className="text-[#525866] dark:text-gray-100 text-sm">{userData?.primaryEmail}</p>
                 </div>
             </div>
-            <p className="text-[#176448] bg-[#CBF5E5] py-1 px-4 rounded-[50px] font-[600] text-sm">Verified</p>
+            {
+              userData?.isEmailVerified ?
+              <p className="text-[#176448] bg-[#CBF5E5] py-1 px-4 rounded-[50px] font-[600] text-sm">Verified</p>
+              :
+              <p className="text-[#641717] bg-[#f5cbcb] py-1 px-4 rounded-[50px] font-[600] text-sm">Un-Verified</p>
+            }
           </div>
 
-          <div className="w-full bg-white dark:bg-[#1c2939] mb-10 border px-4 py-4 border-gray-200 dark:border-gray-700 rounded-[10px]">
+          {/* <div className="w-full bg-white dark:bg-[#1c2939] mb-10 border px-4 py-4 border-gray-200 dark:border-gray-700 rounded-[10px]">
             <p className="text-[#0A0D14] dark:text-gray-200 font-[600] mb-5">Personal Information</p>
             <div className="flex gap-[10px] items-start">
                 <div className="flex items-center justify-between w-full">
@@ -64,7 +87,7 @@ const Profile: React.FC = () => {
                     </div>
                 </div>
             </div>
-          </div>
+          </div> */}
 
           <div className="w-full bg-white dark:bg-[#1c2939] mb-10 border px-4 py-4 border-gray-200 dark:border-gray-700 rounded-[10px]">
             <p className="text-[#0A0D14] dark:text-gray-200 font-[600] mb-4">Wallet Address</p>
@@ -72,9 +95,9 @@ const Profile: React.FC = () => {
                 <div className="flex items-center justify-between w-full">
                     <div>
                         <p className="font-[600] mb-1">RendBit Wallet Address</p>
-                        <p>GBWMCCC3NHYP3QWKQ6KJPXNJGCX3MHEVGJ5CTJJNHFMC4JFWF4NXSLV7</p>
+                        <p>{userData?.stellarPublicKey}</p>
                     </div>
-                    <CopyIcon size={"18px"} cursor={"pointer"}/>
+                    <CopyIcon size={"18px"} cursor={"pointer"} onClick={() => copyWalletAddrss(userData?.stellarPublicKey)}/>
                 </div>
             </div>
           </div>
@@ -93,6 +116,9 @@ const Profile: React.FC = () => {
           </div>
         </section>
       </main>
+      {
+        msg && <Alert msg={msg} alertType={alertType} setMsg={setMsg}/>
+      }
     </>
   );
 };

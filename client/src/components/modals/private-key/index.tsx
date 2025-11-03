@@ -32,7 +32,7 @@ const PrivateKeyModal: React.FC = () => {
 
         {/* Modal Header */}
         <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-          Enter Password
+          Note:
         </h2>
         <p className="text-gray-600 dark:text-gray-300 mb-6 border-b border-gray-200 dark:border-gray-700 pb-4 md:text-[16px] text-[14px]">
           Exporting your private key will reveal sensitive information about your wallet. Ensure you store it securely and never share it with anyone. Losing your private key may result in the permanent loss of your assets.
@@ -65,8 +65,8 @@ const PrivateKeyModal: React.FC = () => {
                     }
                 </div>
                 <div className="flex justify-end mt-5 gap-3">
-                    <button className="border border-[#E2E4E9] rounded-[10px] py-[6px] w-full text-gray-500 dark:text-gray-400">Discard</button>
-                    <button className="bg-[#375DFB] rounded-[10px] py-2 w-full text-white">Apply Changes</button>
+                    <button className="border border-[#E2E4E9] rounded-[10px] py-[6px] w-full text-gray-500 dark:text-gray-400">Cancel</button>
+                    <button className="bg-[#375DFB] rounded-[10px] py-2 w-full text-white">Continue</button>
                 </div>
               </div>
             </div>
