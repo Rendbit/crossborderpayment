@@ -32,7 +32,7 @@ class InternalCacheService {
       await this.set(testKey, "ok", 1);
       const result = await this.get<string>(testKey);
       if (result !== "ok") throw new Error("Redis connection failed");
-      console.log("✅ Connected to Redis");
+      console.log(" Connected to Redis");
     } catch (err: any) {
       throw new Error("Unable to connect to Redis: " + err.message);
     }

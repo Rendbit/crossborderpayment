@@ -147,6 +147,7 @@ router.post("/remove-trustline", authenticate, removeTrustline);
  *               - assetCode
  *               - address
  *               - amount
+ *               - pinCode
  *             properties:
  *               assetCode:
  *                 type: string
@@ -160,6 +161,10 @@ router.post("/remove-trustline", authenticate, removeTrustline);
  *                 type: string
  *                 description: Amount to send
  *                 example: "50"
+ *               pinCode:
+ *                 type: string
+ *                 description: Your transaction 4 digit pin
+ *                 example: "0000"
  *               transactionDetails:
  *                 type: string
  *                 description: Optional transaction details/memo
@@ -325,6 +330,7 @@ router.post("/preview/payment", authenticate, paymentPreview);
  *               - desAssetCode
  *               - sourceAmount
  *               - slippage
+ *               - pinCode
  *             properties:
  *               sourceAssetCode:
  *                 type: string
@@ -342,6 +348,10 @@ router.post("/preview/payment", authenticate, paymentPreview);
  *                 type: number
  *                 description: Slippage tolerance percentage (0-100)
  *                 example: 2.5
+ *               pinCode:
+ *                 type: string
+ *                 description: Your transaction 4 digit pin
+ *                 example: "0000"
  *     responses:
  *       200:
  *         description: Swap executed successfully
@@ -478,6 +488,7 @@ router.post("/preview/swap", authenticate, swapPreview);
  *               - amount
  *               - desAddress
  *               - slippage
+ *               - pinCode
  *             properties:
  *               assetCode:
  *                 type: string
@@ -499,6 +510,10 @@ router.post("/preview/swap", authenticate, swapPreview);
  *                 default: 1
  *                 description: Slippage tolerance percentage (0-100)
  *                 example: 2.5
+ *               pinCode:
+ *                 type: string
+ *                 description: Your transaction 4 digit pin
+ *                 example: "0000"
  *     responses:
  *       200:
  *         description: Transaction successful
@@ -642,6 +657,7 @@ router.post("/preview/strictSend", authenticate, strictSendPreview);
  *               - desAmount
  *               - desAddress
  *               - slippage
+ *               - pinCode
  *             properties:
  *               sourceAssetCode:
  *                 type: string
@@ -667,6 +683,10 @@ router.post("/preview/strictSend", authenticate, strictSendPreview);
  *                 default: 1
  *                 description: Slippage tolerance percentage (0-100)
  *                 example: 2.5
+ *               pinCode:
+ *                 type: string
+ *                 description: Your transaction 4 digit pin
+ *                 example: "0000"
  *     responses:
  *       200:
  *         description: Transaction successful

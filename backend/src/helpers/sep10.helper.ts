@@ -38,7 +38,7 @@ import {
   MemoType,
   Operation,
   Transaction,
-  Utils,
+  WebAuth
 } from "stellar-sdk";
 import { WalletDecryption } from "./encryption-decryption.helper";
 
@@ -174,8 +174,9 @@ export class Sep10Helper {
     };
 
     try {
+      
       // Attempt to parse and validate the challenge transaction using Stellar SDK utilities
-      const rawResults = Utils.readChallengeTx(
+      const rawResults = WebAuth.readChallengeTx(
         transactionXDR,
         serverSigningKey,
         network,

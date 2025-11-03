@@ -11,6 +11,7 @@ import { signIn } from "../function/auth";
 import { MdEmail } from "react-icons/md";
 import { Key, Lock } from "lucide-react";
 import { BsLock } from "react-icons/bs";
+import ThemeToggle from "../components/theme-toggle";
 
 const Login: React.FC = () => {
   const [msg, setMsg] = useState("");
@@ -218,11 +219,12 @@ const Login: React.FC = () => {
         <div className="relative bg-gray-100 dark:bg-gray-800 min-h-screen">
           <div className="flex items-center justify-between w-full md:pr-[100px] pr-[20px]">
             <AuthNav />
-            <div className="text-center text-black dark:text-gray-300 text-[14px]">
+            <div className="text-center text-black dark:text-gray-300 text-[14px] flex items-center truncate">
               Don&apos;t have an account?{" "}
-              <Link to="/create-account" className="text-[#0E7BB2] underline ml-1">
+              <Link to="/create-account" className="text-[#0E7BB2] underline ml-1 mr-4 sm:mr-10">
                 Register
               </Link>
+              <ThemeToggle type={"icon"} />
             </div>
           </div>
           <div className="sm:mt-[5rem] md:mt-[7rem] mt-[50px] mx-3 md:px-24 relative">
@@ -263,7 +265,7 @@ const Login: React.FC = () => {
                         placeholder="hello@rendbit.com"
                         autoComplete="off"
                         name="email-field"
-                        className="outline-none w-full"
+                        className="outline-none w-full "
                       />
                     </div>
                   </div>

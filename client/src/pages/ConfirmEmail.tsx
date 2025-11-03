@@ -6,6 +6,7 @@ import Cookies from "js-cookie";
 import { Link, useNavigate } from "react-router-dom";
 import { resendEmailOtp, verifyEmail } from "../function/auth";
 import { FiExternalLink } from "react-icons/fi";
+import ThemeToggle from "../components/theme-toggle";
 
 const ConfirmEmail: React.FC = () => {
   const [otp, setOtp] = useState("");
@@ -76,14 +77,18 @@ const ConfirmEmail: React.FC = () => {
   }
 
   return (
-    <div className="relative bg-[#F9F9F9] min-h-screen">
+    <div className="relative bg-[#F9F9F9] dark:bg-gray-800 min-h-screen">
       <div className="flex items-center justify-between w-full md:pr-[100px] pr-[20px]">
         <AuthNav />
-        <div className="text-center text-[14px]">
-          Changed your mind?
-          <Link to="/login" className="text-[#0E7BB2] underline ml-1">
-            Go Back
+        <div className="text-center text-black dark:text-gray-300 text-[14px] flex items-center truncate">
+          Changed your mind?{" "}
+          <Link
+            to="/login"
+            className="text-[#0E7BB2] underline ml-1 mr-4 sm:mr-10"
+          >
+            Login
           </Link>
+          <ThemeToggle type={"icon"} />
         </div>
       </div>
       <div className="sm:mt-[5rem] md:mt-[7rem] mt-[50px] mx-3 md:px-24 relative">
@@ -93,7 +98,7 @@ const ConfirmEmail: React.FC = () => {
           alt=""
         />
         <div className="mt-5 flex flex-col justify-center items-center relative z-[11]">
-          <div className="bg-white shadow shadow-[#585C5F1A] px-4 sm:px-6 pt-8 pb-5 rounded-[18px] w-full sm:w-[450px]">
+          <div className="bg-white dark:bg-gray-900 shadow shadow-[#585C5F1A] px-4 sm:px-6 pt-8 pb-5 rounded-[18px] w-full sm:w-[450px]">
             <div className="top-bg relative top-[50px] sm:flex items-center justify-center w-[300px] mx-auto">
               <img
                 src="./image/CustomPasswordResetIcon.svg"
@@ -102,8 +107,10 @@ const ConfirmEmail: React.FC = () => {
               />
             </div>
             <div className="text-center mb-12 mt-[-30px] relative z-[100]">
-              <h2 className="text-[24px] text-[#0A0D14]">Enter Verification Code</h2>
-              <p className="text-[#0A0D14] text-[14px] mt-3">
+              <h2 className="text-[24px] dark:text-gray-300 text-[#0A0D14]">
+                Enter Verification Code
+              </h2>
+              <p className="text-[#0A0D14] dark:text-gray-300 text-[14px] mt-3">
                 We've sent a code to {email}
               </p>
             </div>
@@ -128,7 +135,7 @@ const ConfirmEmail: React.FC = () => {
                     <input
                       {...props}
                       placeholder="0"
-                      className="text-center bg-white/8 text-[#0A0D14] otp-input text-[26px] font-[600] outline-none h-[68px] rounded-md border border-[#E2E4E9] placeholder:text-[#b0b0b0] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      className="text-center bg-white/8 text-[#0A0D14] dark:text-gray-300 otp-input text-[26px] font-[600] outline-none h-[68px] rounded-md border border-[#E2E4E9] placeholder:text-[#b0b0b0] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                   )}
                 />
@@ -148,9 +155,11 @@ const ConfirmEmail: React.FC = () => {
                 )}
               </button>
               <div className="mt-4 text-[14px] text-center">
-                <p className="text-[#525866]">Experiencing issues receiving the code?</p>
+                <p className="text-[#525866] dark:text-gray-300">
+                  Experiencing issues receiving the code?
+                </p>
                 <p
-                  className="text-[#0A0D14] cursor-pointer text-center block underline mt-1"
+                  className="text-[#0A0D14] dark:text-gray-300 cursor-pointer text-center block underline mt-1"
                   onClick={resendOtp}
                 >
                   Resend code
@@ -161,11 +170,10 @@ const ConfirmEmail: React.FC = () => {
         </div>
       </div>
       <div className="mt-[50px] mb-5 sm:mx-10 flex sm:flex-row flex-col sm:gap-0 gap-3 items-center justify-between">
-        <p className="text-[#525866] text-[14px]">
-          &copy; {new Date().getFullYear()} RendBit. All rights
-          reserved.
+        <p className="text-[#525866] dark:text-gray-300 text-[14px]">
+          &copy; {new Date().getFullYear()} RendBit. All rights reserved.
         </p>
-        <div className="text-[#525866] text-[14px] flex items-center gap-4">
+        <div className="text-[#525866] dark:text-gray-300 text-[14px] flex items-center gap-4">
           <Link to="#" className="flex items-center gap-[2px]">
             Privacy Policy <FiExternalLink />
           </Link>

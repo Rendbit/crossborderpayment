@@ -17,7 +17,7 @@
  * - Use the static methods provided by this class to fetch and retrieve
  *   specific information from the Stellar TOML file.
  */
-import { StellarTomlResolver } from "stellar-sdk";
+import { StellarToml } from "stellar-sdk";
 
 // Extracting domain without protocol for TOML resolution
 const domainWithoutProtocol = `${
@@ -31,7 +31,7 @@ export class Sep1Helper {
    * @returns Promise resolving to the parsed Stellar TOML data.
    */
   static async fetchStellarToml() {
-    const stellarToml = await StellarTomlResolver.resolve(
+    const stellarToml = await StellarToml.Resolver.resolve(
       domainWithoutProtocol
     );
     return stellarToml;

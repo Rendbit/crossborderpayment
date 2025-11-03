@@ -17,7 +17,15 @@
  * - This class is designed to handle both "native" assets (e.g., XLM) and issued assets
  *   with either 4-character or 12-character codes.
  */
-import StellarSdk from "@stellar/stellar-sdk";
+import {
+  rpc,
+  Asset,
+  TransactionBuilder,
+  Operation,
+  Keypair,
+  Horizon,
+  xdr,
+} from "@stellar/stellar-sdk";
 import StellarBase from "stellar-base";
 import { STELLAR_ERRORS } from "../common/messages/stellarErrors";
 
@@ -113,10 +121,10 @@ export class WalletHelper {
       };
     }
 
-    const server = new StellarSdk.SorobanRpc.Server(
-      process.env.STELLAR_NETWORK === "public"
-        ? process.env.STELLAR_PUBLIC_SERVER
-        : process.env.STELLAR_TESTNET_SERVER
+    const server = new rpc.Server(
+      `${process.env.STELLAR_NETWORK}` === "public"
+        ? `${process.env.STELLAR_PUBLIC_SERVER}`
+        : `${process.env.STELLAR_TESTNET_SERVER}`
     );
 
     // Helper to extract asset code from XDR
@@ -155,11 +163,11 @@ export class WalletHelper {
 
     try {
       transaction.sign(keypair);
-      const sendResponse = await server.sendTransaction(transaction);
+      const sendResponse: any = await server.sendTransaction(transaction);
       const hsh = sendResponse.hash;
 
       if (sendResponse.status === "PENDING") {
-        let getResponse = await server.getTransaction(hsh);
+        let getResponse: any = await server.getTransaction(hsh);
         let retries = 30;
 
         while (getResponse.status === "NOT_FOUND" && retries-- > 0) {
@@ -197,7 +205,7 @@ export class WalletHelper {
 
         const resultXdr = parseXDR(
           getResponse.resultXdr,
-          StellarSdk.xdr.TransactionResult
+          xdr.TransactionResult
         );
 
         if (getResponse.status === "SUCCESS") {
@@ -208,13 +216,10 @@ export class WalletHelper {
             userMessage: "Transaction completed successfully",
             details: {
               resultXdr,
-              meta: parseXDR(
-                getResponse.resultMetaXdr,
-                StellarSdk.xdr.TransactionMeta
-              ),
+              meta: parseXDR(getResponse.resultMetaXdr, xdr.TransactionMeta),
               envelope: parseXDR(
                 getResponse.envelopeXdr,
-                StellarSdk.xdr.TransactionEnvelope
+                xdr.TransactionEnvelope
               ),
             },
           };
@@ -260,12 +265,13 @@ export class WalletHelper {
               fullErrorCode,
               operations,
               resultXdr,
-              network: process.env.STELLAR_NETWORK,
+              network: `${process.env.STELLAR_NETWORK}`,
               timestamp: new Date().toISOString(),
             },
           };
         }
       } else {
+        console.log({ sendResponse });
         return {
           status: false,
           msg: "Transaction submission failed",
@@ -405,7 +411,7 @@ export class WalletHelper {
 
       // Construct the base URL for the Stellar Horizon API based on the network environment
       let url = `${
-        process.env.STELLAR_NETWORK === "public"
+        `${process.env.STELLAR_NETWORK}` === "public"
           ? process.env.HORIZON_MAINNET_URL
           : process.env.HORIZON_TESTNET_URL
       }/paths/strict-receive`;
@@ -481,10 +487,12 @@ export class WalletHelper {
 
       // Construct the base URL for the Stellar Horizon API based on the network environment
       let url = `${
-        process.env.STELLAR_NETWORK === "public"
+        `${process.env.STELLAR_NETWORK}` === "public"
           ? process.env.HORIZON_MAINNET_URL
           : process.env.HORIZON_TESTNET_URL
       }/paths/strict-send`;
+      // Ensure max 7 decimal places, convert to string
+      const formattedAmount = Number(amount).toFixed(7);
 
       // Append query parameters for destination and source assets
       url += `?destination_assets=${
@@ -497,7 +505,7 @@ export class WalletHelper {
           : sourceAssetCode.length <= 4
           ? "credit_alphanum4"
           : "credit_alphanum12"
-      }&source_amount=${amount}`;
+      }&source_amount=${formattedAmount}`;
 
       // Include source asset issuer and code if not "native"
       if (sourceAssetIssuer !== "native")
@@ -507,6 +515,7 @@ export class WalletHelper {
       const resp = await fetch(url);
       const resps = await resp.json();
       if (!resp.ok) {
+        console.log(resps);
         throw new Error("Error sending payment path."); // Handle non-OK responses
       }
 

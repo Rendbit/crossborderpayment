@@ -4,9 +4,10 @@
  * @author Rendbit
  */
 
-import { Server, NotFoundError } from "stellar-sdk";
+import { NotFoundError } from "stellar-sdk";
 import { User } from "../models/User";
 import httpStatus from "http-status";
+import StellarSdk from "@stellar/stellar-sdk";
 
 type User = {
   stellarWalletAddress: string;
@@ -29,7 +30,6 @@ interface Stats {
 let cachedStats: Stats | null = null;
 let lastUpdated: number | null = null;
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 hours
-const server = new Server(process.env.STELLAR_HORIZON_SERVER as string);
 
 // Utility
 const formatDate = (date: string | Date): string =>
@@ -69,6 +69,11 @@ const getFormattedUsers = async (): Promise<Record<string, User>> => {
 const fetchAllTransactions = async (address: string): Promise<any[]> => {
   const allTxs: any[] = [];
   try {
+    const server = new StellarSdk.SorobanRpc.Server(
+      `${process.env.STELLAR_NETWORK}` === "public"
+        ? `${process.env.STELLAR_PUBLIC_SERVER}`
+        : `${process.env.STELLAR_TESTNET_SERVER}`
+    );
     let page = await server
       .transactions()
       .forAccount(address)
@@ -100,7 +105,8 @@ const generateStats = async (): Promise<Stats> => {
   const cutoff = new Date(now);
   cutoff.setDate(now.getDate() - 7);
 
-  const txPerDay: Record<string, { count: number; addresses: Set<string> }> = {};
+  const txPerDay: Record<string, { count: number; addresses: Set<string> }> =
+    {};
   const userGrowth: Record<string, number> = {};
   const opTypeCounter: Record<string, number> = {};
   const seenTxIds = new Set<string>();
@@ -138,7 +144,11 @@ const generateStats = async (): Promise<Stats> => {
         activeUsers++;
         isActive = true;
       }
-
+      const server = new StellarSdk.SorobanRpc.Server(
+        `${process.env.STELLAR_NETWORK}` === "public"
+          ? `${process.env.STELLAR_PUBLIC_SERVER}`
+          : `${process.env.STELLAR_TESTNET_SERVER}`
+      );
       const opsPage = await server.operations().forTransaction(tx.id).call();
       for (const op of opsPage.records) {
         const type = (op as any).type;

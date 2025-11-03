@@ -1,4 +1,3 @@
-
 import React from "react";
 import { X, ArrowRight } from "lucide-react";
 import { useAppContext } from "../../../context/useContext";

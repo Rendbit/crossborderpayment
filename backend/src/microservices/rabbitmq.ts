@@ -7,7 +7,7 @@ export async function connectToRabbitMQ() {
     process.env.RABBITMQ_URL || "amqp://localhost"
   );
   channel = await connection.createChannel();
-  console.log("✅ Connected to RabbitMQ");
+  console.log("Connected to RabbitMQ");
   return { connection, channel };
 }
 
