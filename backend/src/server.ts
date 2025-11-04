@@ -1,4 +1,5 @@
 import express, { Application } from "express";
+import { createServer } from 'http';
 import dotenv from "dotenv";
 import connectDB from "./config/database";
 import cors from "cors";
@@ -17,13 +18,13 @@ import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./utils/swagger";
 import { startEmailConsumers } from "./events/user/message";
 import { apiKeyValidator } from "./middlewares/apiKeyValidator";
+import RealtimeNotifications from "./realtime/socket";
+import { initializeNotificationService } from "./realtime/notification";
 
 // Load environment variables from .env
 dotenv.config();
-
 // Initialize Express app
 const app: Application = express();
-
 async function bootstrap() {
   try {
     // Connect to MongoDB
@@ -88,7 +89,10 @@ async function bootstrap() {
 
     // Start server
     const PORT = process.env.PORT || 8005;
-    app.listen(PORT, () => {
+    const server = createServer(app);
+    initializeNotificationService(server);
+    //start the server
+    server.listen(PORT, () => {
       console.log(
         ` Server is running on ${process.env.BASE_URL}${
           process.env.NODE_ENV === "production" ? "" : `:${PORT}`

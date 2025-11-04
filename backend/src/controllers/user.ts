@@ -357,7 +357,6 @@ export const exportPrivateKey = async (req: any, res: any) => {
       user.encryptedPrivateKey,
       `${user.primaryEmail}${user.password}${pinCode}`
     );
-
     return res.status(httpStatus.OK).json({
       data: { privateKey: decryptedPrivateKey },
       status: httpStatus.OK,
