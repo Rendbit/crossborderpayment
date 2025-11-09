@@ -12,12 +12,8 @@ import { z } from "zod";
 const ConversionRequestSchema = z
   .object({
     inputAmount: z.number().positive(),
-    inputSymbol: z
-      .string()
-      .regex(/^[A-Za-z]+$/),
-    outputSymbol: z
-      .string()
-      .regex(/^[A-Za-z]+$/),
+    inputSymbol: z.string().regex(/^[A-Za-z]+$/),
+    outputSymbol: z.string().regex(/^[A-Za-z]+$/),
   })
   .strict();
 
@@ -37,13 +33,13 @@ const AllWalletAssetsQuerySchema = z
 
 /**
  * Schema for validating the parameters required to get a payment path.
- * 
+ *
  * This schema ensures that the following fields are provided and meet the specified criteria:
  * - `txType` (string): The type of transaction.
  * - `sourceAssetCode` (string): The asset code of the source asset.
  * - `desAssetCode` (string): The asset code of the destination asset.
  * - `amount` (number): A positive number representing the amount to be transferred.
- * 
+ *
  * The schema is strict, meaning no additional fields are allowed.
  */
 const GetPathSchema = z
@@ -57,19 +53,17 @@ const GetPathSchema = z
 
 /**
  * Schema for validating the parameters required to fetch assets.
- * 
+ *
  * This schema ensures that the following field is provided and meets the specified criteria:
  * - `assetCode` (string): The code of the asset to be fetched.
- * 
+ *
  * The schema is strict, meaning no additional fields are allowed.
  */
 const FetchAssetsSchema = z
-    .object({
-        assetCode: z.string(),
-    })
-    .strict();
-
-
+  .object({
+    assetCode: z.string(),
+  })
+  .strict();
 
 export {
   ConversionRequestSchema,

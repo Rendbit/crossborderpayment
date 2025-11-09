@@ -226,7 +226,7 @@ const Wallet: React.FC = () => {
                                   setSelectedAsset(currency);
                                   if (currency === "NGN") {
                                     setCurrentPrice(
-                                      walletInfo.allWalletTotalBalanceInNgn
+                                      walletInfo.allWalletTotalBalanceInSelectedCurrency
                                     );
                                     setConvertPrice(
                                       walletInfo.allWalletTotalBalanceInUsd
@@ -235,7 +235,7 @@ const Wallet: React.FC = () => {
                                   } else {
                                     setConvertCurrency("NGN");
                                     setConvertPrice(
-                                      walletInfo.allWalletTotalBalanceInNgn
+                                      walletInfo.allWalletTotalBalanceInSelectedCurrency
                                     );
                                     setCurrentPrice(
                                       walletInfo.allWalletTotalBalanceInUsd
@@ -290,7 +290,7 @@ const Wallet: React.FC = () => {
                                 setSelectedCurrency(currency.displaySymbol);
                                 if (currency.symbol === "NGNC") {
                                   setCurrentPrice(
-                                    walletAssets.allWalletTotalBalanceInNgn
+                                    walletAssets.allWalletTotalBalanceInSelectedCurrency
                                   );
                                   setConvertPrice(
                                     walletAssets.allWalletTotalBalanceInUsd || 0
@@ -299,7 +299,7 @@ const Wallet: React.FC = () => {
                                 } else {
                                   setConvertCurrency("NGN");
                                   setConvertPrice(
-                                    walletAssets.allWalletTotalBalanceInNgn || 0
+                                    walletAssets.allWalletTotalBalanceInSelectedCurrency || 0
                                   );
                                   setCurrentPrice(
                                     walletAssets.allWalletTotalBalanceInUsd || 0

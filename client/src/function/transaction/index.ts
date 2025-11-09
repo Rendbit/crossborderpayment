@@ -1,31 +1,33 @@
 const BASE_URL = import.meta.env.VITE_BASE_URL;
 const API_KEY = import.meta.env.VITE_API_KEY;
 
-const getTransactionHistory = async (token: string) => {
+const getTransactionHistory = async (
+  token: string,
+  limit: number = 10,
+  cursor?: string | null
+) => {
   try {
-    const res = await fetch(
-      `${import.meta.env.VITE_BASE_URL}/transaction/crypto-all `,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "x-api-key": `${API_KEY}`,
-        },
-      }
-    );
+    let url = `${
+      import.meta.env.VITE_BASE_URL
+    }/transaction/crypto-all?limit=${limit}`;
+
+    if (cursor) {
+      url += `&cursor=${cursor}`;
+    }
+
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "x-api-key": `${API_KEY}`,
+      },
+    });
+
     const data = await res.json();
 
     if (!res.ok) {
       throw new Error(data.message || "Failed to fetch transaction history");
     }
-    const uniqueTransactions = Array.from(
-      new Map(
-        data.data.transactions.map((item: any) => [item.transaction_hash, item])
-      ).values()
-    );
-    localStorage.setItem(
-      "uniqueTransactions",
-      JSON.stringify(uniqueTransactions)
-    );
+
     return data;
   } catch (error: any) {
     console.log("Error handling get transaction history: ", error);

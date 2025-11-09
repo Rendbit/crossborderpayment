@@ -27,15 +27,30 @@ interface SortConfig {
   direction: SortDirection;
 }
 
+interface PaginationInfo {
+  next: string | null;
+  prev: string | null;
+  count: number;
+  cursor: string | null;
+}
+
 const TransactionTable: React.FC<TransactionTableProps> = ({
   NumberOfTx,
   isHistoryPage,
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [transactionHistory, setTransactionHistory] = useState<any[]>([]);
+  const [paginationInfo, setPaginationInfo] = useState<PaginationInfo>({
+    next: null,
+    prev: null,
+    count: 0,
+    cursor: null,
+  });
   const user = Cookies.get("token");
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [pageLoading, setPageLoading] = useState(false); // New state for page navigation loading
   const [msg, setMsg] = useState("");
   const [alertType, setAlertType] = useState("");
   const [activateWalletAlert, setActivateWalletAlert] = useState<string>("");
@@ -43,41 +58,91 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     useState<boolean>(false);
   const [sortConfig, setSortConfig] = useState<SortConfig | null>(null);
 
+  // Pagination state
+  const [cursorStack, setCursorStack] = useState<string[]>([]);
+  const [currentCursor, setCurrentCursor] = useState<string | null>(null);
+  const [totalPages, setTotalPages] = useState(1);
+  const [pageCursors, setPageCursors] = useState<{
+    [key: number]: string | null;
+  }>({ 1: null });
+
   // new filters
   const [filterType, setFilterType] = useState<string>("all");
   const [filterDate, setFilterDate] = useState<string>("");
 
   const navigate = useNavigate();
 
+  // Items per page - fixed to 10
+  const itemsPerPage = 10;
+
+  // Load transactions from localStorage on component mount
   useEffect(() => {
     const token = Cookies.get("token");
     if (!token) {
       navigate("/login");
+      return;
     }
+
+    // Try to load from localStorage first
+    const cachedTransactions = localStorage.getItem("uniqueTransactions");
+    const cachedPagination = localStorage.getItem("transactionPagination");
+
+    if (cachedTransactions) {
+      try {
+        const transactions = JSON.parse(cachedTransactions);
+        setTransactionHistory(transactions);
+
+        if (cachedPagination) {
+          const pagination = JSON.parse(cachedPagination);
+          setPaginationInfo(pagination);
+          if (pagination.count > 0) {
+            const calculatedTotalPages = Math.ceil(
+              pagination.count / itemsPerPage
+            );
+            setTotalPages(calculatedTotalPages);
+          }
+        }
+
+        setInitialLoading(false);
+      } catch (error) {
+        console.error("Error parsing cached transactions:", error);
+        // If parsing fails, clear corrupted data
+        localStorage.removeItem("uniqueTransactions");
+        localStorage.removeItem("transactionPagination");
+      }
+    }
+
+    // Always fetch fresh data
     handleGetTransactionHistory();
   }, []);
 
-  async function handleGetTransactionHistory() {
-    const storedTx = localStorage.getItem("uniqueTransactions");
-    const parsedTx = JSON.parse(storedTx || "null");
-
-    if (parsedTx) {
-      setTransactionHistory(parsedTx);
-    }
-    if (!parsedTx) {
-      setLoading(true);
-    }
+  // Function to load transactions with pagination
+  async function handleGetTransactionHistory(
+    cursor?: string | null,
+    direction: "next" | "prev" = "next",
+    targetPage?: number
+  ) {
     try {
       if (!user) {
         return;
       }
-      const response = await getTransactionHistory(user);
+
+      // Set loading states based on context
+      if (!transactionHistory.length) {
+        setInitialLoading(true);
+      } else {
+        setPageLoading(true); // Show skeleton for page navigation
+      }
+      setLoading(true);
+
+      const response = await getTransactionHistory(user, itemsPerPage, cursor);
 
       if (!response.success) {
         if (response.message === "Login has expired") {
           localStorage.clear();
           Cookies.remove("token");
           navigate("/login");
+          return;
         }
         if (
           response.message.includes(
@@ -92,17 +157,60 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
         }
         return;
       }
-      console.log(response.data.transactions);
-      setTransactionHistory(response.data.transactions);
+
+      const transactions = response.data.transactions;
+      const paging = response.data.paging;
+
+      // Update transaction history
+      setTransactionHistory(transactions);
+
+      // Update pagination info
+      const newPaginationInfo = {
+        next: paging.next,
+        prev: paging.prev,
+        count: paging.count,
+        cursor: paging.cursor,
+      };
+
+      setPaginationInfo(newPaginationInfo);
+
+      // Calculate total pages based on count
+      if (paging.count > 0) {
+        const calculatedTotalPages = Math.ceil(paging.count / itemsPerPage);
+        setTotalPages(calculatedTotalPages);
+      }
+
+      // Update cursor stack for back navigation
+      if (direction === "next" && currentCursor) {
+        setCursorStack((prev) => [...prev, currentCursor]);
+      }
+
+      // Store cursor for this page
+      if (targetPage) {
+        setPageCursors((prev) => ({
+          ...prev,
+          [targetPage]: cursor || null,
+        }));
+      } else if (direction === "next") {
+        const newPage = currentPage + 1;
+        setPageCursors((prev) => ({
+          ...prev,
+          [newPage]: cursor || null,
+        }));
+      }
+
+      // Store in localStorage for caching
+      localStorage.setItem("uniqueTransactions", JSON.stringify(transactions));
       localStorage.setItem(
-        "uniqueTransactions",
-        JSON.stringify(response.data.transactions)
+        "transactionPagination",
+        JSON.stringify(newPaginationInfo)
       );
     } catch (error: any) {
       if (error.message === "Login has expired") {
         localStorage.clear();
         Cookies.remove("token");
         navigate("/login");
+        return;
       }
       if (
         error.message.includes(
@@ -117,18 +225,78 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
       }
     } finally {
       setLoading(false);
+      setInitialLoading(false);
+      setPageLoading(false);
     }
   }
 
-  const itemsPerPage = 10;
+  // Handle next page
+  const handleNextPage = () => {
+    if (paginationInfo.next) {
+      setCurrentCursor(paginationInfo.next);
+      handleGetTransactionHistory(paginationInfo.next, "next");
+      setCurrentPage((prev) => prev + 1);
+    }
+  };
 
-  // Transactions (limited if NumberOfTx given)
-  const sourceTransactions = NumberOfTx
-    ? (transactionHistory || []).slice(0, NumberOfTx)
-    : transactionHistory || [];
+  // Handle previous page
+  const handlePrevPage = () => {
+    if (cursorStack.length > 0) {
+      const prevCursor = cursorStack[cursorStack.length - 1];
+      const newStack = cursorStack.slice(0, -1);
 
-  // 🔍 Search + Filters
-  const filteredTransactions = sourceTransactions.filter((transaction: any) => {
+      setCursorStack(newStack);
+      setCurrentCursor(prevCursor || null);
+      handleGetTransactionHistory(prevCursor, "prev");
+      setCurrentPage((prev) => prev - 1);
+    }
+  };
+
+  // Handle direct page navigation
+  const handlePageClick = (pageNumber: number) => {
+    if (pageNumber === currentPage) return;
+
+    // If we already have the cursor for this page, use it
+    if (pageCursors[pageNumber] !== undefined) {
+      setCurrentCursor(pageCursors[pageNumber]);
+      handleGetTransactionHistory(pageCursors[pageNumber], "next", pageNumber);
+      setCurrentPage(pageNumber);
+    } else {
+      console.warn(
+        "Cannot jump to page",
+        pageNumber,
+        " - cursor not available"
+      );
+    }
+  };
+
+  // Generate page numbers for pagination - simplified style: < 1 2 3 ... last >
+  const generatePageNumbers = () => {
+    const pages: any = [];
+
+    // If totalPages is 1 or less, just show current page
+    if (totalPages <= 1) {
+      pages.push(1);
+      return pages;
+    }
+
+    // Always show first 3 pages
+    for (let i = 1; i <= Math.min(3, totalPages); i++) {
+      pages.push(i);
+    }
+
+    // Add ellipsis if there are more than 3 pages
+    if (totalPages > 3) {
+      pages.push("...");
+      // Add last page
+      pages.push(totalPages);
+    }
+
+    return pages;
+  };
+
+  // Search and filter functions (client-side for current page)
+  const filteredTransactions = transactionHistory.filter((transaction: any) => {
     const search = searchText.toLowerCase();
 
     const matchesSearch =
@@ -138,6 +306,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
       (transaction?.tokenReceived || "").toLowerCase()?.includes(search) ||
       (transaction?.tokenSent || "")?.toLowerCase()?.includes(search) ||
       (transaction?.type || "")?.toLowerCase()?.includes(search) ||
+      (transaction?.hash || "")?.toLowerCase()?.includes(search) ||
       String(transaction?.amountReceived || transaction?.amountSent || "")
         .toLowerCase()
         .includes(search);
@@ -153,7 +322,7 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     return matchesSearch && matchesType && matchesDate;
   });
 
-  // 🔽 Sorting
+  // Sorting (client-side for current page)
   const handleSort = (key: string) => {
     setSortConfig((prev) => {
       if (prev && prev.key === key) {
@@ -182,21 +351,6 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     if (aValue > bValue) return 1 * order;
     return 0;
   });
-
-  const totalPages = Math.ceil(sortedTransactions.length / itemsPerPage) || 1;
-
-  const currentTransactions = sortedTransactions.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) setCurrentPage(currentPage - 1);
-  };
 
   const formatDate = (date: string) => {
     const d = new Date(date);
@@ -232,6 +386,28 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     );
   };
 
+  // Reset pagination when filters change
+  useEffect(() => {
+    if (searchText || filterType !== "all" || filterDate) {
+      setCurrentPage(1);
+    }
+  }, [searchText, filterType, filterDate]);
+
+  // Determine which transactions to display
+  const displayTransactions =
+    searchText || filterType !== "all" || filterDate
+      ? sortedTransactions.slice(0, itemsPerPage)
+      : sortedTransactions;
+
+  // Calculate showing range
+  const getShowingRange = () => {
+    const startItem = (currentPage - 1) * itemsPerPage + 1;
+    const endItem = Math.min(currentPage * itemsPerPage, paginationInfo.count);
+    return { startItem, endItem };
+  };
+
+  const { startItem, endItem } = getShowingRange();
+
   return (
     <>
       <section className="mt-6 bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg border border-[#E2E4E9] dark:border-gray-700">
@@ -240,7 +416,15 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
           <div>
             <h3 className="text-lg font-semibold">Recent Transactions</h3>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Display the recent transactions in the table below.
+              {paginationInfo.count > 0 ? (
+                <>
+                  Showing {startItem}-{endItem} of {paginationInfo.count}{" "}
+                  transactions
+                  {isHistoryPage && ` • Page ${currentPage} of ${totalPages}`}
+                </>
+              ) : (
+                "No transactions found"
+              )}
             </p>
           </div>
           <div className="flex items-center gap-2 w-full sm:w-auto">
@@ -335,6 +519,14 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                 </th>
                 <th
                   className="pb-2 cursor-pointer"
+                  onClick={() => handleSort("hash")}
+                >
+                  <div className="flex items-center">
+                    <span>View Tx </span> {renderSortArrow("hash")}
+                  </div>
+                </th>
+                <th
+                  className="pb-2 cursor-pointer"
                   onClick={() => handleSort("date")}
                 >
                   <div className="flex items-center">
@@ -352,20 +544,40 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700 items-center">
-              {loading ? (
+              {initialLoading || pageLoading ? (
+                // Show 10 skeleton rows on initial load or page navigation
+                Array.from({ length: 10 }).map((_, index) => (
+                  <tr key={`skeleton-${index}`}>
+                    <td className="py-3">
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                    </td>
+                    <td className="py-3">
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                    </td>
+                    <td className="py-3">
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                    </td>
+                    <td className="py-3">
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                    </td>
+                    <td className="py-3">
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                    </td>
+                    <td className="py-3">
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                    </td>
+                  </tr>
+                ))
+              ) : displayTransactions.length === 0 ? (
                 <tr>
-                  <ArrayTableLoader number={5} />
-                </tr>
-              ) : currentTransactions.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="py-6 text-center text-gray-400">
+                  <td colSpan={6} className="py-6 text-center text-gray-400">
                     No transactions found.
                   </td>
                 </tr>
               ) : (
-                currentTransactions.map((tx: any, idx: number) => (
+                displayTransactions.map((tx: any, idx: number) => (
                   <tr
-                    key={idx}
+                    key={`${tx.hash}-${idx}`}
                     className="hover:bg-gray-50 cursor-pointer dark:hover:bg-gray-700 transition"
                   >
                     {/* From/To */}
@@ -388,6 +600,18 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
 
                     {/* Token */}
                     <td>{tx?.tokenReceived || tx?.tokenSent}</td>
+
+                    {/* Hash */}
+                    <td>
+                      <a
+                        href={`https://stellar.expert/explorer/public/tx/${tx?.hash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#0E7BB2] hover:underline"
+                      >
+                        View on Stellar Expert
+                      </a>
+                    </td>
 
                     {/* Date */}
                     <td>{formatDate(tx?.date)}</td>
@@ -460,28 +684,74 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
         </div>
 
         {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between mt-4">
-            <button
-              onClick={handlePrevPage}
-              disabled={currentPage === 1}
-              className="px-4 py-2 text-sm bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-40"
-            >
-              Previous
-            </button>
-            <span className="text-gray-500 dark:text-gray-400">
-              Page <span className="font-semibold">{currentPage}</span> of{" "}
-              <span className="font-semibold">{totalPages}</span>
-            </span>
-            <button
-              onClick={handleNextPage}
-              disabled={currentPage === totalPages}
-              className="px-4 py-2 text-sm bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 rounded hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-40"
-            >
-              Next
-            </button>
-          </div>
-        )}
+        {(paginationInfo.next || cursorStack.length > 0 || totalPages > 1) &&
+          isHistoryPage && (
+            <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4">
+              {/* Page Info */}
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                {paginationInfo.count > 0 && (
+                  <>
+                    Showing {startItem}-{endItem} of {paginationInfo.count}{" "}
+                    transactions
+                  </>
+                )}
+              </div>
+
+              {/* Pagination Controls */}
+              <div className="flex items-center space-x-1">
+                {/* Previous Arrow */}
+                <button
+                  onClick={handlePrevPage}
+                  disabled={cursorStack.length === 0 || pageLoading}
+                  className={`flex items-center justify-center w-8 h-8 rounded-md ${
+                    cursorStack.length === 0 || pageLoading
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700"
+                  }`}
+                >
+                  &lt;
+                </button>
+
+                {/* Page Numbers - Simplified: < 1 2 3 ... last > */}
+                {generatePageNumbers().map((page, index) => (
+                  <button
+                    key={index}
+                    onClick={() =>
+                      typeof page === "number" && handlePageClick(page)
+                    }
+                    disabled={page === "..." || pageLoading}
+                    className={`min-w-8 h-8 flex items-center justify-center rounded-md text-sm font-medium transition-all ${
+                      page === currentPage
+                        ? "bg-[#0E7BB2] text-white"
+                        : page === "..."
+                        ? "cursor-default text-gray-500"
+                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700"
+                    } ${pageLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+                  >
+                    {page}
+                  </button>
+                ))}
+
+                {/* Next Arrow */}
+                <button
+                  onClick={handleNextPage}
+                  disabled={!paginationInfo.next || pageLoading}
+                  className={`flex items-center justify-center w-8 h-8 rounded-md ${
+                    !paginationInfo.next || pageLoading
+                      ? "text-gray-400 cursor-not-allowed"
+                      : "text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700"
+                  }`}
+                >
+                  &gt;
+                </button>
+              </div>
+
+              {/* Current Page Indicator */}
+              <div className="text-sm text-gray-500 dark:text-gray-400">
+                Page {currentPage} of {totalPages}
+              </div>
+            </div>
+          )}
       </section>
       {msg && <Alert msg={msg} setMsg={setMsg} alertType={alertType} />}
     </>

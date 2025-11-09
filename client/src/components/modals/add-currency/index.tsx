@@ -132,7 +132,6 @@ const AddCurrencyModal: React.FC<AddCurrencyModalProps> = ({
                     border border-gray-700 dark:border-gray-300
                     disabled:opacity-50`}
                 onClick={() => setSelectedAsset(null)}
-                disabled={loading}
               >
                 No
               </button>
@@ -143,12 +142,8 @@ const AddCurrencyModal: React.FC<AddCurrencyModalProps> = ({
                     : "hover:bg-[#0c5e89] bg-[#0E7BB2]"
                 } text-white disabled:opacity-50`}
                 onClick={handleConfirm}
-                disabled={loading}
               >
                 Yes, continue
-                {loading && (
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                )}
               </button>
             </div>
           </div>

@@ -705,6 +705,7 @@ export const fundAccountPreview = async (destination: string) => {
         ? `${process.env.STELLAR_PUBLIC_SERVER}`
         : `${process.env.STELLAR_TESTNET_SERVER}`
     );
+    
     // First check if destination account exists
     let destinationExists = true;
     try {

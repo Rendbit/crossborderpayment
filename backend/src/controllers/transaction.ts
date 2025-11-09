@@ -6,7 +6,7 @@ import {
   Keypair,
   Horizon,
 } from "@stellar/stellar-sdk";
-import { Networks } from "stellar-sdk";
+import { Account, Networks } from "stellar-sdk";
 import httpStatus from "http-status";
 import { Types } from "mongoose";
 import { emitEvent } from "../microservices/rabbitmq";
@@ -21,10 +21,10 @@ import { fundAccount, fundAccountPreview } from "./auth";
 
 export const addTrustline = async (req: any, res: any) => {
   try {
-    const server = new rpc.Server(
-      `${process.env.STELLAR_NETWORK}` === "public"
-        ? `${process.env.STELLAR_PUBLIC_SERVER}`
-        : `${process.env.STELLAR_TESTNET_SERVER}`
+    const server = new Horizon.Server(
+      process.env.STELLAR_NETWORK === "public"
+        ? "https://horizon.stellar.org"
+        : "https://horizon-testnet.stellar.org"
     );
     let { assetCode } = req.body;
     const user = req.user;
@@ -45,10 +45,17 @@ export const addTrustline = async (req: any, res: any) => {
       user.encryptedPrivateKey,
       `${user.primaryEmail}${hashedPassword}${user.pinCode}`
     );
+    // Fetch the account record
+    const accountRecord = await server
+      .accounts()
+      .accountId(user.stellarPublicKey)
+      .call();
 
-    // Fetch the source account details from the Stellar network using the user's public key.
-    const sourceAccount = await server.getAccount(user.stellarPublicKey);
-
+    // Create a Stellar SDK Account instance
+    const sourceAccount = new Account(
+      accountRecord.account_id,
+      accountRecord.sequence
+    );
     // Construct a transaction to change the trustline for the specified asset.
     const transaction = await new TransactionBuilder(sourceAccount, {
       fee: `${process.env.FEE}`, // Set the transaction fee.
@@ -68,14 +75,12 @@ export const addTrustline = async (req: any, res: any) => {
       .setTimeout(Number(`${process.env.TIMEOUT}`)) // Set the transaction timeout.
       .build(); // Build the transaction.
 
-
     // Sign the transaction using the user's decrypted private key.
     const signedTransaction: any = await WalletHelper.execTranst(
       transaction,
       Keypair.fromSecret(decryptedPrivateKey),
       "changeTrust"
     );
-
 
     if (!signedTransaction.status) {
       return res.status(httpStatus.BAD_REQUEST).json({
@@ -110,10 +115,10 @@ export const addTrustline = async (req: any, res: any) => {
 
 export const removeTrustline = async (req: any, res: any) => {
   try {
-    const server = new rpc.Server(
-      `${process.env.STELLAR_NETWORK}` === "public"
-        ? `${process.env.STELLAR_PUBLIC_SERVER}`
-        : `${process.env.STELLAR_TESTNET_SERVER}`
+    const server = new Horizon.Server(
+      process.env.STELLAR_NETWORK === "public"
+        ? "https://horizon.stellar.org"
+        : "https://horizon-testnet.stellar.org"
     );
     let { assetCode } = req.body;
     const user = req.user;
@@ -135,9 +140,17 @@ export const removeTrustline = async (req: any, res: any) => {
       `${user.primaryEmail}${hashedPassword}${user.pinCode}`
     );
 
-    // Fetch the source account details from the Stellar network using the user's public key.
-    const sourceAccount = await server.getAccount(user.stellarPublicKey);
+    // Fetch the account record
+    const accountRecord = await server
+      .accounts()
+      .accountId(user.stellarPublicKey)
+      .call();
 
+    // Create a Stellar SDK Account instance
+    const sourceAccount = new Account(
+      accountRecord.account_id,
+      accountRecord.sequence
+    );
     // Construct a transaction to remove the trustline for the specified asset.
     const transaction = new TransactionBuilder(sourceAccount, {
       fee: `${process.env.FEE}`, // Set the transaction fee.
@@ -337,10 +350,10 @@ export const paymentPreview = async (req: any, res: any) => {
 
 export const payment = async (req: any, res: any) => {
   try {
-    const server = new rpc.Server(
-      `${process.env.STELLAR_NETWORK}` === "public"
-        ? `${process.env.STELLAR_PUBLIC_SERVER}`
-        : `${process.env.STELLAR_TESTNET_SERVER}`
+    const server = new Horizon.Server(
+      process.env.STELLAR_NETWORK === "public"
+        ? "https://horizon.stellar.org"
+        : "https://horizon-testnet.stellar.org"
     );
     let {
       assetCode,
@@ -401,9 +414,17 @@ export const payment = async (req: any, res: any) => {
           )
         : Asset.native(); // Use the native asset if assetCode is 'NATIVE'.
 
-    // Fetch the source account details from the Stellar network using the user's public key.
-    const sourceAccount = await server.getAccount(user.stellarPublicKey);
+    // Fetch the account record
+    const accountRecord = await server
+      .accounts()
+      .accountId(user.stellarPublicKey)
+      .call();
 
+    // Create a Stellar SDK Account instance
+    const sourceAccount = new Account(
+      accountRecord.account_id,
+      accountRecord.sequence
+    );
     // Construct a payment transaction.
     const transaction = new TransactionBuilder(sourceAccount, {
       fee: `${process.env.FEE}`, // Set the transaction fee.
@@ -597,16 +618,15 @@ function calculatePriceImpact(
     return "0%"; // Fallback to 0% on error
   }
 }
+
 export const swapPreview = async (req: any, res: any) => {
   try {
     let { slippage, sourceAssetCode, desAssetCode, sourceAmount } = req.body;
     slippage *= 1;
-
     const sourceAssetIssuer =
       `${process.env.STELLAR_NETWORK}` === "public"
         ? PUBLIC_ASSETS[sourceAssetCode as keyof typeof PUBLIC_ASSETS].issuer
         : TESTNET_ASSETS[sourceAssetCode as keyof typeof TESTNET_ASSETS].issuer;
-
     const desAssetIssuer =
       `${process.env.STELLAR_NETWORK}` === "public"
         ? PUBLIC_ASSETS[desAssetCode as keyof typeof PUBLIC_ASSETS].issuer
@@ -621,11 +641,18 @@ export const swapPreview = async (req: any, res: any) => {
     });
 
     const paths = _paths.data.sendPaymentPath;
+    if (!paths || paths.length === 0) {
+      return res.status(httpStatus.BAD_REQUEST).json({
+        message: "No available swap route between the selected assets.",
+        status: httpStatus.BAD_REQUEST,
+        success: false,
+      });
+    }
     const desAmount = paths?.filter(
       (pth: any) =>
-        pth.destination_asset_type === desAssetIssuer ||
-        desAssetCode.startsWith(pth.destination_asset_code)
-    )[0].destination_amount;
+        pth?.destination_asset_type === desAssetIssuer ||
+        desAssetCode?.startsWith(pth?.destination_asset_code)
+    )[0]?.destination_amount;
 
     const destMin = (((100 - slippage) * parseFloat(desAmount)) / 100).toFixed(
       7
@@ -666,11 +693,12 @@ export const swapPreview = async (req: any, res: any) => {
 
 export const swap = async (req: any, res: any) => {
   try {
-    const server = new rpc.Server(
-      `${process.env.STELLAR_NETWORK}` === "public"
-        ? `${process.env.STELLAR_PUBLIC_SERVER}`
-        : `${process.env.STELLAR_TESTNET_SERVER}`
+    const server = new Horizon.Server(
+      process.env.STELLAR_NETWORK === "public"
+        ? "https://horizon.stellar.org"
+        : "https://horizon-testnet.stellar.org"
     );
+
     let { slippage, sourceAssetCode, desAssetCode, sourceAmount, pinCode } =
       req.body;
     const user = req.user;
@@ -716,14 +744,15 @@ export const swap = async (req: any, res: any) => {
       user.encryptedPrivateKey,
       `${user.primaryEmail}${hashedPassword}${user.pinCode}`
     );
+
     const _paths = paths.data.sendPaymentPath;
 
     // Calculate the destination amount based on the provided amount or the paths.
     const desAmount = _paths?.filter(
       (pth: any) =>
-        pth.destination_asset_type === desAssetIssuer ||
-        desAssetCode.startsWith(pth.destination_asset_code)
-    )[0].destination_amount;
+        pth?.destination_asset_type === desAssetIssuer ||
+        desAssetCode?.startsWith(pth?.destination_asset_code)
+    )[0]?.destination_amount;
 
     // Create the source asset object.
     const sourceAsset =
@@ -743,7 +772,7 @@ export const swap = async (req: any, res: any) => {
     );
 
     // Fetch the source account details from the Stellar network using the user's public key.
-    const sourceAccount = await server.getAccount(user.stellarPublicKey);
+    const sourceAccount = await server.loadAccount(user.stellarPublicKey);
 
     // Construct the strict send payment transaction.
     const transaction = new TransactionBuilder(sourceAccount, {
@@ -772,7 +801,6 @@ export const swap = async (req: any, res: any) => {
       Keypair.fromSecret(decryptedPrivateKey),
       "swap"
     );
-    console.log({ resp });
 
     if (!resp.status) {
       return res.status(httpStatus.BAD_REQUEST).json({
@@ -886,11 +914,12 @@ export const strictSendPreview = async (req: any, res: any) => {
 
 export const strictSend = async (req: any, res: any) => {
   try {
-    const server = new rpc.Server(
-      `${process.env.STELLAR_NETWORK}` === "public"
-        ? `${process.env.STELLAR_PUBLIC_SERVER}`
-        : `${process.env.STELLAR_TESTNET_SERVER}`
+    const server = new Horizon.Server(
+      process.env.STELLAR_NETWORK === "public"
+        ? "https://horizon.stellar.org"
+        : "https://horizon-testnet.stellar.org"
     );
+
     const user = req.user;
     let { desAddress, slippage, assetCode, amount, pinCode } = req.body;
 
@@ -914,7 +943,7 @@ export const strictSend = async (req: any, res: any) => {
       });
     }
 
-    // 1️⃣ Check if destination exists, otherwise fund it
+    // Check if destination exists, otherwise fund it
     let destinationExists = true;
     try {
       const checkAccount = await fundAccountPreview(desAddress);
@@ -955,7 +984,7 @@ export const strictSend = async (req: any, res: any) => {
       }
     }
 
-    // 2️⃣ Continue with path payment strict send
+    // Continue with path payment strict send
     const sourceAssetIssuer =
       `${process.env.STELLAR_NETWORK}` === "public"
         ? PUBLIC_ASSETS[assetCode as keyof typeof PUBLIC_ASSETS].issuer
@@ -994,7 +1023,6 @@ export const strictSend = async (req: any, res: any) => {
       assetCode !== "NATIVE"
         ? new Asset(assetCode, sourceAssetIssuer)
         : Asset.native();
-
     const desAsset =
       assetCode !== "NATIVE"
         ? new Asset(assetCode, desAssetIssuer)
@@ -1004,12 +1032,23 @@ export const strictSend = async (req: any, res: any) => {
       7
     );
 
-    const sourceAccount = await server.getAccount(user.stellarPublicKey);
+    // Fetch the account record
+    const accountRecord = await server
+      .accounts()
+      .accountId(user.stellarPublicKey)
+      .call();
 
+    // Create a Stellar SDK Account instance
+    const sourceAccount = new Account(
+      accountRecord.account_id,
+      accountRecord.sequence
+    );
+
+    // Now build the transaction
     const transaction = new TransactionBuilder(sourceAccount, {
       fee: `${process.env.FEE}`,
       networkPassphrase:
-        `${process.env.STELLAR_NETWORK}` === "public"
+        process.env.STELLAR_NETWORK === "public"
           ? Networks.PUBLIC
           : Networks.TESTNET,
     })
@@ -1022,7 +1061,7 @@ export const strictSend = async (req: any, res: any) => {
           destMin,
         })
       )
-      .setTimeout(Number(`${process.env.TIMEOUT}`))
+      .setTimeout(Number(process.env.TIMEOUT))
       .build();
 
     const resp: any = await WalletHelper.execTranst(
@@ -1140,10 +1179,10 @@ export const strictReceivePreview = async (req: any, res: any) => {
 
 export const strictReceive = async (req: any, res: any) => {
   try {
-    const server = new rpc.Server(
-      `${process.env.STELLAR_NETWORK}` === "public"
-        ? `${process.env.STELLAR_PUBLIC_SERVER}`
-        : `${process.env.STELLAR_TESTNET_SERVER}`
+    const server = new Horizon.Server(
+      process.env.STELLAR_NETWORK === "public"
+        ? "https://horizon.stellar.org"
+        : "https://horizon-testnet.stellar.org"
     );
     let {
       slippage,
@@ -1230,8 +1269,17 @@ export const strictReceive = async (req: any, res: any) => {
       (100 - slippage)
     ).toFixed(7);
 
-    //  Load source account
-    const sourceAccount = await server.getAccount(user.stellarPublicKey);
+    // Fetch the account record
+    const accountRecord = await server
+      .accounts()
+      .accountId(user.stellarPublicKey)
+      .call();
+
+    // Create a Stellar SDK Account instance
+    const sourceAccount = new Account(
+      accountRecord.account_id,
+      accountRecord.sequence
+    );
 
     //  Build transaction
     const transaction = new TransactionBuilder(sourceAccount, {
@@ -1299,6 +1347,7 @@ export const getTransactions = async (req: any, res: any) => {
     try {
       await server.loadAccount(user.stellarPublicKey);
     } catch (error) {
+      console.log({ error });
       return res.status(httpStatus.NOT_FOUND).json({
         message:
           "Fund your wallet with at least 5 XLM to activate your account.",
@@ -1312,7 +1361,7 @@ export const getTransactions = async (req: any, res: any) => {
       .transactions()
       .forAccount(user.stellarPublicKey)
       .order(order === "asc" ? "asc" : "desc")
-      .limit(Math.min(parseInt(limit) || 10, 200));
+      .limit(Math.min(parseInt("100")));
 
     // If cursor is provided, start from that point
     if (cursor) {
@@ -1461,16 +1510,32 @@ export const getTransactions = async (req: any, res: any) => {
       })
     );
 
+    // FIX: Get total count of transactions for this account
+    // This is an approximation since Stellar doesn't provide exact counts easily
+    // We'll use a larger limit to get a reasonable estimate
+    let totalCount = 0;
+    try {
+      const allTransactions = await server
+        .transactions()
+        .forAccount(user.stellarPublicKey)
+        .limit(1000) // Get up to 1000 transactions to estimate count
+        .call();
+      totalCount = allTransactions.records.length;
+    } catch (error) {
+      console.error("Error getting total transaction count:", error);
+      // If we can't get the total count, use the current page count as fallback
+      totalCount = simplifiedTransactions.length;
+    }
+
     return res.status(httpStatus.OK).json({
       data: {
         paging: {
-          next: page.next
-            ? page.next().then((p: any) => p.records.length)
-            : null,
-          prev: page.prev
-            ? page.prev().then((p: any) => p.records.length)
-            : null,
-          count: simplifiedTransactions.length,
+          next:
+            page.records.length > 0
+              ? page.records[page.records.length - 1].paging_token
+              : null,
+          prev: cursor || null,
+          count: totalCount, 
           cursor:
             page.records.length > 0
               ? page.records[page.records.length - 1].paging_token

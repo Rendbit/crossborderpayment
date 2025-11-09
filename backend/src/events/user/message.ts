@@ -43,7 +43,7 @@ export async function startEmailConsumers(channel: any) {
         });
         channel.ack(msg);
       } catch (err: any) {
-        console.error("❌ Failed to send OTP email:", err.message);
+        console.error("Failed to send OTP email:", err.message);
         channel.nack(msg, false, false);
       }
     });
@@ -79,13 +79,13 @@ export async function startEmailConsumers(channel: any) {
         });
         channel.ack(msg);
       } catch (err: any) {
-        console.error("❌ Failed to send general email:", err.message);
+        console.error("Failed to send general email:", err.message);
         channel.nack(msg, false, false);
       }
     });
 
-    console.log(" Email consumers started...");
+    console.log("Email consumers started...");
   } catch (err: any) {
-    console.error("❌ Failed to start email consumers:", err.message);
+    console.error("Failed to start email consumers:", err.message);
   }
 }

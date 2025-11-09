@@ -34,7 +34,7 @@ export const getConversionRates = async (req: any, res: any): Promise<any> => {
   try {
     const { inputAmount, inputSymbol, outputSymbol }: ConversionRequest =
       ConversionRequestSchema.parse(req.body);
-    const fiatList = ["NGN", "GHS", "KHS"]; // Updated to match cleaned symbols
+    const fiatList = ["NGN", "GHS", "KES"]; // Updated to match cleaned symbols
 
     const cleanSymbol = (symbol: string) => {
       let upperSymbol = symbol.toUpperCase();
@@ -96,7 +96,7 @@ export const getConversionRates = async (req: any, res: any): Promise<any> => {
 /**
  * Fetches and calculates the conversion rates for a list of tokens based on the provided currency type.
  * This function retrieves data from multiple APIs, processes the token list, and computes equivalent balances
- * in USD, NGN, and the selected currency type. It also categorizes tokens into yield and non-yield assets
+ * in USD, conversion currency type and the selected currency type. It also categorizes tokens into yield and non-yield assets
  * and calculates their respective total balances.
  *
  * @param param - An object containing the token list and the target currency type.
@@ -104,16 +104,16 @@ export const getConversionRates = async (req: any, res: any): Promise<any> => {
  * @param param.currencyType - The target currency type to convert the token balances into.
  *
  * @returns A promise that resolves to an object containing:
- * - `tokenList`: The updated token list with equivalent balances in USD, NGN, and the selected currency.
+ * - `tokenList`: The updated token list with equivalent balances in USD, conversion currency type and the selected currency.
  * - `allWalletTotalBalanceInSelectedCurrency`: Total balance of all tokens in the selected currency.
  * - `allWalletTotalBalanceInUsd`: Total balance of all tokens in USD.
- * - `allWalletTotalBalanceInNgn`: Total balance of all tokens in NGN.
+ * - `allWalletTotalBalanceInSelectedCurrency`: Total balance of all tokens in conversion currency type.
  * - `nonYieldWalletTotalBalanceInSelectedCurrency`: Total balance of non-yield tokens in the selected currency.
  * - `nonYieldWalletTotalBalanceInUsd`: Total balance of non-yield tokens in USD.
  * - `yieldWalletTotalBalanceInSelectedCurrency`: Total balance of yield tokens in the selected currency.
  * - `yieldWalletTotalBalanceInUsd`: Total balance of yield tokens in USD.
- * - `yieldWalletTotalBalanceInNgn`: Total balance of yield tokens in NGN.
- * - `nonYieldWalletTotalBalanceInNgn`: Total balance of non-yield tokens in NGN.
+ * - `yieldWalletTotalBalanceInNgn`: Total balance of yield tokens in conversion currency type.
+ * - `nonYieldWalletTotalBalanceInNgn`: Total balance of non-yield tokens in conversion currency type.
  *
  * @throws An error if there is an issue fetching data from the APIs or processing the token list.
  */
@@ -121,25 +121,23 @@ export const getConversionRate = async (
   param: GetConversionRate
 ): Promise<any> => {
   try {
-    // Filter out tokens that are not yield assets (those whose asset_code does not start with "y")
+    // Filter out yield tokens (y-prefixed)
     const tokens = param.tokenList.filter(
       (asset: { asset_code: string }) => !asset.asset_code.startsWith("y")
     );
 
-    // Map the asset codes to their corresponding symbols for API requests
+    // Map tokens to CoinMarketCap symbols
     const symbols = tokens
       .map((token: { asset_code: string }) => {
-        if (token.asset_code === "NATIVE") {
-          return "XLM"; // Native Stellar asset
-        } else if (token.asset_code === "NGNC") {
-          return "NGN"; // Nigerian Naira
-        } else {
-          return token.asset_code.toUpperCase(); // Other assets
-        }
+        if (token.asset_code === "NATIVE") return "XLM";
+        if (token.asset_code.endsWith("C") || token.asset_code.endsWith("c"))
+          return token.asset_code.slice(0, -1).toUpperCase();
+        return token.asset_code.toUpperCase();
       })
       .join(",");
 
-    const currencyType =
+    // Normalize selected currency type
+    const selectedCurrency =
       param.currencyType.toUpperCase() === "NATIVE"
         ? "XLM"
         : param.currencyType.endsWith("c") ||
@@ -148,181 +146,123 @@ export const getConversionRate = async (
         ? param.currencyType.slice(0, -1)
         : param.currencyType;
 
-    // Construct API URLs for fetching conversion rates in the selected currency, USD, and NGN
-    const url = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${symbols}&convert=${currencyType
-      .trim()
-      .toUpperCase()}`;
-    const usdUrl = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${symbols}&convert=USD`;
-    const ngnUrl = `https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest?symbol=${symbols}&convert=NGN`;
-    const currencyUrl = `https://api.exchangerate-api.com/v4/latest/USD`;
+    // Dynamic conversion target (e.g. NGN, EUR, GBP, etc.)
+    const conversionCurrency = param.currencyType?.toUpperCase();
 
-    // Set headers for the API requests, including the CoinMarketCap API key
+    // API endpoints
+    const baseUrl =
+      "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest";
+    const currencyUrl = "https://api.exchangerate-api.com/v4/latest/USD";
+
+    const [usdUrl] = [`${baseUrl}?symbol=${symbols}&convert=USD`];
+
+    // Headers
     const headers = {
       "X-CMC_PRO_API_KEY": `${process.env.CMC_PRO_API_KEY}`,
     };
 
-    // Fetch data from the APIs concurrently
-    const [response, usdResponse, ngnResponse, currencyRespose] =
-      await Promise.all([
-        fetch(url, { headers }), // Fetch rates for the selected currency
-        fetch(usdUrl, { headers }), // Fetch rates in USD
-        fetch(ngnUrl, { headers }), // Fetch rates in NGN
-        fetch(currencyUrl, { headers }), // Fetch currency exchange rates
-      ]);
-
-    // Parse the JSON responses from the APIs
-    const [data, usdData, ngnData, currencyData] = await Promise.all([
-      response.json(),
-      usdResponse.json(),
-      ngnResponse.json(),
-      currencyRespose.json(),
+    // Fetch data concurrently
+    const [usdRes, currencyRes] = await Promise.all([
+      fetch(usdUrl, { headers }),
+      fetch(currencyUrl),
     ]);
 
-    // Check if the responses are successful, throw errors if any request fails
-    if (!response.ok) {
-      console.log({ data });
-      throw new Error("Failed to fetch asset rates for the selected currency");
-    }
-    if (!usdResponse.ok) {
-      throw new Error("Failed to fetch asset rates in USD");
-    }
-    if (!ngnResponse.ok) {
-      throw new Error("Failed to fetch asset rates in NGN");
-    }
-    if (!currencyRespose.ok) {
+    const [usdData, currencyData] = await Promise.all([
+      usdRes.json(),
+      currencyRes.json(),
+    ]);
+
+    if (!usdRes.ok) throw new Error("Failed to fetch USD rates");
+    if (!currencyRes.ok)
       throw new Error("Failed to fetch currency exchange rates");
-    }
 
-    // Iterate through each token in the token list to calculate equivalent balances
+    // Supported fiat map
+    const fiatMap: Record<string, string> = {
+      NGN: "NGN",
+      GHS: "GHS",
+      KES: "KES",
+    };
+
+    // Compute balances in USD
     param.tokenList.forEach((token) => {
-      let assetCode = token.asset_code;
+      let assetCode = token.asset_code.startsWith("y")
+        ? token.asset_code.substring(1)
+        : token.asset_code;
 
-      // Remove the "y" prefix from yield assets to get the actual asset code
-      if (assetCode.startsWith("y")) {
-        assetCode = assetCode.substring(1);
-      }
-
-      // Determine the symbol for the asset based on its code
       const symbol =
         assetCode === "NATIVE"
-          ? "XLM" // Native Stellar asset
-          : assetCode === "NGNC"
-          ? "NGN" // Nigerian Naira
-          : assetCode.toUpperCase(); // Other assets
+          ? "XLM"
+          : assetCode.endsWith("C") || assetCode.endsWith("c")
+          ? assetCode.slice(0, -1).toUpperCase()
+          : assetCode.toUpperCase();
 
-      // Check if the asset data exists in the fetched data
-      if (data.data && data.data[symbol]) {
-        // Retrieve the conversion rates for the selected currency, USD, and NGN
+      const isFiat = fiatMap[symbol];
 
-        const selectedCurrencyRate =
-          data.data[symbol].quote[currencyType.trim().toUpperCase()].price;
-        const usdRate = usdData?.data[symbol]?.quote?.USD?.price;
-        const ngnRate = ngnData?.data[symbol]?.quote?.NGN?.price;
-
-        // Calculate the equivalent balances for the token in USD, NGN, and the selected currency
-        token.equivalentBalanceInUsd =
-          symbol === "NGN" || symbol === "GHS"
-            ? token.balance / currencyData.rates[symbol] // For fiat currencies
-            : usdRate * token.balance; // For cryptocurrencies
-        token.equivalentBalanceInNgn = ngnRate * token.balance;
-        token.equivalentBalanceInSelectedCurrency =
-          selectedCurrencyRate * token.balance;
+      if (isFiat) {
+        // Handle fiat via exchange-rate-api
+        const isoCode = fiatMap[symbol];
+        const rateToUSD = currencyData.rates[isoCode];
+        token.equivalentBalanceInUsd = token.balance / rateToUSD;
+      } else if (usdData.data && usdData.data[symbol]) {
+        const usdRate = usdData.data[symbol]?.quote?.USD?.price ?? 0;
+        token.equivalentBalanceInUsd = usdRate * token.balance;
       } else {
-        // If asset data is not available, set equivalent balances to 0
         token.equivalentBalanceInUsd = 0;
-        token.equivalentBalanceInNgn = 0;
-        token.equivalentBalanceInSelectedCurrency = 0;
       }
     });
 
-    // Calculate total balances in selected currency, USD, and NGN for all wallet assets
-    // Also, categorize assets into yield and non-yield assets
-    const [
-      allWalletTotalBalanceInSelectedCurrency,
-      allWalletTotalBalanceInUsd,
-      allWalletTotalBalanceInNgn,
+    // Split yield and non-yield assets
+    const yieldAssets = param.tokenList.filter((a) =>
+      a.asset_code.startsWith("y")
+    );
+    const nonYieldAssets = param.tokenList.filter(
+      (a) => !a.asset_code.startsWith("y")
+    );
+
+    // Sum helper
+    const sum = (arr: any[], field: string) =>
+      arr.reduce((total, t) => total + (t[field] || 0), 0);
+
+    // Totals in USD
+    const allWalletTotalBalanceInUsd = sum(
+      param.tokenList,
+      "equivalentBalanceInUsd"
+    );
+    const yieldWalletTotalBalanceInUsd = sum(
       yieldAssets,
+      "equivalentBalanceInUsd"
+    );
+    const nonYieldWalletTotalBalanceInUsd = sum(
       nonYieldAssets,
-    ] = await Promise.all([
-      // Sum up equivalent balances in the selected currency for all assets
-      param.tokenList.reduce(
-        (total, token) => total + token.equivalentBalanceInSelectedCurrency,
-        0
-      ),
-      // Sum up equivalent balances in USD for all assets
-      param.tokenList.reduce(
-        (total, token) => total + token.equivalentBalanceInUsd,
-        0
-      ),
-      // Sum up equivalent balances in NGN for all assets
-      param.tokenList.reduce(
-        (total, token) => total + token.equivalentBalanceInNgn,
-        0
-      ),
-      // Filter out yield assets (assets whose code starts with "y")
-      param.tokenList.filter((asset) => asset.asset_code.startsWith("y")),
-      // Filter out non-yield assets (assets whose code does not start with "y")
-      param.tokenList.filter((asset) => !asset.asset_code.startsWith("y")),
-    ]);
+      "equivalentBalanceInUsd"
+    );
 
-    // Calculate total balances for yield and non-yield assets in selected currency, USD, and NGN
-    const [
-      yieldWalletTotalBalanceInSelectedCurrency,
-      yieldWalletTotalBalanceInUsd,
-      yieldWalletTotalBalanceInNgn,
-      nonYieldWalletTotalBalanceInSelectedCurrency,
-      nonYieldWalletTotalBalanceInUsd,
-      nonYieldWalletTotalBalanceInNgn,
-    ] = await Promise.all([
-      // Sum up equivalent balances in the selected currency for yield assets
-      yieldAssets.reduce(
-        (total, token) => total + token.equivalentBalanceInSelectedCurrency,
-        0
-      ),
-      // Sum up equivalent balances in USD for yield assets
-      yieldAssets.reduce(
-        (total, token) => total + token.equivalentBalanceInUsd,
-        0
-      ),
-      // Sum up equivalent balances in NGN for yield assets
-      yieldAssets.reduce(
-        (total, token) => total + token.equivalentBalanceInNgn,
-        0
-      ),
+    // Convert from USD → selected currency using exchange-rate-api
+    const usdToConversionRate =
+      conversionCurrency && currencyData.rates[conversionCurrency]
+        ? currencyData.rates[conversionCurrency]
+        : 1;
 
-      // Sum up equivalent balances in the selected currency for non-yield assets
-      nonYieldAssets.reduce(
-        (total, token) => total + token.equivalentBalanceInSelectedCurrency,
-        0
-      ),
-      // Sum up equivalent balances in USD for non-yield assets
-      nonYieldAssets.reduce(
-        (total, token) => total + token.equivalentBalanceInUsd,
-        0
-      ),
-      // Sum up equivalent balances in NGN for non-yield assets
-      nonYieldAssets.reduce(
-        (total, token) => total + token.equivalentBalanceInNgn,
-        0
-      ),
-    ]);
+    const allWalletTotalBalanceInSelectedCurrency =
+      allWalletTotalBalanceInUsd * usdToConversionRate;
+    const yieldWalletTotalBalanceInSelectedCurrency =
+      yieldWalletTotalBalanceInUsd * usdToConversionRate;
+    const nonYieldWalletTotalBalanceInSelectedCurrency =
+      nonYieldWalletTotalBalanceInUsd * usdToConversionRate;
 
+    // Final flattened return
     return {
-      data: {
-        tokenList: param.tokenList,
-        allWalletTotalBalanceInSelectedCurrency,
-        allWalletTotalBalanceInUsd,
-        allWalletTotalBalanceInNgn,
-        nonYieldWalletTotalBalanceInSelectedCurrency,
-        nonYieldWalletTotalBalanceInUsd,
-        yieldWalletTotalBalanceInSelectedCurrency,
-        yieldWalletTotalBalanceInUsd,
-        yieldWalletTotalBalanceInNgn,
-        nonYieldWalletTotalBalanceInNgn,
-      },
+      tokenList: param?.tokenList,
+      allWalletTotalBalanceInUsd,
+      allWalletTotalBalanceInSelectedCurrency,
+      nonYieldWalletTotalBalanceInUsd,
+      nonYieldWalletTotalBalanceInSelectedCurrency,
+      yieldWalletTotalBalanceInUsd,
+      yieldWalletTotalBalanceInSelectedCurrency,
+      conversionCurrencyType: conversionCurrency,
     };
   } catch (error: any) {
-    console.log("Error fetching conversion rate. ", error);
+    console.error("Error fetching conversion rate:", error);
     throw new Error("Error fetching all wallet assets.");
   }
 };
@@ -337,7 +277,7 @@ export const getConversionRate = async (
  * The function performs the following steps:
  * 1. Fetches wallet assets from the Horizon API based on the user's Stellar public key.
  * 2. Processes the fetched data to format it and include additional details like asset images and names.
- * 3. Calls the `getConversionRate` function to calculate equivalent balances in USD, NGN, and the selected currency.
+ * 3. Calls the `getConversionRate` function to calculate equivalent balances in USD, conversion currency type and the selected currency.
  * 4. Categorizes assets into yield and non-yield assets and sorts them based on balance and asset type.
  * 5. Returns the processed data, including total balances and sorted asset lists, in the response.
  */
@@ -426,13 +366,10 @@ export const getAllWalletAssets = async (req: any, res: any) => {
           currencyType: currencyType.trim().toUpperCase(),
           allWalletTotalBalanceInSelectedCurrency: 0,
           allWalletTotalBalanceInUsd: 0,
-          allWalletTotalBalanceInNgn: 0,
           yieldWalletTotalBalanceInSelectedCurrency: 0,
           yieldWalletTotalBalanceInUsd: 0,
-          yieldWalletTotalBalanceInNgn: 0,
           nonYieldWalletTotalBalanceInSelectedCurrency: 0,
           nonYieldWalletTotalBalanceInUsd: 0,
-          nonYieldWalletTotalBalanceInNgn: 0,
           allWalletAssets: [],
           yieldWalletAssets: [],
           nonYieldWalletAssets: [],
@@ -448,14 +385,15 @@ export const getAllWalletAssets = async (req: any, res: any) => {
       currencyType: currencyType.trim().toLowerCase(),
     });
 
-    const yieldAssets = allAssets.data.tokenList.filter(
+
+    const yieldAssets = allAssets?.tokenList?.filter(
       (asset: { asset_code: string }) => asset.asset_code.startsWith("y")
     );
-    const nonYieldAssets = allAssets.data.tokenList.filter(
+    const nonYieldAssets = allAssets?.tokenList?.filter(
       (asset: { asset_code: string }) => !asset.asset_code.startsWith("y")
     );
 
-    const sortedAllWalletAssets = allAssets.data.tokenList.sort(
+    const sortedAllWalletAssets = allAssets?.tokenList?.sort(
       (
         a: { balance: number; asset_code: string; asset_name: string },
         b: { balance: number; asset_code: string; asset_name: string }
@@ -547,26 +485,19 @@ export const getAllWalletAssets = async (req: any, res: any) => {
         return a.asset_name.localeCompare(b.asset_name);
       }
     );
-
     return res.status(httpStatus.OK).json({
       data: {
         currencyType: currencyType.trim().toUpperCase(),
         allWalletTotalBalanceInSelectedCurrency:
-          allAssets.data.allWalletTotalBalanceInSelectedCurrency,
-        allWalletTotalBalanceInUsd: allAssets.data.allWalletTotalBalanceInUsd,
-        allWalletTotalBalanceInNgn: allAssets.data.allWalletTotalBalanceInNgn,
+          allAssets?.allWalletTotalBalanceInSelectedCurrency,
+        allWalletTotalBalanceInUsd: allAssets?.allWalletTotalBalanceInUsd,
         yieldWalletTotalBalanceInSelectedCurrency:
-          allAssets.data.yieldWalletTotalBalanceInSelectedCurrency,
-        yieldWalletTotalBalanceInUsd:
-          allAssets.data.yieldWalletTotalBalanceInUsd,
-        yieldWalletTotalBalanceInNgn:
-          allAssets.data.yieldWalletTotalBalanceInNgn,
+          allAssets?.yieldWalletTotalBalanceInSelectedCurrency,
+        yieldWalletTotalBalanceInUsd: allAssets?.yieldWalletTotalBalanceInUsd,
         nonYieldWalletTotalBalanceInSelectedCurrency:
-          allAssets.data.nonYieldWalletTotalBalanceInSelectedCurrency,
+          allAssets?.nonYieldWalletTotalBalanceInSelectedCurrency,
         nonYieldWalletTotalBalanceInUsd:
-          allAssets.data.nonYieldWalletTotalBalanceInUsd,
-        nonYieldWalletTotalBalanceInNgn:
-          allAssets.data.nonYieldWalletTotalBalanceInNgn,
+          allAssets?.nonYieldWalletTotalBalanceInUsd,
         allWalletAssets: sortedAllWalletAssets,
         yieldWalletAssets: sortedYieldAssets,
         nonYieldWalletAssets: sortedNonYieldAssets,
@@ -696,15 +627,15 @@ export const fetchAssets = async (req: any, res: any): Promise<any> => {
 
     // Fetch assets from the Stellar Expert API based on the search criteria
     const resp = await fetch(
-      `https://api.stellar.expert/explorer/${
-        `${process.env.STELLAR_NETWORK}`
-      }/asset?${new URLSearchParams({
-        search: assetCode,
-        sort: "rating",
-        order: "desc",
-        limit: String(limit),
-        cursor: String(page),
-      })}`
+      `https://api.stellar.expert/explorer/${`${process.env.STELLAR_NETWORK}`}/asset?${new URLSearchParams(
+        {
+          search: assetCode,
+          sort: "rating",
+          order: "desc",
+          limit: String(limit),
+          cursor: String(page),
+        }
+      )}`
     );
     if (!resp.ok) {
       return res.status(httpStatus.EXPECTATION_FAILED).json({
