@@ -90,7 +90,11 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
     if (cachedTransactions) {
       try {
         const transactions = JSON.parse(cachedTransactions);
-        setTransactionHistory(transactions);
+        if (!isHistoryPage && NumberOfTx) {
+          setTransactionHistory(transactions.slice(0, NumberOfTx));
+        } else {
+          setTransactionHistory(transactions);
+        }
 
         if (cachedPagination) {
           const pagination = JSON.parse(cachedPagination);
@@ -162,7 +166,11 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
       const paging = response.data.paging;
 
       // Update transaction history
-      setTransactionHistory(transactions);
+      if (!isHistoryPage && NumberOfTx) {
+        setTransactionHistory(transactions.slice(0, NumberOfTx));
+      } else {
+        setTransactionHistory(transactions);
+      }
 
       // Update pagination info
       const newPaginationInfo = {
