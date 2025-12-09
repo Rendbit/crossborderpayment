@@ -38,16 +38,6 @@ const ASSET_COLORS: { [key: string]: string } = {
   KESC: "#45b7d1",
   Unknown: "#d0ed57",
 };
-const TRANSACTION_TYPE_COLORS: { [key: string]: string } = {
-  payment: "#3b82f6",
-  path_payment_strict_receive: "#ef4444",
-  path_payment_strict_send: "#facc15",
-  create_account: "#10b981",
-  account_merge: "#f472b6",
-  manage_buy_offer: "#8b5cf6",
-  manage_sell_offer: "#f59e0b",
-  change_trust: "#ec4899",
-};
 
 type Transaction = {
   id: string;
@@ -179,13 +169,9 @@ const TransactionDashboard: React.FC = () => {
     // All available assets including the new ones
     const availableAssets = [
       "XLM",
-      "USDC",
-      "BTC",
       "NGNC",
       "GHSC",
       "KESC",
-      "EURT",
-      "ETH",
     ];
 
     // Simulate some transaction data based on the counts
@@ -415,7 +401,7 @@ const TransactionDashboard: React.FC = () => {
         <div className="bg-gray-800 rounded-lg p-4 shadow text-center">
           <p className="text-gray-400 text-sm">Total Users</p>
           <p className="text-3xl font-bold text-blue-400">
-            {formatNumberWithCommas(165)}
+            {formatNumberWithCommas(203)}
           </p>
         </div>
         <div className="bg-gray-800 rounded-lg p-4 shadow text-center">
