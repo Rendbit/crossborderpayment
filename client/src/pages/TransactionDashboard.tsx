@@ -26,6 +26,10 @@ const COLORS = [
   "#ff8042",
   "#a4de6c",
   "#d0ed57",
+  "#ff6b6b",
+  "#4ecdc4",
+  "#45b7d1",
+  "#96ceb4",
 ];
 const ASSET_COLORS: { [key: string]: string } = {
   XLM: "#8884d8",
@@ -33,6 +37,9 @@ const ASSET_COLORS: { [key: string]: string } = {
   EURT: "#ffc658",
   BTC: "#ff8042",
   ETH: "#a4de6c",
+  NGNC: "#ff6b6b", // Added NGNC
+  GHSC: "#4ecdc4", // Added GHSC
+  KESC: "#45b7d1", // Added KESC
   Unknown: "#d0ed57",
 };
 const TRANSACTION_TYPE_COLORS: { [key: string]: string } = {
@@ -85,6 +92,18 @@ type AddressData = {
   type: string;
 };
 
+// Utility function to format numbers with commas
+const formatNumberWithCommas = (num: number): string => {
+  return num.toLocaleString("en-US");
+};
+
+// Utility function to format addresses nicely
+const formatAddress = (address: string): string => {
+  if (!address) return "";
+  if (address.length <= 12) return address;
+  return `${address.slice(0, 6)}...${address.slice(-6)}`;
+};
+
 const TransactionDashboard: React.FC = () => {
   const [stats, setStats] = useState<any>({});
   const [addresses, setAddresses] = useState<AddressData[]>([]);
@@ -95,26 +114,34 @@ const TransactionDashboard: React.FC = () => {
   const [directionVolumeData, setDirectionVolumeData] = useState<
     DirectionVolumeData[]
   >([]);
-  const [loading, setLoading] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+
+  const fetchStats = async (isRefresh: boolean = false) => {
+    try {
+      if (isRefresh) {
+        setRefreshing(true);
+      } else {
+        setLoading(true);
+      }
+      const results = await getStats();
+      console.log("Fetched stats:", results);
+      processData(results.data);
+    } catch (error) {
+      console.error("Failed to fetch Stellar data:", error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
-    // In a real app, you would fetch this data from your API
-    // For now, we'll use the sample data directly
-    const fetchStats = async () => {
-      try {
-        const results = await getStats();
-        console.log("Fetched stats:", results);
-        // setStats(results.data);
-        processData(results.data)
-      } catch (error) {
-        console.error("Failed to fetch Stellar data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchStats();
   }, []);
+
+  const handleRefresh = () => {
+    fetchStats(true);
+  };
 
   const processData = (data: any) => {
     // Extract unique addresses from transactionsPerDay
@@ -126,7 +153,7 @@ const TransactionDashboard: React.FC = () => {
     // Create address objects with metadata
     const addressList = Array.from(uniqueAddresses).map((addr) => ({
       address: addr,
-      name: addr.slice(0, 6) + "..." + addr.slice(-4),
+      name: formatAddress(addr),
       type: addr.startsWith("GD") ? "user" : "institution",
     }));
 
@@ -153,6 +180,18 @@ const TransactionDashboard: React.FC = () => {
       ["receive", 0],
     ]);
 
+    // All available assets including the new ones
+    const availableAssets = [
+      "XLM",
+      "USDC",
+      "BTC",
+      "NGNC",
+      "GHSC",
+      "KESC",
+      "EURT",
+      "ETH",
+    ];
+
     // Simulate some transaction data based on the counts
     transactionsPerDay.forEach((day) => {
       day.addresses.forEach((addr: string) => {
@@ -166,12 +205,16 @@ const TransactionDashboard: React.FC = () => {
             ? addr
             : addressList.find((a) => a.address !== addr)?.address || addr;
 
+          // Select random asset from available assets
+          const randomAsset =
+            availableAssets[Math.floor(Math.random() * availableAssets.length)];
+
           const tx: Transaction = {
             id: `simulated-tx-${day.date}-${i}`,
             type: Math.random() > 0.7 ? "payment" : "path_payment_strict_send",
             amount: (Math.random() * 1000).toFixed(2),
             created_at: new Date(day.date).toISOString(),
-            asset: ["XLM", "USDC", "BTC"][Math.floor(Math.random() * 3)],
+            asset: randomAsset,
             from: fromAddr,
             to: toAddr,
           };
@@ -256,58 +299,153 @@ const TransactionDashboard: React.FC = () => {
     setDirectionVolumeData(directionArray);
   };
 
-  if (loading) {
+  // Loading skeleton component
+  if (loading && !refreshing) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
-        <p className="text-xl">Loading data...</p>
+      <div className="bg-gray-900 text-white p-6 rounded-lg shadow-md min-h-screen max-w-7xl mx-auto">
+        {/* Header with reload button skeleton */}
+        <div className="flex justify-between items-center mb-6">
+          <div className="h-10 bg-gray-800 rounded w-96 animate-pulse"></div>
+          <div className="h-10 bg-gray-800 rounded w-32 animate-pulse"></div>
+        </div>
+
+        {/* Summary Stats Skeleton */}
+        <div className="grid grid-cols-1 sm:grid-cols-4 md:grid-cols-5 gap-4 mb-8">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="bg-gray-800 rounded-lg p-4 shadow">
+              <div className="h-4 bg-gray-700 rounded w-24 mb-2 animate-pulse"></div>
+              <div className="h-8 bg-gray-700 rounded w-16 animate-pulse"></div>
+            </div>
+          ))}
+        </div>
+
+        {/* Charts Skeleton */}
+        {[...Array(5)].map((_, i) => (
+          <div key={i} className="bg-gray-800 rounded-lg p-4 shadow mb-8">
+            <div className="h-6 bg-gray-700 rounded w-48 mb-4 animate-pulse"></div>
+            <div className="h-64 bg-gray-700 rounded animate-pulse"></div>
+          </div>
+        ))}
+
+        {/* Address List Skeleton */}
+        <div className="bg-gray-800 rounded-lg p-4 shadow mb-8">
+          <div className="h-6 bg-gray-700 rounded w-48 mb-4 animate-pulse"></div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="bg-gray-700 p-3 rounded-lg animate-pulse">
+                <div className="h-4 bg-gray-600 rounded w-32 mb-2"></div>
+                <div className="h-3 bg-gray-600 rounded w-full mb-1"></div>
+                <div className="h-3 bg-gray-600 rounded w-16"></div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
 
+  // Calculate total volume
+  const totalVolume = volumeData.reduce((acc, cur) => acc + cur.value, 0);
+  const sendCount =
+    directionVolumeData.find((d) => d.direction === "send")?.count || 0;
+  const receiveCount =
+    directionVolumeData.find((d) => d.direction === "receive")?.count || 0;
+
   return (
     <div className="bg-gray-900 text-white p-6 rounded-lg shadow-md min-h-screen max-w-7xl mx-auto">
-      <h2 className="text-3xl font-bold mb-6">RendBit Traction Analytics Dashboard</h2>
+      {/* Header with reload button - ALWAYS VISIBLE */}
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-3xl font-bold">
+          RendBit Traction Analytics Dashboard
+        </h2>
+        <button
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className={`flex items-center gap-2 text-white font-medium py-2 px-4 rounded-lg transition-colors ${
+            refreshing
+              ? "bg-blue-800 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
+          }`}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className={`h-5 w-5 ${refreshing ? "animate-spin" : ""}`}
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fillRule="evenodd"
+              d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z"
+              clipRule="evenodd"
+            />
+          </svg>
+          {refreshing ? "Refreshing..." : "Refresh Data"}
+        </button>
+      </div>
+
+      {/* If refreshing, show overlay but keep content visible */}
+      {refreshing && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-800 p-6 rounded-lg shadow-lg">
+            <div className="flex items-center gap-3">
+              <svg
+                className="animate-spin h-8 w-8 text-blue-500"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                ></circle>
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              <p className="text-lg">Refreshing data...</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Summary Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-4 md:grid-cols-5 gap-4 mb-8">
         <div className="bg-gray-800 rounded-lg p-4 shadow text-center">
           <p className="text-gray-400 text-sm">Total Users</p>
           <p className="text-3xl font-bold text-blue-400">
-            165
+            {formatNumberWithCommas(165)}
           </p>
         </div>
         <div className="bg-gray-800 rounded-lg p-4 shadow text-center">
           <p className="text-gray-400 text-sm">Total Transactions</p>
           <p className="text-3xl font-bold text-green-400">
-            {stats.totalTransactions || 0}
+            {formatNumberWithCommas(stats.totalTransactions || 0)}
           </p>
         </div>
         <div className="bg-gray-800 rounded-lg p-4 shadow text-center">
           <p className="text-gray-400 text-sm">Active Users (7d)</p>
           <p className="text-3xl font-bold text-purple-400">
-            {stats.totalUsers || 0}
+            {formatNumberWithCommas(stats.totalUsers || 0)}
           </p>
         </div>
         <div className="bg-gray-800 rounded-lg p-4 shadow text-center">
           <p className="text-gray-400 text-sm">Total Volume (All Assets)</p>
           <p className="text-3xl font-bold text-yellow-400">
-            {volumeData.reduce((acc, cur) => acc + cur.value, 0).toFixed(2)}
+            {formatNumberWithCommas(parseFloat(totalVolume.toFixed(2)))}
           </p>
         </div>
         <div className="bg-gray-800 rounded-lg p-4 shadow text-center">
           <p className="text-gray-400 text-sm">Total Send Txns</p>
           <p className="text-3xl font-bold text-red-400">
-            {directionVolumeData.find((d) => d.direction === "send")?.count ||
-              0}
+            {formatNumberWithCommas(sendCount)}
           </p>
         </div>
-        {/* <div className="bg-gray-800 rounded-lg p-4 shadow text-center">
-          <p className="text-gray-400 text-sm">Total Receive Txns</p>
-          <p className="text-3xl font-bold text-green-400">
-            {directionVolumeData.find((d) => d.direction === "receive")
-              ?.count || 0}
-          </p>
-        </div> */}
       </div>
 
       {/* User Growth Area Chart */}
@@ -324,6 +462,7 @@ const TransactionDashboard: React.FC = () => {
             <YAxis stroke="#9CA3AF" />
             <Tooltip
               labelFormatter={(label) => format(new Date(label), "PPPP")}
+              formatter={(value: number) => formatNumberWithCommas(value)}
             />
             <Area
               type="monotone"
@@ -351,6 +490,7 @@ const TransactionDashboard: React.FC = () => {
             <YAxis stroke="#9CA3AF" />
             <Tooltip
               labelFormatter={(label) => format(new Date(label), "PPPP")}
+              formatter={(value: number) => formatNumberWithCommas(value)}
             />
             <Area
               type="monotone"
@@ -381,7 +521,9 @@ const TransactionDashboard: React.FC = () => {
             <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
             <XAxis dataKey="type" stroke="#9CA3AF" />
             <YAxis stroke="#9CA3AF" />
-            <Tooltip />
+            <Tooltip
+              formatter={(value: number) => formatNumberWithCommas(value)}
+            />
             <Bar
               dataKey="count"
               fill="#8884d8"
@@ -419,7 +561,12 @@ const TransactionDashboard: React.FC = () => {
               ))}
             </Pie>
             <Legend />
-            <Tooltip formatter={(value: number) => value.toFixed(2)} />
+            <Tooltip
+              formatter={(value: number) => [
+                formatNumberWithCommas(parseFloat(value.toFixed(2))),
+                "Volume",
+              ]}
+            />
           </PieChart>
         </ResponsiveContainer>
       </section>
@@ -433,7 +580,9 @@ const TransactionDashboard: React.FC = () => {
           <BarChart data={typeVolumeData}>
             <XAxis dataKey="type" stroke="#9CA3AF" />
             <YAxis stroke="#9CA3AF" />
-            <Tooltip />
+            <Tooltip
+              formatter={(value: number) => formatNumberWithCommas(value)}
+            />
             <Bar
               dataKey="count"
               fill="#3b82f6"
@@ -451,7 +600,9 @@ const TransactionDashboard: React.FC = () => {
           {addresses.map((addr) => (
             <div key={addr.address} className="bg-gray-700 p-3 rounded-lg">
               <div className="font-mono text-sm text-blue-400">{addr.name}</div>
-              <div className="text-xs text-gray-400 mt-1">{addr.address}</div>
+              <div className="text-xs text-gray-400 mt-1 break-all">
+                {formatAddress(addr.address)}
+              </div>
               <div className="text-xs text-yellow-400 mt-1">
                 Type: {addr.type}
               </div>

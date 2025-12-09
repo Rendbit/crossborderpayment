@@ -23,7 +23,6 @@ const queryTransaction = async (token: string, assetCode: string) => {
 };
 
 const initiateTransfer24 = async (token: string, assetCode: string, stellarPublicKey: string, txType: string) => {
-  console.log({assetCode, txType})
   try {
     const res = await fetch(
       `${import.meta.env.VITE_BASE_URL}/sep24/initiateTransfer24/${txType}`,
