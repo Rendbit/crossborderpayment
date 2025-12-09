@@ -33,13 +33,9 @@ const COLORS = [
 ];
 const ASSET_COLORS: { [key: string]: string } = {
   XLM: "#8884d8",
-  USDC: "#82ca9d",
-  EURT: "#ffc658",
-  BTC: "#ff8042",
-  ETH: "#a4de6c",
-  NGNC: "#ff6b6b", // Added NGNC
-  GHSC: "#4ecdc4", // Added GHSC
-  KESC: "#45b7d1", // Added KESC
+  NGNC: "#ff6b6b",
+  GHSC: "#4ecdc4",
+  KESC: "#45b7d1",
   Unknown: "#d0ed57",
 };
 const TRANSACTION_TYPE_COLORS: { [key: string]: string } = {
