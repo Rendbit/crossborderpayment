@@ -1,6 +1,6 @@
 import express from "express";
 import { authenticate } from "../middlewares/authMiddleWare";
-import { initiateTransfer24, queryTransfers24 } from "../controllers/sep24";
+import { initiateTransfer, queryTransfers } from "../controllers/sep24";
 import { moderateLimiter } from "../middlewares/rateLimiter";
 import { apiKeyValidator } from "../middlewares/apiKeyValidator";
 
@@ -50,7 +50,7 @@ router.use(apiKeyValidator);
  *       500:
  *         description: Internal server error
  */
-router.post("/initiateTransfer24/:txType", authenticate, initiateTransfer24);
+router.post("/initiateTransfer24/:txType", authenticate, initiateTransfer);
 
 /**
  * @swagger
@@ -76,6 +76,6 @@ router.post("/initiateTransfer24/:txType", authenticate, initiateTransfer24);
  *       500:
  *         description: Internal server error
  */
-router.get("/queryTransfers24", authenticate, queryTransfers24);
+router.get("/queryTransfers24", authenticate, queryTransfers);
 
 export default router;

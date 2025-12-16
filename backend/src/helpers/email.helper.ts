@@ -48,7 +48,6 @@ export class EmailHelper {
   static isValidEmail(email: string): boolean {
     // Regular expression pattern to validate email format
     const regex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  
     return regex.test(email.toLowerCase());
   }
 }

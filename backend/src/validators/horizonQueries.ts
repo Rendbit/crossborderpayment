@@ -1,73 +1,114 @@
+// validators/horizon.validator.ts
 import { z } from "zod";
 
-/**
- * Schema for validating a conversion request.
- *
- * This schema ensures that the input object adheres to the following structure:
- * - `inputAmount`: A positive number representing the amount to be converted.
- * - `symbol`: A string of exactly 3 alphabetic characters (case-insensitive) representing the currency symbol.
- *
- * The schema is strict, meaning no additional properties are allowed beyond the defined structure.
- */
-const ConversionRequestSchema = z
+// Asset code validator
+const AssetCodeSchema = z
+  .string()
+  .min(1, "Asset code is required")
+  .max(12, "Asset code must be at most 12 characters")
+  .regex(/^[A-Z]+$/, "Asset code must contain only uppercase letters")
+  .optional();
+
+// Currency type validator
+export const CurrencyTypeSchema = z
+  .string()
+  .min(1, "Currency type is required")
+  .max(5, "Currency type must be at most 5 characters")
+  .transform((val) => val.toUpperCase())
+  .refine(
+    (val) => ["USD", "NGN", "GHS", "KES", "EUR", "GBP", "NATIVE"].includes(val),
+    {
+      message: "Currency type must be USD, NGN, GHS, KES, EUR, GBP, or NATIVE",
+    }
+  );
+
+// Amount validator
+const AmountSchema = z
+  .string()
+  .regex(/^\d+(\.\d+)?$/, "Amount must be a valid number")
+  .refine((val) => parseFloat(val) > 0, "Amount must be greater than 0");
+
+// Transaction type validator
+const TransactionTypeSchema = z.enum(["deposit", "withdrawal", "swap"], {
+  errorMap: () => ({
+    message: "Transaction type must be deposit, withdrawal, or swap",
+  }),
+});
+
+// Pagination validator
+const PaginationSchema = z
   .object({
-    inputAmount: z.number().positive(),
-    inputSymbol: z.string().regex(/^[A-Za-z]+$/),
-    outputSymbol: z.string().regex(/^[A-Za-z]+$/),
+    limit: z
+      .string()
+      .regex(/^\d+$/, "Limit must be a number")
+      .transform((val) => parseInt(val, 10))
+      .refine((val) => val > 0 && val <= 100, "Limit must be between 1 and 100")
+      .optional()
+      .default("10"),
+    page: z
+      .string()
+      .regex(/^\d+$/, "Page must be a number")
+      .transform((val) => parseInt(val, 10))
+      .refine((val) => val > 0, "Page must be greater than 0")
+      .optional()
+      .default("1"),
   })
   .strict();
 
-/**
- * Schema for validating a query to fetch all wallet assets.
- *
- * This schema ensures that the input object adheres to the following structure:
- * - `currencyType`: An optional string that defaults to "BOTH" if not provided.
- *
- * The schema is strict, meaning no additional properties are allowed beyond the defined structure.
- */
-const AllWalletAssetsQuerySchema = z
+// Get all wallet assets validator
+export const GetAllWalletAssetsSchema = z
   .object({
-    currencyType: z.string(),
+    currencyType: CurrencyTypeSchema.optional().default("USD"),
   })
   .strict();
 
-/**
- * Schema for validating the parameters required to get a payment path.
- *
- * This schema ensures that the following fields are provided and meet the specified criteria:
- * - `txType` (string): The type of transaction.
- * - `sourceAssetCode` (string): The asset code of the source asset.
- * - `desAssetCode` (string): The asset code of the destination asset.
- * - `amount` (number): A positive number representing the amount to be transferred.
- *
- * The schema is strict, meaning no additional fields are allowed.
- */
-const GetPathSchema = z
+// Get path validator
+export const GetPathSchema = z
   .object({
-    txType: z.string(),
-    sourceAssetCode: z.string(),
-    desAssetCode: z.string(),
-    amount: z.number().positive(),
+    txType: TransactionTypeSchema,
+    sourceAssetCode: AssetCodeSchema.or(z.literal("NATIVE")),
+    desAssetCode: AssetCodeSchema.or(z.literal("NATIVE")),
+    amount: AmountSchema,
   })
   .strict();
 
-/**
- * Schema for validating the parameters required to fetch assets.
- *
- * This schema ensures that the following field is provided and meets the specified criteria:
- * - `assetCode` (string): The code of the asset to be fetched.
- *
- * The schema is strict, meaning no additional fields are allowed.
- */
-const FetchAssetsSchema = z
+// Fetch assets validator
+export const FetchAssetsSchema = z
   .object({
-    assetCode: z.string(),
+    assetCode: AssetCodeSchema.or(z.literal("NATIVE")),
   })
   .strict();
 
-export {
-  ConversionRequestSchema,
-  AllWalletAssetsQuerySchema,
-  GetPathSchema,
-  FetchAssetsSchema,
-};
+export const FetchAssetsQuerySchema = PaginationSchema;
+
+// Get conversion rates validator
+export const GetConversionRatesSchema = z
+  .object({
+    inputAmount: AmountSchema,
+    inputSymbol: z
+      .string()
+      .min(1, "Input symbol is required")
+      .max(10, "Input symbol must be at most 10 characters")
+      .transform((val) => val.toUpperCase()),
+    outputSymbol: z
+      .string()
+      .min(1, "Output symbol is required")
+      .max(10, "Output symbol must be at most 10 characters")
+      .transform((val) => val.toUpperCase()),
+  })
+  .strict();
+
+// Fetch user details validator
+export const FetchUserDetailsSchema = z
+  .object({
+    searchType: z.enum(["username", "primaryEmail", "rendbitId"], {
+      errorMap: () => ({
+        message: "Search type must be username, primaryEmail, or rendbitId",
+      }),
+    }),
+    input: z
+      .string()
+      .min(1, "Input is required")
+      .max(100, "Input must be at most 100 characters"),
+  })
+  .strict();

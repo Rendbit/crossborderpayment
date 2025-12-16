@@ -1,0 +1,20 @@
+export enum KycTier {
+  NONE = 0,
+  BASIC = 1,
+  STANDARD = 2,
+}
+
+export enum KycStatus {
+  PENDING = "PENDING",
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED",
+  UNDER_REVIEW = "UNDER_REVIEW",
+}
+
+export enum KycDocumentType {
+  PASSPORT = "PASSPORT",
+  DRIVERS_LICENSE = "DRIVERS_LICENSE",
+  NATIONAL_ID = "NATIONAL_ID",
+  PROOF_OF_ADDRESS = "PROOF_OF_ADDRESS",
+  SELFIE = "SELFIE",
+}

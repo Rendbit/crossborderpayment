@@ -13,10 +13,13 @@ import sep24Route from "./routes/sep24";
 import statsRoute from "./routes/stats";
 import horizonQueryRoute from "./routes/horizonQueries";
 import transactionRoute from "./routes/transaction";
+import recurringPaymentRoute from "./routes/recurringPayment";
+import paymentRequestRoute from "./routes/paymentRequest";
 import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./utils/swagger";
 import { startEmailConsumers } from "./events/user/message";
 import { apiKeyValidator } from "./middlewares/apiKeyValidator";
+import { paymentProcessorJob } from "./jobs/paymentProcessorCron";
 
 // Load environment variables from .env
 dotenv.config();
@@ -50,6 +53,9 @@ async function bootstrap() {
     app.use("/api/horizonQueries", horizonQueryRoute);
     app.use("/api/transaction", transactionRoute);
     app.use("/api/stats", statsRoute);
+    app.use("/api/stats", statsRoute);
+    app.use("/api/paymentRequest", paymentRequestRoute);
+    app.use("/api/recurringPayment", recurringPaymentRoute);
 
     // Swagger Docs
     app.use(
@@ -95,6 +101,7 @@ async function bootstrap() {
         }/api`
       );
       console.log(`View docs on ${process.env.BASE_URL}/api/docs`);
+      paymentProcessorJob.start();
     });
   } catch (err: any) {
     console.error("Failed to start app:", err);

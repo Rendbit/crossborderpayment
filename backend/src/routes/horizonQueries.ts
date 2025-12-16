@@ -269,6 +269,6 @@ router.post("/fetch-assets", fetchAssets);
  *       500:
  *         description: Internal server error
  */
-router.post("/fetch-user-details", fetchUserDetailsWithInput);
+router.post("/fetch-user-details", authenticate, fetchUserDetailsWithInput);
 
 export default router;
