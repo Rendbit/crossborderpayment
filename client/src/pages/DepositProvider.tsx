@@ -75,11 +75,11 @@ const DepositProvider: React.FC = () => {
 
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
-      if (event.data === "closeIframe") {
-        setModal(false);
-        setUrl(null);
-        setIsIframeLoading(true);
-      }
+      console.log({ event });
+      //close modal on receiving message from iframe
+      setModal(false);
+      setUrl(null);
+      setIsIframeLoading(true);
     };
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
@@ -169,7 +169,7 @@ const DepositProvider: React.FC = () => {
         setLoading(false);
         return;
       }
-      setUrl(response.data.json.url);
+      setUrl(`${response.data.json.url}&callback=postMessage`);
       setModal("deposit");
     } catch (error: any) {
       setMsg(error.message || "Failed to Initiate deposit");
