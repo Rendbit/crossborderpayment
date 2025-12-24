@@ -97,7 +97,7 @@ const makeWithdrawal = async (
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          amount,
+          amount: amount.toString(),
           address,
           assetCode,
           currencyType,
@@ -141,7 +141,7 @@ const swapAssets = async (
         body: JSON.stringify({
           sourceAssetCode,
           desAssetCode,
-          sourceAmount,
+          sourceAmount: sourceAmount.toString(),
           slippage,
           pinCode,
         }),
@@ -181,7 +181,7 @@ const swapAssetsPreview = async (
         body: JSON.stringify({
           sourceAssetCode,
           desAssetCode,
-          sourceAmount,
+          sourceAmount: sourceAmount.toString(),
           slippage,
         }),
       }
@@ -276,7 +276,7 @@ const strictSend = async (
       },
       body: JSON.stringify({
         assetCode,
-        amount,
+        amount: amount.toString(),
         desAddress,
         slippage,
         pinCode,
@@ -316,7 +316,7 @@ const strictSendPreview = async (
       },
       body: JSON.stringify({
         assetCode,
-        amount,
+        amount: amount.toString(),
         desAddress,
         slippage,
       }),
@@ -358,7 +358,7 @@ const strictReceive = async (
       body: JSON.stringify({
         sourceAssetCode,
         desAssetCode,
-        desAmount,
+        desAmount: desAmount.toString(),
         desAddress,
         slippage,
         pinCode,
@@ -400,7 +400,7 @@ const strictReceivePreview = async (
       body: JSON.stringify({
         sourceAssetCode,
         desAssetCode,
-        desAmount,
+        desAmount: desAmount.toString(),
         desAddress,
         slippage,
       }),

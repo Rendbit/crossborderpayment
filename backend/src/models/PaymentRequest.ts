@@ -1,4 +1,4 @@
-import mongoose, { Schema, Document } from "mongoose";
+import mongoose, { Schema } from "mongoose";
 import { IPaymentRequest } from "../types/paymentRequest";
 
 const PaymentRequestSchema: Schema = new Schema(
@@ -59,8 +59,8 @@ const PaymentRequestSchema: Schema = new Schema(
       default: "both",
     },
     metadata: {
-      type: Schema.Types.Mixed,
-      default: {},
+      invoiceNumber: { type: String, required: true },
+      invoiceDateAndTime: { type: Date, required: true },
     },
     qrCodeUrl: {
       type: String,

@@ -5,6 +5,11 @@ export const createRecurringPayment = async (req: any, res: any) => {
   return res.status(response.status).json(response);
 };
 
+export const editRecurringPayment = async (req: any, res: any) => {
+  const response = await recurringPaymentService.editRecurringPayment(req);
+  return res.status(response.status).json(response);
+};
+
 export const getRecurringPayment = async (req: any, res: any) => {
   const response = await recurringPaymentService.getRecurringPayment(req);
   return res.status(response.status).json(response);
@@ -22,5 +27,10 @@ export const cancelRecurringPayment = async (req: any, res: any) => {
 
 export const processRecurringPayment = async (req: any, res: any) => {
   const response = await recurringPaymentService.processRecurringPayment(req);
+  return res.status(response.status).json(response);
+};
+
+export const getProcessingStats = async (req: any, res: any) => {
+  const response = await recurringPaymentService.getProcessingStats(req);
   return res.status(response.status).json(response);
 };

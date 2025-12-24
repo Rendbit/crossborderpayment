@@ -1,9 +1,10 @@
 import cron from "node-cron";
-import { batchPaymentProcessor } from "../services/BatchPaymentProcessor";
+import { batchPaymentProcessor } from "../services/batchPaymentProcessor";
 
 class PaymentProcessorJob {
   private isProcessing = false;
-  private readonly PROCESSING_INTERVAL = "*/5 * * * *"; // Every 5 minutes
+  // private readonly PROCESSING_INTERVAL = "*/1 * * * *"; // Every 5 minutes
+  private readonly PROCESSING_INTERVAL = "*/10 * * * * *"; // Every second
   private readonly MONITORING_INTERVAL = "0 */1 * * *"; // Every hour
   private processingJob: any  = null;
   private monitoringJob: any = null;

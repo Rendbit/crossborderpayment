@@ -5,6 +5,11 @@ export const createPaymentRequest = async (req: any, res: any) => {
   return res.status(response.status).json(response);
 };
 
+export const editPaymentRequest = async (req: any, res: any) => {
+  const response = await paymentRequestService.editPaymentRequest(req);
+  return res.status(response.status).json(response);
+};
+
 export const getPaymentRequest = async (req: any, res: any) => {
   const response = await paymentRequestService.getPaymentRequest(req);
   return res.status(response.status).json(response);

@@ -295,7 +295,6 @@ export class StellarTransaction implements IBlockchainTransaction {
         pinCode,
       } = params;
       const user = params.user;
-
       if (pinCode !== user.pinCode) {
         throw new Error("Invalid transaction pin");
       }
@@ -315,6 +314,8 @@ export class StellarTransaction implements IBlockchainTransaction {
         user.encryptedPrivateKey,
         `${user.primaryEmail}${hashedPassword}${user.pinCode}`
       );
+
+      console.log({ decryptedPrivateKey });
 
       const asset =
         assetCode !== "NATIVE"

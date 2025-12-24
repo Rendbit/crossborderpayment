@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { FiLoader } from "react-icons/fi";
 import { FaChevronDown } from "react-icons/fa6";
-import AuthNav from "../components/auth-nav/AuthNav";
 import Alert from "../components/alert/Alert";
 import Cookies from "js-cookie";
 import OTPInput from "react-otp-input";
 import { Link, useNavigate } from "react-router-dom";
 import { createWallet } from "../function/auth";
+import { User } from "lucide-react";
+import AuthHeader from "../components/auth-nav/AuthHeader";
+import AuthFooter from "../components/auth-nav/AuthFooter";
 
 const AboutSelf: React.FC = () => {
   const [showCountries, setShowCountries] = useState<any>(false);
@@ -72,7 +74,7 @@ const AboutSelf: React.FC = () => {
         setMsg(response.message);
         setAlertType("error");
         setLoading(false);
-        if(response.message === "Login has expired"){
+        if (response.message === "Login has expired") {
           localStorage.clear();
           Cookies.remove("token");
           navigate("/login");
@@ -82,7 +84,7 @@ const AboutSelf: React.FC = () => {
 
       navigate("/dashboard");
     } catch (error: any) {
-      if(error.message === "Login has expired"){
+      if (error.message === "Login has expired") {
         localStorage.clear();
         Cookies.remove("token");
         navigate("/login");
@@ -95,49 +97,61 @@ const AboutSelf: React.FC = () => {
   }
 
   return (
-    <div className="relative">
-      <AuthNav />
-      <div className="sm:mt-[12rem] h-[100%] mx-3">
-        <h2 className="text-[24px] text-white font-semibold mb-2 text-center">
-          Create Your Wallet
-        </h2>
-        <div className="mt-5 flex flex-col justify-center items-center relative z-[11]">
-          <div className="border border-[white]/50 px-4 sm:px-8 pt-8 pb-5 rounded-[16px] w-full max-w-[488px]">
+    <div className="min-h-screen flex flex-col relative  bg-[#F9F9F9] dark:bg-gray-800">
+      <AuthHeader />
+      <main className="sm:mt-[3rem] md:mt-[2rem] mt-[30px] mx-3 md:px-24 relative">
+        <img
+          src="./image/Pattern.svg"
+          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+          alt=""
+        />
+
+        <div className="flex flex-col justify-center items-center relative z-[11]">
+          <div className="bg-white dark:bg-gray-900 shadow shadow-[#585C5F1A] px-4 sm:px-6 pt-8 pb-5 rounded-[18px] w-full sm:w-[450px]">
             <div className="top-bg relative top-[50px] sm:flex items-center justify-center w-[300px] mx-auto">
               <img
-                src="./images/favicon.svg"
+                src="./image/CustomRegisterIcon.svg"
                 alt="RendBit Logo"
-                className="mx-auto mb-4 relative top-[-65px]"
+                className="mx-auto mb-4 relative top-[-65px] mt-5"
               />
             </div>
+
             <div className="text-center mb-12 mt-[-30px] relative z-[100]">
-              <h2 className="text-[24px] mb-2 text-white">RendBit</h2>
-              <p className="text-white sm:text-[14px] text-[12px]">
+              <h2 className="text-[18px] dark:text-gray-300 md:text-[24px] text-[#0A0D14] mb-2">
+                Create Your Wallet
+              </h2>
+              <p className="text-[#525866] dark:text-gray-300 text-[14px]">
                 These details will help us set up your RendBit Wallet
               </p>
             </div>
+
             <form className="flex flex-col mt-[-10px] sm:w-[400px] mx-auto">
-              <div className="my-7">
-                <label className="text-[#ffffff] font-[500] text-[14px] mb-1 block">
+              <div className="w-[100%]">
+                <label className="text-[#0A0D14] dark:text-gray-300 font-[500] text-[14px] mb-2 ml-1 block">
                   Username
                 </label>
-                <input
-                  type="text"
-                  onChange={(e) => setUserName(e.target.value)}
-                  placeholder="Your nickname"
-                  autoCapitalize="off"
-                  className="border border-[white]/50 bg-white/8 autofill:bg-white/8 autofill:shadow-[0_0_0px_1000px_rgba(0,0,0,0)]  p-2 rounded-[6px] w-full outline-none text-white"
-                />
+                <div className="border border-[#E2E4E9] text-[#868C98] px-2 py-[7px] rounded-[6px] gap-2 flex items-center justify-between w-full">
+                  <User />
+                  <input
+                    type="text"
+                    onChange={(e) => setUserName(e.target.value)}
+                    disabled={loading}
+                    placeholder="John Doe"
+                    autoComplete="off"
+                    name="username-field"
+                    className="outline-none w-full"
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className="text-[#ffffff] font-[500] text-[14px] mb-1 block">
+              <div className="mt-5">
+                <label className="text-[#0A0D14] dark:text-gray-300 font-[500] text-[14px]  mb-1 block">
                   Create transaction Pin
                 </label>
                 <OTPInput
                   value={transactionPin}
                   inputType="number"
-                  inputStyle={{ width: "80px" }}
+                  inputStyle={{ width: "100%" }}
                   onChange={setTransactionPin}
                   numInputs={4}
                   renderSeparator={
@@ -146,22 +160,23 @@ const AboutSelf: React.FC = () => {
                   renderInput={(props) => (
                     <input
                       {...props}
+                      type="password"
                       placeholder="0"
-                      className="text-center text-white bg-white/8  border-[white]/50  otp-input text-[26px] font-[600] outline-none h-[68px] rounded-md border placeholder:text-[#96969659] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      className="text-center border-[#E2E4E9] text-[#868C98]  otp-input text-[26px] font-[600] outline-none h-[68px] rounded-md border placeholder:text-[#96969659] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                   )}
                 />
               </div>
 
-              <div className="my-7">
-                <label className="text-[#ffffff] font-[500] text-[14px] mb-1 block">
+              <div className="mt-5">
+                <label className="text-[#0A0D14] dark:text-gray-300 font-[500] text-[14px]  mb-1 block">
                   Confirm transaction Pin
                 </label>
                 <OTPInput
                   value={confirmTransactionPin}
                   inputType="number"
                   onChange={setConfirmTransactionPin}
-                  inputStyle={{ width: "80px" }}
+                  inputStyle={{ width: "100%" }}
                   numInputs={4}
                   renderSeparator={
                     <span style={{ visibility: "hidden" }}>---</span>
@@ -170,42 +185,45 @@ const AboutSelf: React.FC = () => {
                     <input
                       {...props}
                       placeholder="0"
-                      className="text-center otp-input border-[white]/50 bg-white/8 text-white text-[26px] font-[600] outline-none h-[68px] rounded-md border placeholder:text-[#96969659] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      type="password"
+                      className="text-center  border-[#E2E4E9] text-[#868C98]  otp-input text-[26px] font-[600] outline-none h-[68px] rounded-md border placeholder:text-[#96969659] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                     />
                   )}
                 />
               </div>
 
-              <div className="relative">
-                <label className="text-[#ffffff] font-[500] text-[14px] mb-1 block">
+              <div className="relative mt-5">
+                <label className="text-[#0A0D14] dark:text-gray-300 font-[500] text-[14px]  mb-1 block">
                   Country
                 </label>
                 <div
                   onClick={() => setShowCountries(!showCountries)}
-                  className="flex cursor-pointer items-center justify-between border border-[white]/50 p-2 rounded-[6px] w-full"
+                  className="flex cursor-pointer items-center justify-between border border-[#E2E4E9] p-2 rounded-[6px] w-full"
                 >
                   <input
                     type="text"
-                    defaultValue={country}
+                    value={country}
                     placeholder="Select country"
-                    autoComplete="off"
-                    className="outline-none  w-full text-white autofill:bg-transparent autofill:shadow-[0_0_0px_1000px_rgba(0,0,0,0)]"
+                    readOnly
+                    tabIndex={-1}
+                    className="outline-none w-full  cursor-pointer text-[#868C98] placeholder:text-[var(--text-muted)]"
                   />
+
                   <FaChevronDown className="cursor-pointer text-gray-300" />
                 </div>
                 {showCountries && (
-                  <div className="bg-white w-full absolute top-[75px] rounded-[4px] border border-[white]/50 h-[300px] overflow-x-hidden overflow-y-scroll left-0 px-2 py-3">
+                  <div className="bg-[#F9F9F9] dark:bg-gray-800 w-full absolute top-[75px] rounded-[4px] border border-[white]/50 h-[300px] overflow-x-hidden overflow-y-scroll left-0 px-2 py-3">
                     <input
                       type="text"
                       onChange={(e) => setSeacrhText(e.target.value)}
                       placeholder="Search Country"
-                      className="border border-gray-300 text-black w-full placeholder:text-[13px] text-[13px] outline-none px-[4px] rounded mb-1 py-[5px]"
+                      className="border border-gray-300 text-[#868C98] w-full placeholder:text-[13px] text-[13px] outline-none px-[4px] rounded mb-1 py-[5px]"
                     />
-                    <div>
+                    <div className="bg-[#F9F9F9] dark:bg-gray-800">
                       {loader ? (
                         <div className="flex items-center justify-center flex-col gap-3 mt-[7rem]">
                           <FiLoader className="text-[28px] animate-spin" />
-                          <p className="text-black text-[14px]">
+                          <p className="text-[#868C98] text-[14px]">
                             Fetching Countries Please Wait...
                           </p>
                         </div>
@@ -220,14 +238,16 @@ const AboutSelf: React.FC = () => {
                             .map((country, index) => (
                               <div
                                 key={index}
-                                className="flex items-center gap-2 hover:bg-gray-300 cursor-pointer p-[5px] text-[14px] text-black"
+                                className="flex items-center gap-2 hover:bg-gray-300 dark:hover:bg-gray-700 cursor-pointer p-[5px] text-[14px] text-[#868C98]"
                                 onClick={() => {
                                   setShowCountries(!showCountries);
                                   setCountry(country.name);
                                 }}
                               >
-                                <p className="text-black">{country.emoji}</p>
-                                <p className="text-black">{country.name}</p>
+                                <p className="text-[#868C98]">
+                                  {country.emoji}
+                                </p>
+                                <p className="text-[#868C98]">{country.name}</p>
                               </div>
                             ))}
                         </>
@@ -250,7 +270,7 @@ const AboutSelf: React.FC = () => {
                   />
                 )}
               </button>
-              <div className="text-center text-[white] sm:mt-[70px] text-[14px]">
+              <div className="text-center text-[#868C98] sm:mt-[70px] text-[14px]">
                 <p className="text-center">
                   Already have an account?{" "}
                   <Link to="/login" className="text-[#0E7BB2]">
@@ -261,19 +281,8 @@ const AboutSelf: React.FC = () => {
             </form>
           </div>
         </div>
-      </div>
-      <div className="mt-[100px] mb-5 sm:mx-10 flex sm:flex-row flex-col sm:gap-0 gap-3 items-center justify-between">
-        <p className="text-[white] text-[12px]">
-          &copy; {new Date().getFullYear()} RendBit. All rights
-          reserved.
-        </p>
-        <div className="text-[white] text-[12px] flex items-center gap-4">
-          <Link to="#">Privacy Policy</Link>
-          <Link to="#" className="mr-4">
-            Terms of Use
-          </Link>
-        </div>
-      </div>
+      </main>
+      <AuthFooter />
       {msg && <Alert msg={msg} setMsg={setMsg} alertType={alertType} />}
     </div>
   );

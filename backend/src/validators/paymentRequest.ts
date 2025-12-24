@@ -44,6 +44,18 @@ const PinCodeSchema = z
   .length(4, "PIN code must be exactly 4 digits")
   .regex(/^\d{4}$/, "PIN code must contain only digits");
 
+// Metadata schemas
+const PaymentRequestMetadataSchema = z.object({
+  invoiceNumber: z
+    .string()
+    .min(1, "Invoice number is required")
+    .max(100, "Invoice number must be at most 100 characters"),
+  invoiceDateAndTime: z
+    .string()
+    .refine((val) => !isNaN(Date.parse(val)), "Invalid invoice date and time")
+    .transform((val) => new Date(val)),
+});
+
 // Payment request validators
 export const CreatePaymentRequestSchema = z
   .object({
@@ -65,9 +77,41 @@ export const CreatePaymentRequestSchema = z
       .enum(["crypto", "fiat", "both"])
       .optional()
       .default("both"),
-    metadata: z.record(z.any()).optional(),
+    metadata: PaymentRequestMetadataSchema,
   })
   .strict();
+
+export const EditPaymentRequestSchema = z
+  .object({
+    requestId: z
+      .string()
+      .min(1, "Request ID is required")
+      .max(100, "Request ID must be at most 100 characters"),
+    amount: AmountSchema.optional(),
+    currency: CurrencySchema.optional(),
+    description: DescriptionSchema,
+    expiresIn: z
+      .string()
+      .regex(/^\d+$/, "Expires in must be a number")
+      .transform((val) => parseInt(val, 10))
+      .refine(
+        (val) => val >= 1 && val <= 30,
+        "Expires in must be between 1 and 30 days"
+      )
+      .optional(),
+    metadata: PaymentRequestMetadataSchema.partial().optional(),
+  })
+  .strict()
+  .refine(
+    (data) => {
+      // Ensure at least one field is being updated
+      const { requestId, ...updateFields } = data;
+      return Object.keys(updateFields).length > 0;
+    },
+    {
+      message: "At least one field must be provided for update",
+    }
+  );
 
 export const GetPaymentRequestSchema = z
   .object({
@@ -163,6 +207,6 @@ export const ListPaymentRequestsSchema = z
         "failed",
       ])
       .optional(),
-    direction: z.enum(["sent", "received"]).optional(),
+    direction: z.enum(["sent", "received", "all"]).optional(),
   })
   .strict();

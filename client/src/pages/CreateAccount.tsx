@@ -12,11 +12,12 @@ import { register } from "../function/auth";
 import { MdEmail } from "react-icons/md";
 import { Key, User } from "lucide-react";
 import ThemeToggle from "../components/theme-toggle";
+import AuthFooter from "../components/auth-nav/AuthFooter";
+import AuthHeader from "../components/auth-nav/AuthHeader";
 
 const CreateAccount: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordType, setPasswordType] = useState("password");
@@ -88,21 +89,9 @@ const CreateAccount: React.FC = () => {
   };
 
   return (
-    <div className="relative bg-[#F9F9F9] dark:bg-gray-800 min-h-screen">
-      <div className="flex items-center justify-between w-full md:pr-[100px] pr-[20px]">
-        <AuthNav />
-        <div className="text-center text-black dark:text-gray-300 text-[14px] flex items-center truncate">
-          Already have an account?{" "}
-          <Link
-            to="/login"
-            className="text-[#0E7BB2] underline ml-1 mr-4 sm:mr-10"
-          >
-            Login
-          </Link>
-          <ThemeToggle type={"icon"} />
-        </div>
-      </div>
-      <div className="sm:mt-[5rem] md:mt-[7rem] mt-[50px] mx-3 md:px-24 relative">
+    <div className="min-h-screen flex flex-col relative  bg-[#F9F9F9] dark:bg-gray-800">
+      <AuthHeader />
+      <main className="flex-1 sm:mt-[5rem] md:mt-[7rem] mt-[50px] mx-3 md:px-24 relative">
         <img
           src="./image/Pattern.svg"
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
@@ -147,24 +136,6 @@ const CreateAccount: React.FC = () => {
               </div> */}
 
               <div className="w-[100%]">
-                <label className="text-[#0A0D14] dark:text-gray-300 font-[500] text-[14px] mb-2 ml-1 block">
-                  Username
-                </label>
-                <div className="border border-[#E2E4E9] text-[#868C98] px-2 py-[7px] rounded-[6px] gap-2 flex items-center justify-between w-full">
-                  <User />
-                  <input
-                    type="text"
-                    onChange={(e) => setUsername(e.target.value)}
-                    disabled={loading}
-                    placeholder="John Doe"
-                    autoComplete="off"
-                    name="username-field"
-                    className="outline-none w-full"
-                  />
-                </div>
-              </div>
-
-              <div className="w-[100%] mt-6">
                 <label className="text-[#0A0D14] dark:text-gray-300 font-[500] text-[14px] mb-2 ml-1 block">
                   Email Address
                 </label>
@@ -266,14 +237,17 @@ const CreateAccount: React.FC = () => {
             <div className="text-[#868C98] text-[14px] flex items-center gap-1 mt-2 justify-center">
               <p className="text-center mt-2">
                 By clicking Register, you agree to accept Rendbit
-                <Link to="#" className="block text-[#0A0D14] dark:text-gray-300 underline ml-1">
+                <Link
+                  to="#"
+                  className="block text-[#0A0D14] dark:text-gray-300 underline ml-1"
+                >
                   Terms and Conditions
                 </Link>
               </p>
             </div>
           </div>
         </div>
-      </div>
+      </main>
       {/* <div className='flex items-center justify-center mt-3'>
           <ReCAPTCHA
               ref={recaptchaRef}
@@ -281,19 +255,8 @@ const CreateAccount: React.FC = () => {
               onChange={handleCaptchaChange}
           />
       </div> */}
-      <div className="mt-[50px] mb-5 sm:mx-10 flex sm:flex-row flex-col sm:gap-0 gap-3 items-center justify-between">
-        <p className="text-[#525866] text-[14px]">
-          &copy; {new Date().getFullYear()} RendBit. All rights reserved.
-        </p>
-        <div className="text-[#525866] text-[14px] flex items-center gap-4">
-          <Link to="#" className="flex items-center gap-[2px]">
-            Privacy Policy <FiExternalLink />
-          </Link>
-          <Link to="#" className="mr-4 flex items-center gap-[2px]">
-            Terms of Use <FiExternalLink />
-          </Link>
-        </div>
-      </div>
+      <AuthFooter />
+
       {msg && <Alert msg={msg} setMsg={setMsg} alertType={alertType} />}
     </div>
   );

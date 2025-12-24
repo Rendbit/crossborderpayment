@@ -5,6 +5,7 @@ import {
   listPaymentRequests,
   processPaymentRequest,
   cancelPaymentRequest,
+  editPaymentRequest,
   generatePaymentQRCode,
   validatePaymentLink,
 } from "../controllers/paymentRequest";
@@ -39,11 +40,11 @@ router.use(moderateLimiter);
  *             required: [amount, currency, toUser, paymentMethod, expiresIn]
  *             properties:
  *               amount:
- *                 type: number
+ *                 type: string
  *                 description: Payment amount
  *               currency:
  *                 type: string
- *                 description: Currency code (e.g., USD, XLM, EUR)
+ *                 description: Currency code (e.g., NGN, GHS, KES, XLM)
  *               toUser:
  *                 type: string
  *                 description: Recipient's email, username, or Stellar public key
@@ -59,12 +60,70 @@ router.use(moderateLimiter);
  *                 description: Optional payment description
  *               metadata:
  *                 type: object
- *                 description: Additional metadata
+ *                 required: true
+ *                 properties:
+ *                   invoiceNumber:
+ *                     type: string
+ *                     required: true
+ *                     description: Invoice number for the payment request
+ *                   invoiceDateAndTime:
+ *                     type: string
+ *                     format: date-time
+ *                     required: true
+ *                     description: Date and time when invoice was created
  *     responses:
  *       201:
  *         description: Payment request created successfully
  */
 router.post("/create", authenticate, createPaymentRequest);
+
+/**
+ * @swagger
+ * /api/paymentRequest/edit:
+ *   put:
+ *     summary: Edit an existing payment request
+ *     tags: [PaymentRequest]
+ *     security:
+ *       - bearerAuth: []
+ *       - apiKey: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [requestId]
+ *             properties:
+ *               requestId:
+ *                 type: string
+ *                 description: Payment request ID
+ *               amount:
+ *                 type: string
+ *                 description: New payment amount (optional)
+ *               currency:
+ *                 type: string
+ *                 description: New currency code (optional)
+ *               description:
+ *                 type: string
+ *                 description: New payment description (optional)
+ *               expiresIn:
+ *                 type: number
+ *                 description: New days until request expires (1-30) (optional)
+ *               metadata:
+ *                 type: object
+ *                 properties:
+ *                   invoiceNumber:
+ *                     type: string
+ *                     description: New invoice number (optional)
+ *                   invoiceDateAndTime:
+ *                     type: string
+ *                     format: date-time
+ *                     description: New invoice date and time (optional)
+ *     responses:
+ *       200:
+ *         description: Payment request updated successfully
+ */
+router.put("/edit", authenticate, editPaymentRequest);
 
 /**
  * @swagger

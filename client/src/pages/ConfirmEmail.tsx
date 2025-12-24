@@ -7,6 +7,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { resendEmailOtp, verifyEmail } from "../function/auth";
 import { FiExternalLink } from "react-icons/fi";
 import ThemeToggle from "../components/theme-toggle";
+import AuthHeader from "../components/auth-nav/AuthHeader";
+import AuthFooter from "../components/auth-nav/AuthFooter";
 
 const ConfirmEmail: React.FC = () => {
   const [otp, setOtp] = useState("");
@@ -77,27 +79,15 @@ const ConfirmEmail: React.FC = () => {
   }
 
   return (
-    <div className="relative bg-[#F9F9F9] dark:bg-gray-800 min-h-screen">
-      <div className="flex items-center justify-between w-full md:pr-[100px] pr-[20px]">
-        <AuthNav />
-        <div className="text-center text-black dark:text-gray-300 text-[14px] flex items-center truncate">
-          Changed your mind?{" "}
-          <Link
-            to="/login"
-            className="text-[#0E7BB2] underline ml-1 mr-4 sm:mr-10"
-          >
-            Login
-          </Link>
-          <ThemeToggle type={"icon"} />
-        </div>
-      </div>
-      <div className="sm:mt-[5rem] md:mt-[7rem] mt-[50px] mx-3 md:px-24 relative">
+    <div className="min-h-screen flex flex-col relative  bg-[#F9F9F9] dark:bg-gray-800">
+      <AuthHeader />
+      <main className="flex-1 sm:mt-[5rem] md:mt-[7rem] mt-[50px] mx-3 md:px-24 relative">
         <img
           src="./image/Pattern.svg"
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
           alt=""
         />
-        <div className="mt-5 flex flex-col justify-center items-center relative z-[11]">
+        <div className="mt-[150px] flex flex-col justify-center items-center relative z-[11]">
           <div className="bg-white dark:bg-gray-900 shadow shadow-[#585C5F1A] px-4 sm:px-6 pt-8 pb-5 rounded-[18px] w-full sm:w-[450px]">
             <div className="top-bg relative top-[50px] sm:flex items-center justify-center w-[300px] mx-auto">
               <img
@@ -168,20 +158,8 @@ const ConfirmEmail: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
-      <div className="mt-[50px] mb-5 sm:mx-10 flex sm:flex-row flex-col sm:gap-0 gap-3 items-center justify-between">
-        <p className="text-[#525866] dark:text-gray-300 text-[14px]">
-          &copy; {new Date().getFullYear()} RendBit. All rights reserved.
-        </p>
-        <div className="text-[#525866] dark:text-gray-300 text-[14px] flex items-center gap-4">
-          <Link to="#" className="flex items-center gap-[2px]">
-            Privacy Policy <FiExternalLink />
-          </Link>
-          <Link to="#" className="mr-4 flex items-center gap-[2px]">
-            Terms of Use <FiExternalLink />
-          </Link>
-        </div>
-      </div>
+      </main>
+      <AuthFooter />
       {msg && <Alert msg={msg} setMsg={setMsg} alertType={alertType} />}
     </div>
   );

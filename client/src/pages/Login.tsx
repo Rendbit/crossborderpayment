@@ -12,6 +12,8 @@ import { MdEmail } from "react-icons/md";
 import { Key, Lock } from "lucide-react";
 import { BsLock } from "react-icons/bs";
 import ThemeToggle from "../components/theme-toggle";
+import AuthFooter from "../components/auth-nav/AuthFooter";
+import AuthHeader from "../components/auth-nav/AuthHeader";
 
 const Login: React.FC = () => {
   const [msg, setMsg] = useState("");
@@ -55,8 +57,8 @@ const Login: React.FC = () => {
         return;
       }
 
-      const { isMFA, isEmailVerified, stellarPublicKey, token, ...safeData } =
-        response.data;
+      const { isMFA, isEmailVerified, stellarPublicKey } = response.data.user;
+      const { token, ...user } = response.data;
 
       if (isMFA) {
         setAuthPage(true);
@@ -74,7 +76,7 @@ const Login: React.FC = () => {
       }
 
       Cookies.set("token", token);
-      localStorage.setItem("userData", JSON.stringify(safeData));
+      localStorage.setItem("userData", JSON.stringify(user));
       navigate("/dashboard");
     } catch (error: any) {
       setMsg(error.message || "An error occurred during sign-in");
@@ -91,8 +93,8 @@ const Login: React.FC = () => {
   return (
     <>
       {authPage ? (
-        <div className="relative bg-gray-100 dark:bg-gray-800">
-          <AuthNav />
+        <div className="min-h-screen flex flex-col relative  bg-[#F9F9F9] dark:bg-gray-800">
+          <AuthHeader />
           <div className="sm:mt-[5rem] mt-[50px] mx-3 md:px-24">
             <div className="flex flex-col justify-center items-center relative z-[11]">
               <div className="px-4 sm:px-8 pt-8 pb-5 rounded-[16px] w-full sm:w-[488px] border">
@@ -161,20 +163,7 @@ const Login: React.FC = () => {
               </div>
             </div>
           </div>
-          <div className="mt-[50px] mb-5 sm:mx-10 flex sm:flex-row flex-col sm:gap-0 gap-3 items-center justify-between">
-            <p className="text-black dark:text-gray-300 text-[14px]">
-              &copy; {new Date().getFullYear()} RendBit. All rights
-              reserved.
-            </p>
-            <div className="text-black dark:text-gray-300 text-[14px] flex items-center gap-4">
-              <Link to="#" className="flex items-center gap-[2px]">
-                Privacy Policy <FiExternalLink />
-              </Link>
-              <Link to="#" className="mr-4 flex items-center gap-[2px]">
-                Terms of Use <FiExternalLink />
-              </Link>
-            </div>
-          </div>
+          <AuthFooter />
           {msg && <Alert msg={msg} setMsg={setMsg} alertType={alertType} />}
           {modal === "verify-code" && (
             <div>
@@ -216,18 +205,9 @@ const Login: React.FC = () => {
           )}
         </div>
       ) : (
-        <div className="relative bg-gray-100 dark:bg-gray-800 min-h-screen">
-          <div className="flex items-center justify-between w-full md:pr-[100px] pr-[20px]">
-            <AuthNav />
-            <div className="text-center text-black dark:text-gray-300 text-[14px] flex items-center truncate">
-              Don&apos;t have an account?{" "}
-              <Link to="/create-account" className="text-[#0E7BB2] underline ml-1 mr-4 sm:mr-10">
-                Register
-              </Link>
-              <ThemeToggle type={"icon"} />
-            </div>
-          </div>
-          <div className="sm:mt-[5rem] md:mt-[7rem] mt-[50px] mx-3 md:px-24 relative">
+        <div className="min-h-screen flex flex-col relative  bg-[#F9F9F9] dark:bg-gray-800">
+          <AuthHeader />
+          <main className="flex-1 sm:mt-[5rem] md:mt-[7rem] mt-[50px] mx-3 md:px-24 relative">
             <img
               src="./image/Pattern.svg"
               className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
@@ -243,15 +223,14 @@ const Login: React.FC = () => {
                   />
                 </div>
                 <div className="text-center mb-12 mt-[-30px] relative z-[100]">
-                  <h2 className="text-[18px] md:text-[24px] text-[black] dark:text-gray-300 mb-2">Login to your account</h2>
+                  <h2 className="text-[18px] md:text-[24px] text-[black] dark:text-gray-300 mb-2">
+                    Login to your account
+                  </h2>
                   <p className="text-black dark:text-gray-300 text-[14px]">
                     Enter your details to login.
                   </p>
                 </div>
-                <form
-                  onSubmit={handleSignIn}
-                  className="flex flex-col mx-auto"
-                >
+                <form onSubmit={handleSignIn} className="flex flex-col mx-auto">
                   <div className="w-[100%]">
                     <label className="text-black dark:text-gray-300 font-[500] text-[14px] mb-2 ml-1 block">
                       Email Address
@@ -301,11 +280,11 @@ const Login: React.FC = () => {
                     </div>
                   </div>
 
-                  <p
-                    className="text-black dark:text-gray-300 cursor-pointer text-end mt-2 text-[14px] underline"
-                    onClick={() => navigate("/forgot-password")}
-                  >
-                    Forgot Password?
+                  <p className="text-black dark:text-gray-300 text-end mt-2 text-[14px] underline">
+                    <Link to="/forgot-password" className="cursor-pointer ">
+                      {" "}
+                      Forgot Password?
+                    </Link>
                   </p>
 
                   <button
@@ -336,21 +315,9 @@ const Login: React.FC = () => {
                 />
               </div>
             </div> */}
-          </div>
-          <div className="mt-[50px] mb-5 sm:mx-10 flex sm:flex-row flex-col sm:gap-0 gap-3 items-center justify-between">
-            <p className="text-black dark:text-gray-300 text-[14px]">
-              &copy; {new Date().getFullYear()} RendBit. All rights
-              reserved.
-            </p>
-            <div className="text-black dark:text-gray-300 text-[14px] flex items-center gap-4">
-              <Link to="#" className="flex items-center gap-[2px]">
-                Privacy Policy <FiExternalLink />
-              </Link>
-              <Link to="#" className="mr-4 flex items-center gap-[2px]">
-                Terms of Use <FiExternalLink />
-              </Link>
-            </div>
-          </div>
+          </main>
+          <AuthFooter />
+
           {msg && <Alert msg={msg} setMsg={setMsg} alertType={alertType} />}
           {modal === "verify-code" && (
             <div>

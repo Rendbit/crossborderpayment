@@ -47,6 +47,7 @@ import {
   ValidateUserSchema,
 } from "../validators/auth";
 import { sanitizeInput, isValidObjectId } from "../utils/security";
+import { WalletDecryption, WalletEncryption } from "../helpers/encryption-decryption.helper";
 
 export class AuthService implements IAuthService {
   async createWallet(req: Request): Promise<ServiceResponse<WalletData>> {
@@ -480,6 +481,7 @@ export class AuthService implements IAuthService {
       const sanitizedEmail = EmailHelper.format(
         sanitizeInput(validatedBody.email)
       );
+
       const sanitizedPassword = sanitizeInput(validatedBody.password);
       let sanitizedCode, sanitizedCaptcha;
       if (validatedBody.code) {
@@ -1581,10 +1583,8 @@ export class AuthService implements IAuthService {
         };
       }
 
-      // Find user
-      const user = await User.findById(redisObject)
-        .select("-password -encryptedPrivateKey")
-        .lean();
+      // Find user with encryptedPrivateKey (important!)
+      const user: any = await User.findById(redisObject).lean();
 
       if (!user) {
         return {
@@ -1605,22 +1605,67 @@ export class AuthService implements IAuthService {
         };
       }
 
-      // Update password
+      // 1. FIRST: Decrypt the wallet private key using OLD credentials
+      let decryptedPrivateKey: string;
+      try {
+        // Use the current (old) password and pinCode for decryption
+        decryptedPrivateKey = WalletDecryption.decryptPrivateKey(
+          user.encryptedPrivateKey,
+          `${user.primaryEmail}${user.password}${user.pinCode}`
+        );
+      } catch (decryptError) {
+        console.error("Failed to decrypt wallet:", decryptError);
+        return {
+          status: httpStatus.INTERNAL_SERVER_ERROR,
+          data: {} as ResetPasswordData,
+          success: false,
+          message: "Failed to decrypt wallet. Please contact support.",
+        };
+      }
+
+      // 2. Hash the NEW password
       const hashedPassword = bcrypt.hashSync(sanitizedPassword, 8);
+
+      // 3. Re-encrypt the wallet private key with NEW credentials
+      let newEncryptedPrivateKey: string;
+      try {
+        newEncryptedPrivateKey = WalletEncryption.encryptPrivateKey(
+          decryptedPrivateKey,
+          `${user.primaryEmail}${hashedPassword}${user.pinCode}`
+        );
+      } catch (encryptError) {
+        console.error("Failed to re-encrypt wallet:", encryptError);
+        return {
+          status: httpStatus.INTERNAL_SERVER_ERROR,
+          data: {} as ResetPasswordData,
+          success: false,
+          message: "Failed to secure wallet with new password.",
+        };
+      }
+
+      // 4. Update user with new password AND new encrypted private key
       await User.findByIdAndUpdate(
         user._id,
-        { $set: { password: hashedPassword } },
+        {
+          $set: {
+            password: hashedPassword,
+            encryptedPrivateKey: newEncryptedPrivateKey,
+          },
+        },
         { new: true }
       );
 
-      // Delete OTP from cache
+      // 5. Delete OTP from cache
       await internalCacheService.delete(sanitizedOtp);
+
+      // OPTIONAL: Invalidate user sessions/tokens
+      // await tokenService.revokeAllUserTokens(user._id);
 
       return {
         status: httpStatus.OK,
         data: { success: true },
         success: true,
-        message: "Password reset successfully.",
+        message: "Password reset successfully. Your wallet remains accessible.",
       };
     } catch (error: any) {
       console.error("Error resetting password:", error);

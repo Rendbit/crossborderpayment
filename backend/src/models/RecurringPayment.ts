@@ -37,7 +37,16 @@ const RecurringPaymentSchema: Schema = new Schema(
     },
     frequency: {
       type: String,
-      enum: ["daily", "weekly", "bi_weekly", "monthly", "quarterly", "yearly"],
+      enum: [
+        "hourly",
+        "daily",
+        "weekly",
+        "bi_weekly",
+        "monthly",
+        "quarterly",
+        "yearly",
+        "custom",
+      ],
       required: true,
     },
     startDate: {
@@ -66,8 +75,71 @@ const RecurringPaymentSchema: Schema = new Schema(
       default: "both",
     },
     metadata: {
-      type: Schema.Types.Mixed,
-      default: {},
+      // Schedule window for hourly/custom payments
+      scheduleWindow: {
+        startHour: { type: Number, min: 0, max: 23, default: 0 },
+        endHour: { type: Number, min: 0, max: 23, default: 23 },
+        timezone: { type: String, default: "UTC" },
+      },
+      // For hourly payments
+      hourlyInterval: { type: Number, min: 1, max: 24, default: 1 },
+      // For custom frequency
+      customInterval: { type: Number, min: 1 }, // in days
+      customTimes: [{ type: String }], // Array of specific times in 24-hour format ["09:00", "14:00"]
+      customFullDatetimes: [{ type: String }], // Array of ISO datetime strings for custom frequency
+      // NEW: Frontend 12-hour format support
+      scheduleTimes: [{ type: String }], // Array of times in 12-hour format ["9:00 AM", "2:30 PM"] - For Daily, Weekly, Monthly, Yearly
+      specificHours: [{ type: String }], // Array of hours in 12-hour format ["9:00 AM", "6:00 PM"] - For Hourly frequency display
+      // NEW: Custom datetimes in 12-hour format for frontend display
+      customDatetimes: [
+        {
+          date: { type: Date },
+          time12h: { type: String },
+        },
+      ],
+      timezone: { type: String, default: "UTC" },
+      // Exclusions
+      excludedDays: { type: [Number], default: [0, 6] }, // 0=Sunday, 6=Saturday
+      excludedHours: { type: [Number], default: [] }, // Array of hours to exclude (0-23)
+      excludedDates: { type: [Date], default: [] }, // Specific dates to exclude
+      // Backward compatibility
+      skipWeekends: { type: Boolean, default: true },
+      // Pause settings
+      pauseEnabled: { type: Boolean, default: false },
+      pauseStartDate: { type: Date },
+      pauseEndDate: { type: Date },
+      pauseReason: { type: String },
+      // Tracking
+      lastProcessedAmount: { type: Number },
+      lastProcessedCurrency: { type: String },
+      lastProcessedDate: { type: Date },
+      totalProcessedCount: { type: Number, default: 0 },
+      failedCount: { type: Number, default: 0 },
+      lastFailedAttempt: { type: Date },
+      failureReason: { type: String },
+      skipCount: { type: Number, default: 0 },
+      weekendSkipCount: { type: Number, default: 0 },
+      windowSkipCount: { type: Number, default: 0 },
+      exclusionSkipCount: { type: Number, default: 0 },
+      lastSkippedDueToWeekend: { type: Date },
+      lastSkippedDueToWindow: { type: Date },
+      lastSkippedDueToExclusion: { type: Date },
+      lastSkipReason: { type: String },
+      // Retry logic
+      retryAt: { type: Date },
+      retryCount: { type: Number, default: 0 },
+      maxRetries: { type: Number, default: 3 },
+      // Payment tracking
+      lastBlockchainTxHash: { type: String },
+      lastFiatPaymentRef: { type: String },
+      // Pause tracking
+      lastPausedAt: { type: Date },
+      lastResumedAt: { type: Date },
+      // Cancellation tracking
+      cancellationReason: { type: String },
+      cancelledBy: { type: String, enum: ["sender", "receiver"] },
+      cancelledAt: { type: Date },
+      wasPaused: { type: Boolean },
     },
     lastProcessedAt: {
       type: Date,
@@ -135,6 +207,15 @@ RecurringPaymentSchema.index(
       "metadata.retryAt": { $exists: true },
     },
   }
+);
+
+// Index for schedule window queries
+RecurringPaymentSchema.index(
+  {
+    "metadata.scheduleWindow.startHour": 1,
+    "metadata.scheduleWindow.endHour": 1,
+  },
+  { background: true }
 );
 
 export const RecurringPayment = mongoose.model<IRecurringPayment>(

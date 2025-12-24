@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simple Recurring Payments</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+      }
+
+      body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #4361ee, #7209b7);
+        color: white;
+        padding: 30px;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 28px;
+        margin-bottom: 10px;
+      }
+
+      .header p {
+        opacity: 0.9;
+        font-size: 16px;
+      }
+
+      .form-section {
+        padding: 30px;
+      }
+
+      .step {
+        margin-bottom: 30px;
+        padding: 25px;
+        background: #f8f9fa;
+        border-radius: 15px;
+        border-left: 4px solid #4361ee;
+      }
+
+      .step h3 {
+        color: #4361ee;
+        margin-bottom: 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .input-group {
+        margin-bottom: 20px;
+      }
+
+      .input-group label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #333;
+      }
+
+      .input-group input,
+      .input-group select {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: all 0.3s;
+      }
+
+      .input-group input:focus,
+      .input-group select:focus {
+        outline: none;
+        border-color: #4361ee;
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+      }
+
+      .amount-input {
+        position: relative;
+      }
+
+      .amount-input input {
+        padding-left: 40px;
+      }
+
+      .currency-sign {
+        position: absolute;
+        left: 15px;
+        top: 40px;
+        color: #666;
+        font-weight: bold;
+      }
+
+      .inline-inputs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+      }
+
+      /* Frequency Selector */
+      .frequency-selector {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        margin-top: 10px;
+      }
+
+      .frequency-option {
+        padding: 15px;
+        background: white;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .frequency-option:hover {
+        border-color: #4361ee;
+        transform: translateY(-2px);
+      }
+
+      .frequency-option.selected {
+        border-color: #4361ee;
+        background: rgba(67, 97, 238, 0.1);
+      }
+
+      .frequency-option i {
+        font-size: 24px;
+        color: #4361ee;
+        margin-bottom: 10px;
+      }
+
+      /* Time Selection */
+      .time-selector {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        border: 1px solid #e0e0e0;
+      }
+
+      .time-display {
+        font-family: monospace;
+        font-size: 18px;
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 6px;
+        margin-bottom: 10px;
+      }
+
+      .time-buttons {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+
+      .time-btn {
+        padding: 10px;
+        background: white;
+        border: 2px solid #e0e0e0;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .time-btn:hover {
+        border-color: #4361ee;
+      }
+
+      .time-btn.selected {
+        background: #4361ee;
+        color: white;
+        border-color: #4361ee;
+      }
+
+      .add-time-btn {
+        background: #4361ee;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      /* Toggle Switch */
+      .toggle {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 15px;
+      }
+
+      .switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 26px;
+      }
+
+      .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: 0.4s;
+        border-radius: 34px;
+      }
+
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: 0.4s;
+        border-radius: 50%;
+      }
+
+      input:checked + .slider {
+        background-color: #4361ee;
+      }
+
+      input:checked + .slider:before {
+        transform: translateX(24px);
+      }
+
+      /* Preview Box */
+      .preview-box {
+        background: linear-gradient(
+          135deg,
+          rgba(67, 97, 238, 0.1),
+          rgba(114, 9, 183, 0.1)
+        );
+        border: 2px solid #4361ee;
+        border-radius: 15px;
+        padding: 20px;
+        margin: 20px 0;
+      }
+
+      .preview-box h4 {
+        color: #4361ee;
+        margin-bottom: 15px;
+      }
+
+      .preview-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(67, 97, 238, 0.2);
+      }
+
+      /* Action Buttons */
+      .actions {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+      }
+
+      .btn {
+        padding: 15px 30px;
+        border: none;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #4361ee, #7209b7);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(67, 97, 238, 0.3);
+      }
+
+      .btn-secondary {
+        background: white;
+        color: #4361ee;
+        border: 2px solid #4361ee;
+      }
+
+      .btn-secondary:hover {
+        background: #4361ee;
+        color: white;
+      }
+
+      /* Status Messages */
+      .status {
+        padding: 15px;
+        border-radius: 10px;
+        margin: 20px 0;
+        display: none;
+      }
+
+      .status.success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+        display: block;
+      }
+
+      .status.error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+        display: block;
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .container {
+          border-radius: 10px;
+        }
+
+        .form-section {
+          padding: 20px;
+        }
+
+        .frequency-selector {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        .inline-inputs {
+          grid-template-columns: 1fr;
+        }
+
+        .time-buttons {
+          grid-template-columns: repeat(3, 1fr);
+        }
+
+        .actions {
+          flex-direction: column;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .frequency-selector {
+          grid-template-columns: 1fr;
+        }
+
+        .time-buttons {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1><i class="fas fa-history"></i> Recurring Payments</h1>
+        <p>Set up automatic payments in minutes</p>
+      </div>
+
+      <div class="form-section">
+        <!-- Step 1: Payment Details -->
+        <div class="step">
+          <h3><i class="fas fa-money-bill-wave"></i> Payment Details</h3>
+
+          <div class="input-group">
+            <label>Amount</label>
+            <div class="amount-input">
+              <div class="currency-sign">$</div>
+              <input
+                type="number"
+                id="amount"
+                placeholder="25.50"
+                step="0.01"
+                min="0.01"
+              />
+            </div>
+          </div>
+
+          <div class="inline-inputs">
+            <div class="input-group">
+              <label>Currency</label>
+              <select id="currency">
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="GBP">GBP (£)</option>
+                <option value="XLM">XLM (Stellar)</option>
+              </select>
+            </div>
+
+            <div class="input-group">
+              <label>To User</label>
+              <input
+                type="text"
+                id="toUser"
+                placeholder="username@example.com"
+              />
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label>Description (Optional)</label>
+            <input
+              type="text"
+              id="description"
+              placeholder="Payment for services"
+            />
+          </div>
+        </div>
+
+        <!-- Step 2: Frequency -->
+        <div class="step">
+          <h3><i class="fas fa-calendar-alt"></i> Frequency</h3>
+
+          <div class="frequency-selector">
+            <div class="frequency-option selected" data-frequency="daily">
+              <i class="fas fa-calendar-day"></i>
+              <div>Daily</div>
+            </div>
+            <div class="frequency-option" data-frequency="weekly">
+              <i class="fas fa-calendar-week"></i>
+              <div>Weekly</div>
+            </div>
+            <div class="frequency-option" data-frequency="monthly">
+              <i class="fas fa-calendar"></i>
+              <div>Monthly</div>
+            </div>
+            <div class="frequency-option" data-frequency="yearly">
+              <i class="fas fa-calendar-check"></i>
+              <div>Yearly</div>
+            </div>
+            <div class="frequency-option" data-frequency="hourly">
+              <i class="fas fa-clock"></i>
+              <div>Hourly</div>
+            </div>
+            <div class="frequency-option" data-frequency="custom">
+              <i class="fas fa-cogs"></i>
+              <div>Custom</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3: Time Settings -->
+        <div class="step">
+          <h3><i class="fas fa-clock"></i> Time Settings</h3>
+
+          <div class="time-selector">
+            <div class="time-display" id="currentTime">9:00:00 AM</div>
+
+            <div class="time-buttons">
+              <button class="time-btn selected" data-time="9:00:00 AM">
+                9:00 AM
+              </button>
+              <button class="time-btn" data-time="12:00:00 PM">12:00 PM</button>
+              <button class="time-btn" data-time="3:00:00 PM">3:00 PM</button>
+              <button class="time-btn" data-time="6:00:00 PM">6:00 PM</button>
+              <button class="time-btn" data-time="9:00:00 AM">Morning</button>
+              <button class="time-btn" data-time="2:00:00 PM">Afternoon</button>
+              <button class="time-btn" data-time="7:00:00 PM">Evening</button>
+              <button class="time-btn" data-time="11:00:00 PM">Night</button>
+            </div>
+
+            <button class="add-time-btn" id="addCustomTime">
+              <i class="fas fa-plus"></i> Add Custom Time
+            </button>
+          </div>
+
+          <div class="toggle">
+            <div>
+              <strong>Skip Weekends</strong>
+              <p style="font-size: 14px; color: #666">
+                Don't process payments on Saturdays and Sundays
+              </p>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="skipWeekends" checked />
+              <span class="slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Step 4: Date Range -->
+        <div class="step">
+          <h3><i class="fas fa-calendar-range"></i> Date Range</h3>
+
+          <div class="inline-inputs">
+            <div class="input-group">
+              <label>Start Date</label>
+              <input type="date" id="startDate" />
+            </div>
+            <div class="input-group">
+              <label>End Date (Optional)</label>
+              <input type="date" id="endDate" />
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 5: Security -->
+        <div class="step">
+          <h3><i class="fas fa-lock"></i> Security</h3>
+
+          <div class="input-group">
+            <label>4-Digit PIN</label>
+            <input
+              type="password"
+              id="pinCode"
+              maxlength="4"
+              placeholder="1234"
+              pattern="\d{4}"
+            />
+            <p style="font-size: 14px; color: #666; margin-top: 5px">
+              Required for creating and modifying payments
+            </p>
+          </div>
+        </div>
+
+        <!-- Preview -->
+        <div class="preview-box">
+          <h4><i class="fas fa-eye"></i> Preview</h4>
+          <div class="preview-item">
+            <span>Amount:</span>
+            <strong id="previewAmount">$25.50</strong>
+          </div>
+          <div class="preview-item">
+            <span>Frequency:</span>
+            <strong id="previewFrequency">Daily</strong>
+          </div>
+          <div class="preview-item">
+            <span>Time:</span>
+            <strong id="previewTime">9:00:00 AM</strong>
+          </div>
+          <div class="preview-item">
+            <span>Start Date:</span>
+            <strong id="previewStartDate">Tomorrow</strong>
+          </div>
+        </div>
+
+        <!-- Status Messages -->
+        <div class="status success" id="successMessage">
+          <i class="fas fa-check-circle"></i> Payment scheduled successfully!
+        </div>
+        <div class="status error" id="errorMessage">
+          <i class="fas fa-exclamation-circle"></i> Please fill in all required
+          fields.
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="actions">
+          <button class="btn btn-primary" id="createPayment">
+            <i class="fas fa-check-circle"></i> Create Payment
+          </button>
+          <button class="btn btn-secondary" id="previewRequest">
+            <i class="fas fa-code"></i> Preview API
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Simple configuration
+      const CONFIG = {
+        API_URL: "http://localhost:3000/api/recurringPayment/create",
+        AUTH_TOKEN:
+          "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4YTQ2NmExZGViMDVjMjQ2M2M4YWQ0MSIsImlhdCI6MTc2NTg1MjEyMSwiZXhwIjoxNzY1OTM4NTIxfQ.O6P65OC4WFegpgehB-ewFmm4gseWNjKUi50_eR-X74A",
+        API_KEY:
+          "FDAye5u6y52jk6ryh3n:OIYUITRUIQDSTW&56uyjt3h4gmn,mhjUIYUTEIAdte7q6i3",
+      };
+
+      // Initialize the app
+      document.addEventListener("DOMContentLoaded", function () {
+        // Set default dates
+        setDefaultDates();
+
+        // Initialize event listeners
+        setupEventListeners();
+
+        // Update preview
+        updatePreview();
+      });
+
+      // Set default dates
+      function setDefaultDates() {
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        // Format as YYYY-MM-DD
+        const formatDate = (date) => date.toISOString().split("T")[0];
+
+        document.getElementById("startDate").value = formatDate(tomorrow);
+
+        // Set end date to 1 month from now as default
+        const nextMonth = new Date(today);
+        nextMonth.setMonth(nextMonth.getMonth() + 1);
+        document.getElementById("endDate").value = formatDate(nextMonth);
+      }
+
+      // Setup all event listeners
+      function setupEventListeners() {
+        // Frequency selection
+        document.querySelectorAll(".frequency-option").forEach((option) => {
+          option.addEventListener("click", function () {
+            document.querySelectorAll(".frequency-option").forEach((opt) => {
+              opt.classList.remove("selected");
+            });
+            this.classList.add("selected");
+            updatePreview();
+          });
+        });
+
+        // Time selection
+        document.querySelectorAll(".time-btn").forEach((btn) => {
+          btn.addEventListener("click", function () {
+            document.querySelectorAll(".time-btn").forEach((b) => {
+              b.classList.remove("selected");
+            });
+            this.classList.add("selected");
+            document.getElementById("currentTime").textContent =
+              this.dataset.time;
+            updatePreview();
+          });
+        });
+
+        // Add custom time
+        document
+          .getElementById("addCustomTime")
+          .addEventListener("click", function () {
+            const time = prompt(
+              "Enter time in 12-hour format (e.g., 2:30:45 PM):"
+            );
+            if (time && /^\d{1,2}:\d{2}:\d{2}\s*(AM|PM)$/i.test(time)) {
+              const btn = document.createElement("button");
+              btn.className = "time-btn";
+              btn.dataset.time = time;
+              btn.textContent = time;
+              btn.addEventListener("click", function () {
+                document.querySelectorAll(".time-btn").forEach((b) => {
+                  b.classList.remove("selected");
+                });
+                this.classList.add("selected");
+                document.getElementById("currentTime").textContent =
+                  this.dataset.time;
+                updatePreview();
+              });
+
+              document.querySelector(".time-buttons").appendChild(btn);
+              alert("Custom time added! Click on it to select.");
+            } else if (time) {
+              alert("Please use format like: 9:00:00 AM or 2:30:00 PM");
+            }
+          });
+
+        // Input changes update preview
+        document
+          .getElementById("amount")
+          .addEventListener("input", updatePreview);
+        document
+          .getElementById("currency")
+          .addEventListener("change", updatePreview);
+        document
+          .getElementById("toUser")
+          .addEventListener("input", updatePreview);
+        document
+          .getElementById("startDate")
+          .addEventListener("change", updatePreview);
+        document
+          .getElementById("endDate")
+          .addEventListener("change", updatePreview);
+
+        // Create payment
+        document
+          .getElementById("createPayment")
+          .addEventListener("click", createPayment);
+
+        // Preview API request
+        document
+          .getElementById("previewRequest")
+          .addEventListener("click", previewAPIRequest);
+      }
+
+      // Update preview section
+      function updatePreview() {
+        const amount = document.getElementById("amount").value;
+        const currency = document.getElementById("currency").value;
+        const frequency = document.querySelector(".frequency-option.selected")
+          .dataset.frequency;
+        const time = document.getElementById("currentTime").textContent;
+        const startDate = document.getElementById("startDate").value;
+
+        // Format date for display
+        const formatDisplayDate = (dateStr) => {
+          if (!dateStr) return "Immediately";
+          const date = new Date(dateStr);
+          const today = new Date();
+          const tomorrow = new Date(today);
+          tomorrow.setDate(tomorrow.getDate() + 1);
+
+          if (date.toDateString() === tomorrow.toDateString()) {
+            return "Tomorrow";
+          } else {
+            return date.toLocaleDateString("en-US", {
+              weekday: "short",
+              month: "short",
+              day: "numeric",
+            });
+          }
+        };
+
+        // Update preview elements
+        document.getElementById("previewAmount").textContent = `${
+          currency === "USD" ? "$" : ""
+        }${amount || "0.00"} ${currency}`;
+
+        document.getElementById("previewFrequency").textContent =
+          frequency.charAt(0).toUpperCase() + frequency.slice(1);
+
+        document.getElementById("previewTime").textContent = time;
+        document.getElementById("previewStartDate").textContent =
+          formatDisplayDate(startDate);
+      }
+
+      // Create payment function
+      async function createPayment() {
+        // Hide any previous messages
+        hideMessages();
+
+        // Validate inputs
+        if (!validateForm()) {
+          showMessage("error", "Please fill in all required fields correctly.");
+          return;
+        }
+
+        // Build request data
+        const requestData = buildRequestData();
+
+        // Show loading state
+        const createBtn = document.getElementById("createPayment");
+        const originalText = createBtn.innerHTML;
+        createBtn.innerHTML =
+          '<i class="fas fa-spinner fa-spin"></i> Creating...';
+        createBtn.disabled = true;
+
+        try {
+          // Make API call
+          const response = await fetch(CONFIG.API_URL, {
+            method: "POST",
+            headers: {
+              Authorization: CONFIG.AUTH_TOKEN,
+              "x-api-key": CONFIG.API_KEY,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(requestData),
+          });
+
+          const result = await response.json();
+
+          if (response.ok) {
+            showMessage("success", "Payment scheduled successfully!");
+            console.log("API Response:", result);
+
+            // Show schedule ID if available
+            if (result.data?.recurringPayment?.scheduleId) {
+              showMessage(
+                "success",
+                `Payment scheduled successfully! Schedule ID: ${result.data.recurringPayment.scheduleId}`
+              );
+            }
+          } else {
+            showMessage(
+              "error",
+              result.message || "Failed to create payment. Please try again."
+            );
+          }
+        } catch (error) {
+          showMessage(
+            "error",
+            `Connection error: ${error.message}. Using mock data for demo.`
+          );
+
+          // For demo purposes, show success with mock data
+          setTimeout(() => {
+            showMessage(
+              "success",
+              "Demo: Payment would be created successfully!"
+            );
+          }, 1000);
+        } finally {
+          // Restore button
+          createBtn.innerHTML = originalText;
+          createBtn.disabled = false;
+        }
+      }
+
+      // Validate form
+      function validateForm() {
+        const amount = document.getElementById("amount").value;
+        const toUser = document.getElementById("toUser").value;
+        const pinCode = document.getElementById("pinCode").value;
+
+        if (!amount || parseFloat(amount) <= 0) {
+          return false;
+        }
+
+        if (!toUser || toUser.trim() === "") {
+          return false;
+        }
+
+        if (!pinCode || !/^\d{4}$/.test(pinCode)) {
+          return false;
+        }
+
+        return true;
+      }
+
+      // Build request data
+      function buildRequestData() {
+        const frequency = document.querySelector(".frequency-option.selected")
+          .dataset.frequency;
+        const time12h = document.getElementById("currentTime").textContent;
+
+        // Convert 12-hour time to 24-hour format
+        const time24h = convert12to24(time12h);
+
+        // Build basic request
+        const requestData = {
+          amount: document.getElementById("amount").value,
+          currency: document.getElementById("currency").value,
+          description: document.getElementById("description").value || "",
+          frequency: frequency,
+          startDate: document.getElementById("startDate").value + "T00:00:00Z",
+          toUser: document.getElementById("toUser").value,
+          pinCode: document.getElementById("pinCode").value,
+          metadata: {
+            time12h: time12h,
+            time24h: time24h,
+            skipWeekends: document.getElementById("skipWeekends").checked,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          },
+        };
+
+        // Add end date if provided
+        const endDate = document.getElementById("endDate").value;
+        if (endDate) {
+          requestData.endDate = endDate + "T23:59:59Z";
+        }
+
+        return requestData;
+      }
+
+      // Convert 12-hour time to 24-hour format
+      function convert12to24(time12h) {
+        const match = time12h.match(/^(\d{1,2}):(\d{2}):(\d{2})\s*(AM|PM)$/i);
+        if (!match) return "09:00:00";
+
+        let hour = parseInt(match[1]);
+        const minute = match[2];
+        const second = match[3];
+        const period = match[4].toUpperCase();
+
+        if (period === "PM" && hour !== 12) {
+          hour += 12;
+        } else if (period === "AM" && hour === 12) {
+          hour = 0;
+        }
+
+        return hour.toString().padStart(2, "0") + ":" + minute + ":" + second;
+      }
+
+      // Preview API request
+      function previewAPIRequest() {
+        if (!validateForm()) {
+          showMessage("error", "Please fill in all required fields first.");
+          return;
+        }
+
+        const requestData = buildRequestData();
+
+        // Format JSON nicely
+        const formattedJson = JSON.stringify(requestData, null, 2);
+
+        // Create a simple preview
+        const previewWindow = window.open("", "_blank");
+        previewWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>API Request Preview</title>
+                    <style>
+                        body { font-family: monospace; padding: 20px; background: #f5f5f5; }
+                        pre { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                        .info { background: #e3f2fd; padding: 15px; border-radius: 5px; margin: 20px 0; }
+                    </style>
+                </head>
+                <body>
+                    <h2>API Request Preview</h2>
+                    <div class="info">
+                        <strong>Endpoint:</strong> ${CONFIG.API_URL}<br>
+                        <strong>Method:</strong> POST<br>
+                        <strong>Headers:</strong> Authorization, x-api-key, Content-Type: application/json
+                    </div>
+                    <h3>Request Body:</h3>
+                    <pre>${formattedJson}</pre>
+                    <div class="info">
+                        <strong>Note:</strong> This is a preview. Click "Create Payment" to send this request.
+                    </div>
+                </body>
+                </html>
+            `);
+        previewWindow.document.close();
+      }
+
+      // Show message
+      function showMessage(type, text) {
+        const messageEl =
+          type === "success"
+            ? document.getElementById("successMessage")
+            : document.getElementById("errorMessage");
+
+        messageEl.innerHTML = `<i class="fas fa-${
+          type === "success" ? "check-circle" : "exclamation-circle"
+        }"></i> ${text}`;
+        messageEl.className = `status ${type}`;
+
+        // Auto-hide success messages after 5 seconds
+        if (type === "success") {
+          setTimeout(() => {
+            messageEl.style.display = "none";
+          }, 5000);
+        }
+      }
+
+      // Hide all messages
+      function hideMessages() {
+        document.getElementById("successMessage").style.display = "none";
+        document.getElementById("errorMessage").style.display = "none";
+      }
+    </script>
+  </body>
+</html>

@@ -1,11 +1,10 @@
 import React, { useState } from "react";
-import AuthNav from "../components/auth-nav/AuthNav";
 import Alert from "../components/alert/Alert";
 import { Link, useNavigate } from "react-router-dom";
 import { forgotPassword } from "../function/auth";
 import { MdEmail } from "react-icons/md";
-import { FiExternalLink } from "react-icons/fi";
-import ThemeToggle from "../components/theme-toggle";
+import AuthFooter from "../components/auth-nav/AuthFooter";
+import AuthHeader from "../components/auth-nav/AuthHeader";
 
 const ForgotPassword: React.FC = () => {
   const [msg, setMsg] = useState<string>("");
@@ -46,27 +45,15 @@ const ForgotPassword: React.FC = () => {
   }
 
   return (
-    <div className="relative bg-[#F9F9F9] dark:bg-gray-800 min-h-screen">
-      <div className="flex items-center justify-between w-full md:pr-[100px] pr-[20px]">
-        <AuthNav />
-        <div className="text-center text-black dark:text-gray-300 text-[14px] flex items-center truncate">
-          Changed your mind?{" "}
-          <Link
-            to="/login"
-            className="text-[#0E7BB2] underline ml-1 mr-4 sm:mr-10"
-          >
-            Login
-          </Link>
-          <ThemeToggle type={"icon"} />
-        </div>
-      </div>
-      <div className="sm:mt-[5rem] md:mt-[7rem] mt-[50px] mx-3 md:px-24 relative">
+    <div className="min-h-screen flex flex-col relative  bg-[#F9F9F9] dark:bg-gray-800">
+      <AuthHeader />
+      <main className="flex-1 sm:mt-[5rem] md:mt-[7rem] mt-[50px] mx-3 md:px-24 relative">
         <img
           src="./image/Pattern.svg"
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
           alt=""
         />
-        <div className="mt-5 flex flex-col justify-center items-center relative z-[11]">
+        <div className="mt-[150px] flex flex-col justify-center items-center relative z-[11]">
           <div className="bg-white dark:bg-gray-900 shadow shadow-[#585C5F1A] px-4 sm:px-6 pt-8 pb-5 rounded-[18px] w-full sm:w-[450px]">
             <div className="top-bg relative top-[50px] sm:flex items-center justify-center w-[300px] mx-auto">
               <img
@@ -87,7 +74,7 @@ const ForgotPassword: React.FC = () => {
               onSubmit={handleForgotPassword}
               className="flex flex-col mx-auto"
             >
-              <div className="w-[100%] mt-6">
+              <div className="w-[100%]">
                 <label className="text-[#0A0D14] dark:text-gray-300 font-[500] text-[14px] mb-2 ml-1 block">
                   Email Address
                 </label>
@@ -120,8 +107,11 @@ const ForgotPassword: React.FC = () => {
 
               <div className="text-center text-[#525866] mt-5 sm:mt-[30px] text-[14px]">
                 <p className="text-center">
-                  Don't have access anymore?
-                  <Link to="/create-account" className="dark:text-gray-300 text-[#0A0D14]">
+                  Don't have access anymore?{" "}
+                  <Link
+                    to="/create-account"
+                    className="dark:text-gray-300 text-[#0A0D14]"
+                  >
                     Try another method
                   </Link>
                 </p>
@@ -129,20 +119,8 @@ const ForgotPassword: React.FC = () => {
             </form>
           </div>
         </div>
-      </div>
-      <div className="mt-[50px] mb-5 sm:mx-10 flex sm:flex-row flex-col sm:gap-0 gap-3 items-center justify-between">
-        <p className="text-[#525866] text-[14px]">
-          &copy; {new Date().getFullYear()} RendBit. All rights reserved.
-        </p>
-        <div className="text-[#525866] text-[14px] flex items-center gap-4">
-          <Link to="#" className="flex items-center gap-[2px]">
-            Privacy Policy <FiExternalLink />
-          </Link>
-          <Link to="#" className="mr-4 flex items-center gap-[2px]">
-            Terms of Use <FiExternalLink />
-          </Link>
-        </div>
-      </div>
+      </main>
+      <AuthFooter />
       {msg && <Alert msg={msg} setMsg={setMsg} alertType={alertType} />}
     </div>
   );

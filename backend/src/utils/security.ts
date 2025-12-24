@@ -263,45 +263,62 @@ export const validatePaymentAmount = (
 /**
  * Validate and sanitize metadata object
  */
-export const sanitizeMetadata = (metadata: any): Record<string, any> => {
-  const sanitized: Record<string, any> = {};
-
-  if (!metadata || typeof metadata !== "object") {
-    return sanitized;
+export function sanitizeMetadata(metadata: any): any {
+  if (!metadata || typeof metadata !== 'object') {
+    return {};
   }
 
-  const keys = Object.keys(metadata);
-  if (keys.length > 10) {
-    throw new Error("Metadata cannot have more than 10 properties");
+  const sanitized: any = {};
+  
+  for (const [key, value] of Object.entries(metadata)) {
+    const sanitizedKey = sanitizeInput(key);
+    
+    // Allow nested objects for specific fields like scheduleWindow
+    if (key === 'scheduleWindow' && typeof value === 'object' && value !== null) {
+      // Sanitize nested object
+      sanitized[sanitizedKey] = {};
+      for (const [nestedKey, nestedValue] of Object.entries(value)) {
+        const sanitizedNestedKey = sanitizeInput(nestedKey);
+        if (typeof nestedValue === 'string') {
+          sanitized[sanitizedKey][sanitizedNestedKey] = sanitizeInput(nestedValue as string);
+        } else if (typeof nestedValue === 'number') {
+          sanitized[sanitizedKey][sanitizedNestedKey] = nestedValue;
+        } else if (typeof nestedValue === 'boolean') {
+          sanitized[sanitizedKey][sanitizedNestedKey] = nestedValue;
+        } else if (nestedValue === null) {
+          sanitized[sanitizedKey][sanitizedNestedKey] = null;
+        }
+      }
+    } 
+    // Allow arrays for specific fields
+    else if (Array.isArray(value)) {
+      sanitized[sanitizedKey] = value.map(item => {
+        if (typeof item === 'string') return sanitizeInput(item);
+        if (typeof item === 'number') return item;
+        if (typeof item === 'boolean') return item;
+        return sanitizeInput(JSON.stringify(item));
+      });
+    }
+    // Handle other types
+    else if (typeof value === 'string') {
+      sanitized[sanitizedKey] = sanitizeInput(value);
+    } else if (typeof value === 'number' || typeof value === 'boolean' || value === null) {
+      sanitized[sanitizedKey] = value;
+    } else {
+      // For other object types, sanitize or skip
+      console.warn(`Skipping nested object in metadata for key: ${key}`);
+    }
   }
-
-  for (const key of keys) {
-    if (key.length > 50) {
-      throw new Error(`Metadata key '${key}' is too long`);
-    }
-
-    const value = metadata[key];
-
-    // Limit metadata size
-    if (typeof value === "string" && value.length > 500) {
-      throw new Error(`Metadata value for '${key}' is too long`);
-    }
-
-    if (typeof value === "object" && value !== null) {
-      throw new Error("Nested objects in metadata are not allowed");
-    }
-
-    sanitized[key] = sanitizeInput(value);
-  }
-
+  
   return sanitized;
-};
+}
 
 /**
  * Validate frequency for recurring payments
  */
 export const isValidFrequency = (frequency: string): boolean => {
   const validFrequencies = [
+    "hourly",
     "daily",
     "weekly",
     "bi_weekly",

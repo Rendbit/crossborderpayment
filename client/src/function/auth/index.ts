@@ -102,8 +102,6 @@ const createWallet = async (
   username: string,
   country: string
 ) => {
-  console.log(localStorage.getItem("token"));
-  console.log({ pinCode: transactionPin, username, country });
   try {
     const res = await fetch(
       `${import.meta.env.VITE_BASE_URL}/auth/create-wallet`,

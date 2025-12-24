@@ -20,6 +20,44 @@ export class PinHelper {
     await internalCacheService.delete(cacheKey);
   }
 
+  static async verifyPin(
+    user: any,
+    providedPin: string
+  ): Promise<{
+    isValid: boolean;
+    decryptedPrivateKey?: string;
+    error?: string;
+  }> {
+    try {
+      if (providedPin !== user.pinCode) {
+        return {
+          isValid: false,
+          error: "Invalid transaction PIN",
+        };
+      }
+
+      const hashedPassword = user.password;
+
+      const decryptedPrivateKey = this.decryptPrivateKey(
+        user.encryptedPrivateKey,
+        `${user.primaryEmail}${hashedPassword}${user.pinCode}`
+      );
+
+      await this.clearCachedUserPin(user._id.toString());
+
+      return {
+        isValid: true,
+        decryptedPrivateKey,
+      };
+    } catch (error: any) {
+      console.error("Error verifying PIN:", error);
+      return {
+        isValid: false,
+        error: error.message || "PIN verification failed",
+      };
+    }
+  }
+
   static async verifyAndCachePin(
     user: any,
     providedPin: string

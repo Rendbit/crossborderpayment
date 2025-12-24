@@ -7,6 +7,7 @@ import {
   TransactionBuilder,
 } from "stellar-sdk";
 import { IBlockchainAuth } from "../../types/blockchain";
+import { WalletEncryption } from "../../helpers/encryption-decryption.helper";
 
 export class StellarAuth implements IBlockchainAuth {
   private server: Horizon.Server;
@@ -31,9 +32,7 @@ export class StellarAuth implements IBlockchainAuth {
     encryptedPrivateKey: string;
   }> {
     const keypair = Keypair.random();
-    const {
-      WalletEncryption,
-    } = require("../../helpers/encryption-decryption.helper");
+
     const hashedPasword = user.password;
 
     return {

@@ -9,7 +9,6 @@ import { KycTier, KycStatus } from "../common/enums/kyc";
 
 const UserSchema = new Schema<IUser>(
   {
-    // Your existing fields (keeping your exact schema)
     secondaryEmail: { type: String, trim: true },
     primaryEmail: { type: String, unique: true, required: true, trim: true },
     password: { type: String },

@@ -15,6 +15,7 @@ import {
   GenerateQRCodeSchema,
   ValidatePaymentLinkSchema,
   ListPaymentRequestsSchema,
+  EditPaymentRequestSchema,
 } from "../validators/paymentRequest";
 import {
   sanitizeInput,
@@ -229,12 +230,14 @@ export interface IRecurringPaymentService {
 }
 
 export enum RecurringFrequency {
+  HOURLY = "hourly",
   DAILY = "daily",
   WEEKLY = "weekly",
   BI_WEEKLY = "bi_weekly",
   MONTHLY = "monthly",
   QUARTERLY = "quarterly",
   YEARLY = "yearly",
+  CUSTOM = "custom" // For custom schedules
 }
 
 export interface RecurringPaymentData {
@@ -648,6 +651,260 @@ export class PaymentRequestService implements IPaymentRequestService {
     }
   }
 
+  async editPaymentRequest(
+    req: Request
+  ): Promise<ServiceResponse<PaymentRequestData>> {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const user = (req as any).user;
+
+      // SECURITY: Validate user exists
+      if (!user || !user._id) {
+        await session.abortTransaction();
+        session.endSession();
+        return {
+          status: httpStatus.UNAUTHORIZED,
+          data: {} as PaymentRequestData,
+          success: false,
+          message: "User authentication required",
+        };
+      }
+
+      // SECURITY: Validate ObjectId
+      if (!isValidObjectId(user._id.toString())) {
+        await session.abortTransaction();
+        session.endSession();
+        return {
+          status: httpStatus.BAD_REQUEST,
+          data: {} as PaymentRequestData,
+          success: false,
+          message: "Invalid user ID format",
+        };
+      }
+
+      // SECURITY: Validate request body with Zod
+      const validatedBody = EditPaymentRequestSchema.parse(req.body);
+
+      // SECURITY: Sanitize all inputs
+      const sanitizedRequestId = sanitizeInput(validatedBody.requestId);
+      const sanitizedAmount = validatedBody.amount
+        ? parseFloat(sanitizeInput(validatedBody.amount.toString()))
+        : undefined;
+      const sanitizedCurrency = validatedBody.currency
+        ? sanitizeInput(validatedBody.currency).toUpperCase()
+        : undefined;
+      const sanitizedDescription = validatedBody.description
+        ? sanitizeInput(validatedBody.description).substring(0, 500)
+        : undefined;
+      const sanitizedExpiresIn = validatedBody.expiresIn
+        ? Math.min(
+            Math.max(
+              parseInt(sanitizeInput(validatedBody.expiresIn.toString()), 10),
+              1
+            ),
+            30
+          )
+        : undefined;
+
+      // Sanitize metadata
+      let sanitizedMetadata: any = {};
+      if (validatedBody.metadata) {
+        try {
+          sanitizedMetadata = sanitizeMetadata(validatedBody.metadata);
+        } catch (error: any) {
+          await session.abortTransaction();
+          session.endSession();
+          return {
+            status: httpStatus.BAD_REQUEST,
+            data: {} as PaymentRequestData,
+            success: false,
+            message: error.message,
+          };
+        }
+      }
+
+      // Find payment request
+      const paymentRequest: any = await PaymentRequest.findOne({
+        requestId: sanitizedRequestId,
+      }).session(session);
+
+      if (!paymentRequest) {
+        await session.abortTransaction();
+        session.endSession();
+        return {
+          status: httpStatus.NOT_FOUND,
+          data: {} as PaymentRequestData,
+          success: false,
+          message: "Payment request not found",
+        };
+      }
+
+      // SECURITY: Check if user is authorized to edit
+      const fromUserId = paymentRequest.fromUser.toString();
+      const userId = user._id.toString();
+
+      if (fromUserId !== userId) {
+        await session.abortTransaction();
+        session.endSession();
+        return {
+          status: httpStatus.FORBIDDEN,
+          data: {} as PaymentRequestData,
+          success: false,
+          message: "Only the creator can edit this payment request",
+        };
+      }
+
+      // Check if payment request can be edited
+      if (paymentRequest.status !== PaymentRequestStatus.PENDING) {
+        await session.abortTransaction();
+        session.endSession();
+        return {
+          status: httpStatus.BAD_REQUEST,
+          data: {} as PaymentRequestData,
+          success: false,
+          message: `Cannot edit payment request with status: ${paymentRequest.status}`,
+        };
+      }
+
+      // Check if request has expired
+      if (paymentRequest.expiresAt && new Date() > paymentRequest.expiresAt) {
+        paymentRequest.status = PaymentRequestStatus.EXPIRED;
+        await paymentRequest.save({ session });
+        await session.commitTransaction();
+        session.endSession();
+
+        return {
+          status: httpStatus.BAD_REQUEST,
+          data: {} as PaymentRequestData,
+          success: false,
+          message: "Payment request has expired and cannot be edited",
+        };
+      }
+
+      // Update fields if provided
+      if (sanitizedAmount !== undefined) {
+        const amountValidation = validatePaymentAmount(
+          sanitizedAmount,
+          sanitizedCurrency || paymentRequest.currency
+        );
+        if (!amountValidation.valid) {
+          await session.abortTransaction();
+          session.endSession();
+          return {
+            status: httpStatus.BAD_REQUEST,
+            data: {} as PaymentRequestData,
+            success: false,
+            message: amountValidation.message,
+          };
+        }
+        paymentRequest.amount = sanitizedAmount;
+      }
+
+      if (sanitizedCurrency) {
+        paymentRequest.currency = sanitizedCurrency;
+      }
+
+      if (sanitizedDescription !== undefined) {
+        paymentRequest.description = sanitizedDescription;
+      }
+
+      if (sanitizedExpiresIn !== undefined) {
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + sanitizedExpiresIn);
+        paymentRequest.expiresAt = expiresAt;
+      }
+
+      // Update metadata
+      if (Object.keys(sanitizedMetadata).length > 0) {
+        paymentRequest.metadata = {
+          ...paymentRequest.metadata,
+          ...sanitizedMetadata,
+        };
+      }
+
+      await paymentRequest.save({ session });
+
+      // Commit transaction
+      await session.commitTransaction();
+      session.endSession();
+
+      // Add security log
+      logSecurityEvent(
+        "payment_request_edited",
+        user._id.toString(),
+        {
+          requestId: paymentRequest.requestId,
+          updatedFields: Object.keys(validatedBody).filter(
+            (key) => key !== "requestId"
+          ),
+        },
+        "low"
+      );
+
+      // Emit notification event
+      await emitEvent("payment:request:edited", {
+        requestId: paymentRequest.requestId,
+        fromUser: paymentRequest.fromUser,
+        toUser: paymentRequest.toUser,
+        amount: paymentRequest.amount,
+        currency: paymentRequest.currency,
+        expiresAt: paymentRequest.expiresAt,
+        metadata: paymentRequest.metadata,
+      }).catch((err) =>
+        console.error("Error emitting payment request edited event:", err)
+      );
+
+      return {
+        status: httpStatus.OK,
+        data: {
+          paymentRequest: {
+            id: paymentRequest._id.toString(),
+            requestId: paymentRequest.requestId,
+            amount: paymentRequest.amount,
+            currency: paymentRequest.currency,
+            description: paymentRequest.description,
+            expiresAt: paymentRequest.expiresAt,
+            status: paymentRequest.status,
+            metadata: paymentRequest.metadata,
+            qrCodeUrl: paymentRequest.qrCodeUrl,
+            paymentLink: paymentRequest.paymentLink,
+            shortUrl: paymentRequest.shortUrl,
+            createdAt: paymentRequest.createdAt,
+          },
+        },
+        success: true,
+        message: "Payment request updated successfully",
+      };
+    } catch (error: any) {
+      await session.abortTransaction();
+      session.endSession();
+
+      console.error("Error editing payment request:", error);
+
+      // Handle Zod validation errors
+      if (error.name === "ZodError") {
+        const errorMessages = error.errors
+          .map((err: any) => err.message)
+          .join(", ");
+        return {
+          status: httpStatus.BAD_REQUEST,
+          data: {} as PaymentRequestData,
+          success: false,
+          message: `${errorMessages}`,
+        };
+      }
+
+      return {
+        status: httpStatus.INTERNAL_SERVER_ERROR,
+        data: {} as PaymentRequestData,
+        success: false,
+        message: "Error editing payment request",
+      };
+    }
+  }
+
   async getPaymentRequest(
     req: Request
   ): Promise<ServiceResponse<PaymentRequestDetails>> {
@@ -1032,6 +1289,23 @@ export class PaymentRequestService implements IPaymentRequestService {
         };
       }
 
+      // NEW: Validate required metadata is present
+      if (
+        !paymentRequest.metadata?.invoiceNumber ||
+        !paymentRequest.metadata?.invoiceDateAndTime ||
+        !paymentRequest.metadata?.serviceType
+      ) {
+        await session.abortTransaction();
+        session.endSession();
+        return {
+          status: httpStatus.BAD_REQUEST,
+          data: {} as PaymentProcessData,
+          success: false,
+          message:
+            "Payment request is missing required invoice information. Please contact the sender.",
+        };
+      }
+
       // Check payment method compatibility
       if (
         paymentRequest.paymentMethod !== "both" &&
@@ -1090,7 +1364,7 @@ export class PaymentRequestService implements IPaymentRequestService {
           amount: paymentRequest.amount.toString(),
           transactionDetails:
             sanitizedTransactionDetails ||
-            `Payment request: ${paymentRequest.requestId}`,
+            `Payment request: ${paymentRequest.requestId}, Invoice: ${paymentRequest.metadata?.invoiceNumber}`,
         };
 
         const paymentResult = await blockchain.payment(paymentParams);
@@ -1111,6 +1385,15 @@ export class PaymentRequestService implements IPaymentRequestService {
 
       // Update payment request status to completed
       paymentRequest.status = PaymentRequestStatus.COMPLETED;
+
+      // Add payment completion timestamp to metadata
+      paymentRequest.metadata = {
+        ...paymentRequest.metadata,
+        paymentCompletedDate: new Date().toISOString(),
+        paymentMethodUsed: sanitizedPaymentMethod,
+        transactionReference: blockchainTxHash || fiatPaymentRef,
+      };
+
       await paymentRequest.save({ session });
 
       // Commit transaction
@@ -1127,6 +1410,8 @@ export class PaymentRequestService implements IPaymentRequestService {
           currency: paymentRequest.currency,
           blockchainTxHash,
           fiatPaymentRef,
+          invoiceNumber: paymentRequest.metadata?.invoiceNumber,
+          serviceType: paymentRequest.metadata?.serviceType,
         }).catch((err) =>
           console.error("Error emitting payment completed event:", err)
         ),
@@ -1135,11 +1420,12 @@ export class PaymentRequestService implements IPaymentRequestService {
           userId: paymentRequest.fromUser._id,
           type: "payment_request_completed",
           title: "Payment Request Completed",
-          message: `Your payment request for ${paymentRequest.amount} ${paymentRequest.currency} has been paid`,
+          message: `Your payment request for ${paymentRequest.amount} ${paymentRequest.currency} (Invoice: ${paymentRequest.metadata?.invoiceNumber}) has been paid`,
           data: {
             requestId: paymentRequest.requestId,
             amount: paymentRequest.amount,
             currency: paymentRequest.currency,
+            invoiceNumber: paymentRequest.metadata?.invoiceNumber,
             txHash: blockchainTxHash,
             paymentRef: fiatPaymentRef,
           },

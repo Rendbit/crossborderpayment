@@ -201,12 +201,14 @@ export interface IRecurringPaymentService {
 }
 
 export enum RecurringFrequency {
+  HOURLY = "hourly",
   DAILY = "daily",
   WEEKLY = "weekly",
   BI_WEEKLY = "bi_weekly",
   MONTHLY = "monthly",
   QUARTERLY = "quarterly",
   YEARLY = "yearly",
+  CUSTOM = "custom" // For custom schedules
 }
 
 export enum PaymentMethod {

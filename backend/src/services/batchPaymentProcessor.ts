@@ -6,6 +6,7 @@ import { BlockchainFactory } from "../providers/blockchainFactory";
 import { logSecurityEvent } from "../utils/security";
 import { emitEvent } from "../microservices/rabbitmq";
 import { nanoid } from "nanoid";
+import { RecurringFrequency } from "./recurringPayment";
 
 export interface PaymentProcessingResult {
   scheduleId: string;
@@ -16,6 +17,7 @@ export interface PaymentProcessingResult {
   userId?: string;
   amount?: number;
   currency?: string;
+  status?: string;
 }
 
 export interface BatchProcessingStats {
@@ -23,6 +25,7 @@ export interface BatchProcessingStats {
   failed: number;
   retried: number;
   skipped: number;
+  paused: number;
   totalTime: number;
   details: PaymentProcessingResult[];
 }
@@ -32,9 +35,6 @@ export class BatchPaymentProcessor {
   private readonly MAX_RETRY_ATTEMPTS = 3;
   private readonly RETRY_DELAY_MINUTES = [5, 15, 60];
 
-  /**
-   * Main method to process all due payments
-   */
   async processDuePayments(): Promise<BatchProcessingStats> {
     const startTime = Date.now();
     const stats: BatchProcessingStats = {
@@ -42,14 +42,17 @@ export class BatchPaymentProcessor {
       failed: 0,
       retried: 0,
       skipped: 0,
+      paused: 0,
       totalTime: 0,
       details: [],
     };
 
     try {
       console.log("Starting batch payment processing...");
+      console.log("Current time:", new Date().toISOString());
 
       const duePayments = await this.getDuePayments();
+      console.log({ duePayments });
 
       if (duePayments.length === 0) {
         console.log("No payments due for processing");
@@ -61,6 +64,25 @@ export class BatchPaymentProcessor {
 
       for (const payment of duePayments) {
         try {
+          const pauseCheck = await this.checkPauseStatus(payment);
+
+          if (pauseCheck.isPaused) {
+            stats.paused++;
+            stats.details.push({
+              scheduleId: payment.scheduleId,
+              success: false,
+              error: `Payment paused: ${pauseCheck.reason}`,
+              status: "paused",
+              userId: payment.fromUser?._id?.toString(),
+              amount: payment.amount,
+              currency: payment.currency,
+            });
+            console.log(
+              `Payment ${payment.scheduleId} is paused: ${pauseCheck.reason}`
+            );
+            continue;
+          }
+
           const result = await this.processPayment(payment);
           stats.details.push(result);
 
@@ -90,7 +112,7 @@ export class BatchPaymentProcessor {
             scheduleId: payment.scheduleId,
             success: false,
             error: error.message,
-            userId: payment.fromUser._id?.toString(),
+            userId: payment.fromUser?._id?.toString(),
             amount: payment.amount,
             currency: payment.currency,
           });
@@ -100,15 +122,17 @@ export class BatchPaymentProcessor {
       stats.totalTime = Date.now() - startTime;
       console.log(`Batch processing completed in ${stats.totalTime}ms`);
       console.log(`   Processed: ${stats.processed}`);
+      console.log(`   Paused: ${stats.paused}`);
       console.log(`   Retried: ${stats.retried}`);
       console.log(`   Failed: ${stats.failed}`);
 
-      if (stats.processed > 0 || stats.failed > 0) {
+      if (stats.processed > 0 || stats.failed > 0 || stats.paused > 0) {
         logSecurityEvent(
           "batch_payments_processed",
           "system",
           {
             processed: stats.processed,
+            paused: stats.paused,
             failed: stats.failed,
             retried: stats.retried,
             totalTime: stats.totalTime,
@@ -140,12 +164,17 @@ export class BatchPaymentProcessor {
   private async getDuePayments(): Promise<any[]> {
     const now = new Date();
 
-    return await RecurringPayment.find({
+    console.log("Looking for due payments...");
+    console.log("Now (UTC):", now.toISOString());
+    console.log("Now (local):", now.toString());
+
+    const payments = await RecurringPayment.find({
       status: "active",
       pinVerified: true,
+      nextPaymentDate: { $lte: now },
       $or: [
-        { nextPaymentDate: { $lte: now } },
-        { "metadata.retryAt": { $lte: now, $exists: true } },
+        { "metadata.retryAt": { $exists: false } },
+        { "metadata.retryAt": { $lte: now } },
       ],
     })
       .populate("fromUser", "_id username stellarPublicKey primaryEmail")
@@ -153,6 +182,65 @@ export class BatchPaymentProcessor {
       .sort({ nextPaymentDate: 1 })
       .limit(this.BATCH_SIZE)
       .lean();
+
+    payments.forEach((payment: any) => {
+      console.log(`Payment ${payment.scheduleId}:`);
+      console.log(`  Next payment date: ${payment.nextPaymentDate}`);
+      console.log(`  Frequency: ${payment.frequency}`);
+      console.log(
+        `  Custom times: ${JSON.stringify(payment.metadata?.customTimes)}`
+      );
+      console.log(
+        `  Now is after nextPaymentDate: ${
+          now >= new Date(payment.nextPaymentDate)
+        }`
+      );
+    });
+
+    return payments;
+  }
+
+  private async checkPauseStatus(
+    payment: any
+  ): Promise<{ isPaused: boolean; reason?: string }> {
+    if (payment.status === "paused") {
+      return { isPaused: true, reason: "Payment status is paused" };
+    }
+
+    if (payment.metadata?.pauseEnabled) {
+      const now = new Date();
+      const pauseStart = payment.metadata.pauseStartDate
+        ? new Date(payment.metadata.pauseStartDate)
+        : null;
+      const pauseEnd = payment.metadata.pauseEndDate
+        ? new Date(payment.metadata.pauseEndDate)
+        : null;
+
+      if (pauseStart && pauseEnd && now >= pauseStart && now <= pauseEnd) {
+        return {
+          isPaused: true,
+          reason:
+            payment.metadata.pauseReason ||
+            `Paused from ${pauseStart.toISOString()} to ${pauseEnd.toISOString()}`,
+        };
+      }
+
+      if (pauseEnd && now > pauseEnd) {
+        await RecurringPayment.updateOne(
+          { _id: payment._id },
+          {
+            $set: {
+              "metadata.pauseEnabled": false,
+              "metadata.pauseStartDate": null,
+              "metadata.pauseEndDate": null,
+              "metadata.pauseReason": null,
+            },
+          }
+        );
+      }
+    }
+
+    return { isPaused: false };
   }
 
   private async processPayment(payment: any): Promise<PaymentProcessingResult> {
@@ -160,7 +248,7 @@ export class BatchPaymentProcessor {
     let result: PaymentProcessingResult = {
       scheduleId: payment.scheduleId,
       success: false,
-      userId: payment.fromUser._id?.toString(),
+      userId: payment.fromUser?._id?.toString(),
       amount: payment.amount,
       currency: payment.currency,
     };
@@ -174,7 +262,21 @@ export class BatchPaymentProcessor {
       }).session(session);
 
       if (!currentPayment) {
-        throw new Error("Payment no longer active");
+        throw new Error("Payment not found or not active");
+      }
+
+      const pauseCheck = await this.checkPauseStatus(currentPayment.toObject());
+      if (pauseCheck.isPaused) {
+        await session.abortTransaction();
+        return {
+          scheduleId: payment.scheduleId,
+          success: false,
+          error: pauseCheck.reason,
+          status: "paused",
+          userId: payment.fromUser?._id?.toString(),
+          amount: payment.amount,
+          currency: payment.currency,
+        };
       }
 
       const senderUser = await User.findById(payment.fromUser._id)
@@ -201,29 +303,46 @@ export class BatchPaymentProcessor {
       );
 
       const nextPaymentDate = this.calculateNextPaymentDate(
-        new Date(payment.nextPaymentDate),
-        payment.frequency
+        new Date(),
+        payment.frequency as RecurringFrequency,
+        payment.metadata
+      );
+
+      console.log(
+        `Calculated next payment date for ${payment.scheduleId}:`,
+        nextPaymentDate
       );
 
       const updateData: any = {
         lastProcessedAt: new Date(),
         nextPaymentDate,
-        processingAttempts: 0,
-        lastProcessingError: null,
+        $inc: { "metadata.totalProcessedCount": 1 },
+        $set: {
+          "metadata.lastProcessedDate": new Date(),
+          "metadata.lastProcessedAmount": payment.amount,
+          "metadata.lastProcessedCurrency": payment.currency,
+          processingAttempts: 0,
+          lastProcessingError: null,
+        },
         $push: {} as any,
       };
 
       if (paymentResult.blockchainTxHash) {
         updateData.$push.blockchainTxHashes = paymentResult.blockchainTxHash;
+        updateData.$set["metadata.lastBlockchainTxHash"] =
+          paymentResult.blockchainTxHash;
       }
       if (paymentResult.fiatPaymentRef) {
         updateData.$push.fiatPaymentRefs = paymentResult.fiatPaymentRef;
+        updateData.$set["metadata.lastFiatPaymentRef"] =
+          paymentResult.fiatPaymentRef;
       }
 
       if (payment.metadata?.retryAt) {
         updateData.$unset = {
           "metadata.retryAt": "",
           "metadata.retryAttempts": "",
+          "metadata.lastError": "",
         };
       }
 
@@ -273,7 +392,8 @@ export class BatchPaymentProcessor {
         assetCode: payment.currency === "XLM" ? "NATIVE" : payment.currency,
         address: payment.toUser.stellarPublicKey,
         amount: payment.amount.toString(),
-        transactionDetails: `Recurring payment: ${payment.scheduleId}`,
+        transactionDetails: payment,
+        pinCode: senderUser.toObject().pinCode,
       };
 
       const paymentResult = await blockchain.payment(paymentParams);
@@ -306,6 +426,11 @@ export class BatchPaymentProcessor {
           status: "paused",
           lastProcessingError: error,
           processingAttempts: currentAttempts + 1,
+          $inc: { "metadata.failedCount": 1 },
+          $set: {
+            "metadata.lastFailedAttempt": new Date(),
+            "metadata.failureReason": error,
+          },
         }
       );
 
@@ -328,12 +453,12 @@ export class BatchPaymentProcessor {
     await RecurringPayment.updateOne(
       { _id: payment._id },
       {
-        processingAttempts: currentAttempts + 1,
-        lastProcessingError: error,
-        nextPaymentDate: retryAt,
+        $inc: { processingAttempts: 1 },
         $set: {
+          lastProcessingError: error,
+          nextPaymentDate: retryAt,
           "metadata.retryAt": retryAt,
-          "metadata.retryAttempts": currentAttempts + 1,
+          "metadata.retryAttempts": (payment.metadata?.retryAttempts || 0) + 1,
           "metadata.lastError": error,
         },
       }
@@ -386,85 +511,289 @@ export class BatchPaymentProcessor {
     await Promise.all(events);
   }
 
-  private calculateNextPaymentDate(currentDate: Date, frequency: string): Date {
-    const nextDate = new Date(currentDate);
+  calculateNextPaymentDate(
+    baseDate: Date,
+    frequency: RecurringFrequency,
+    metadata: any
+  ): Date {
+    console.log(
+      `Calculating next payment date from base: ${baseDate.toISOString()}`
+    );
+    console.log(`Frequency: ${frequency}`);
+    console.log(`Metadata: ${JSON.stringify(metadata)}`);
+
+    const customTimes = metadata?.customTimes || [];
+    const nextDate = new Date(baseDate);
 
     switch (frequency) {
-      case "daily":
+      case RecurringFrequency.HOURLY:
+        return this.calculateHourlyNextDate(baseDate, metadata);
+      case RecurringFrequency.DAILY:
         nextDate.setDate(nextDate.getDate() + 1);
         break;
-      case "weekly":
+      case RecurringFrequency.WEEKLY:
         nextDate.setDate(nextDate.getDate() + 7);
         break;
-      case "bi_weekly":
+      case RecurringFrequency.BI_WEEKLY:
         nextDate.setDate(nextDate.getDate() + 14);
         break;
-      case "monthly":
+      case RecurringFrequency.MONTHLY:
         nextDate.setMonth(nextDate.getMonth() + 1);
         break;
-      case "quarterly":
+      case RecurringFrequency.QUARTERLY:
         nextDate.setMonth(nextDate.getMonth() + 3);
         break;
-      case "yearly":
+      case RecurringFrequency.YEARLY:
         nextDate.setFullYear(nextDate.getFullYear() + 1);
         break;
+      case RecurringFrequency.CUSTOM:
+        return this.calculateCustomNextDate(baseDate, metadata);
       default:
-        throw new Error(`Unknown frequency: ${frequency}`);
+        nextDate.setDate(nextDate.getDate() + 1);
     }
 
+    if (customTimes.length > 0) {
+      const [hours, minutes] = customTimes[0].split(":").map(Number);
+      nextDate.setHours(hours, minutes, 0, 0);
+    } else {
+      nextDate.setHours(baseDate.getHours(), baseDate.getMinutes(), 0, 0);
+    }
+
+    const result = this.applyExclusions(nextDate, metadata);
+    console.log(`Calculated next date: ${result.toISOString()}`);
+    return result;
+  }
+
+  private calculateHourlyNextDate(baseDate: Date, metadata: any): Date {
+    const scheduleWindow = metadata?.scheduleWindow || {};
+    const hourlyInterval = metadata?.hourlyInterval || 1;
+    const startHour = scheduleWindow.startHour ?? 0;
+    const endHour = scheduleWindow.endHour ?? 23;
+
+    let nextDate = new Date(baseDate);
+
+    nextDate.setHours(nextDate.getHours() + hourlyInterval);
+
+    nextDate = this.adjustToScheduleWindow(nextDate, metadata);
+
+    nextDate = this.applyExclusions(nextDate, metadata);
+
     return nextDate;
+  }
+
+  private calculateCustomNextDate(baseDate: Date, metadata: any): Date {
+    const customTimes = metadata?.customTimes || [];
+    const scheduleWindow = metadata?.scheduleWindow || {};
+    const startHour = scheduleWindow.startHour ?? 0;
+    const endHour = scheduleWindow.endHour ?? 23;
+
+    if (customTimes.length === 0) {
+      const nextDate = new Date(baseDate);
+      nextDate.setDate(nextDate.getDate() + 1);
+      return this.applyExclusions(nextDate, metadata);
+    }
+
+    const sortedTimes = [...customTimes].sort();
+
+    const currentHour = baseDate.getUTCHours();
+    const currentMinute = baseDate.getUTCMinutes();
+    const currentTimeStr = `${currentHour
+      .toString()
+      .padStart(2, "0")}:${currentMinute.toString().padStart(2, "0")}`;
+
+    console.log(`Current time (UTC): ${currentTimeStr}`);
+    console.log(`Sorted custom times: ${sortedTimes}`);
+
+    for (const time of sortedTimes) {
+      if (time > currentTimeStr) {
+        const [hours, minutes] = time.split(":").map(Number);
+        const nextDate = new Date(baseDate);
+        nextDate.setUTCHours(hours, minutes, 0, 0);
+
+        if (hours >= startHour && hours <= endHour) {
+          console.log(
+            `Found next time today: ${time}, date: ${nextDate.toISOString()}`
+          );
+          return this.applyExclusions(nextDate, metadata);
+        }
+      }
+    }
+
+    const [hours, minutes] = sortedTimes[0].split(":").map(Number);
+    const nextDate = new Date(baseDate);
+    nextDate.setUTCDate(nextDate.getUTCDate() + 1);
+    nextDate.setUTCHours(hours, minutes, 0, 0);
+
+    console.log(
+      `Using first time tomorrow: ${
+        sortedTimes[0]
+      }, date: ${nextDate.toISOString()}`
+    );
+
+    return this.applyExclusions(nextDate, metadata);
+  }
+
+  private adjustToScheduleWindow(date: Date, metadata: any): Date {
+    const scheduleWindow = metadata?.scheduleWindow || {};
+    const startHour = scheduleWindow.startHour ?? 0;
+    const endHour = scheduleWindow.endHour ?? 23;
+
+    const result = new Date(date);
+    const currentHour = result.getUTCHours();
+
+    console.log(
+      `Adjusting to schedule window: currentHour=${currentHour}, startHour=${startHour}, endHour=${endHour}`
+    );
+
+    if (currentHour < startHour) {
+      result.setUTCHours(startHour, 0, 0, 0);
+      console.log(`Adjusted to start hour: ${result.toISOString()}`);
+    } else if (currentHour >= endHour) {
+      result.setUTCDate(result.getUTCDate() + 1);
+      result.setUTCHours(startHour, 0, 0, 0);
+      console.log(`Adjusted to start hour tomorrow: ${result.toISOString()}`);
+    }
+
+    return result;
+  }
+
+  private applyExclusions(date: Date, metadata: any): Date {
+    const result = new Date(date);
+    const excludedDays = metadata?.excludedDays || [];
+    const excludedHours = metadata?.excludedHours || [];
+    const excludedDates = metadata?.excludedDates || [];
+    const skipWeekends = metadata?.skipWeekends ?? true;
+
+    let needsAdjustment = false;
+
+    console.log(`Applying exclusions to: ${result.toISOString()}`);
+    console.log(
+      `Excluded days: ${excludedDays}, Skip weekends: ${skipWeekends}`
+    );
+
+    do {
+      needsAdjustment = false;
+
+      const dayOfWeek = result.getUTCDay();
+      console.log(`Day of week: ${dayOfWeek}`);
+
+      if (excludedDays.includes(dayOfWeek)) {
+        result.setUTCDate(result.getUTCDate() + 1);
+        result.setUTCHours(0, 0, 0, 0);
+        needsAdjustment = true;
+        console.log(
+          `Skipped excluded day ${dayOfWeek}, new date: ${result.toISOString()}`
+        );
+        continue;
+      }
+
+      if (skipWeekends && (dayOfWeek === 0 || dayOfWeek === 6)) {
+        result.setUTCDate(result.getUTCDate() + (dayOfWeek === 0 ? 1 : 2));
+        result.setUTCHours(0, 0, 0, 0);
+        needsAdjustment = true;
+        console.log(
+          `Skipped weekend day ${dayOfWeek}, new date: ${result.toISOString()}`
+        );
+        continue;
+      }
+
+      const hour = result.getUTCHours();
+      if (excludedHours.includes(hour)) {
+        result.setUTCHours(hour + 1, 0, 0, 0);
+        needsAdjustment = true;
+        console.log(
+          `Skipped excluded hour ${hour}, new date: ${result.toISOString()}`
+        );
+        continue;
+      }
+
+      const dateString = result.toISOString().split("T")[0];
+      const isExcludedDate = excludedDates.some((excludedDate: Date) => {
+        const excludedDateStr = new Date(excludedDate)
+          .toISOString()
+          .split("T")[0];
+        return excludedDateStr === dateString;
+      });
+
+      if (isExcludedDate) {
+        result.setUTCDate(result.getUTCDate() + 1);
+        result.setUTCHours(0, 0, 0, 0);
+        needsAdjustment = true;
+        console.log(
+          `Skipped excluded date ${dateString}, new date: ${result.toISOString()}`
+        );
+        continue;
+      }
+    } while (needsAdjustment);
+
+    console.log(`Final date after exclusions: ${result.toISOString()}`);
+    return result;
   }
 
   async getQueueStats(): Promise<{
     dueCount: number;
     retryCount: number;
+    pausedCount: number;
     nextDueDate: Date | null;
     lastProcessedDate: Date | null;
     activeUsersCount: number;
   }> {
     const now = new Date();
 
-    const [dueCount, retryCount, nextDue, lastProcessed, activeUsers] =
-      await Promise.all([
-        RecurringPayment.countDocuments({
-          status: "active",
-          pinVerified: true,
-          nextPaymentDate: { $lte: now },
-          "metadata.retryAt": { $exists: false },
-        }),
+    const [
+      dueCount,
+      retryCount,
+      pausedCount,
+      nextDue,
+      lastProcessed,
+      activeUsers,
+    ] = await Promise.all([
+      RecurringPayment.countDocuments({
+        status: "active",
+        pinVerified: true,
+        nextPaymentDate: { $lte: now },
+        "metadata.retryAt": { $exists: false },
+        "metadata.pauseEnabled": false,
+      }),
 
-        RecurringPayment.countDocuments({
-          status: "active",
-          "metadata.retryAt": { $lte: now, $exists: true },
-        }),
+      RecurringPayment.countDocuments({
+        status: "active",
+        "metadata.retryAt": { $lte: now, $exists: true },
+      }),
 
-        RecurringPayment.findOne({
-          status: "active",
-          pinVerified: true,
-          nextPaymentDate: { $gt: now },
-        })
-          .sort({ nextPaymentDate: 1 })
-          .select("nextPaymentDate")
-          .lean(),
+      RecurringPayment.countDocuments({
+        status: "paused",
+      }),
 
-        RecurringPayment.findOne({
-          status: { $in: ["active", "completed"] },
-          lastProcessedAt: { $exists: true },
-        })
-          .sort({ lastProcessedAt: -1 })
-          .select("lastProcessedAt")
-          .lean(),
+      RecurringPayment.findOne({
+        status: "active",
+        pinVerified: true,
+        nextPaymentDate: { $gt: now },
+        "metadata.pauseEnabled": false,
+      })
+        .sort({ nextPaymentDate: 1 })
+        .select("nextPaymentDate")
+        .lean(),
 
-        RecurringPayment.aggregate([
-          { $match: { status: "active", pinVerified: true } },
-          { $group: { _id: "$fromUser" } },
-          { $count: "uniqueUsers" },
-        ]),
-      ]);
+      RecurringPayment.findOne({
+        status: { $in: ["active", "completed"] },
+        lastProcessedAt: { $exists: true },
+      })
+        .sort({ lastProcessedAt: -1 })
+        .select("lastProcessedAt")
+        .lean(),
+
+      RecurringPayment.aggregate([
+        { $match: { status: "active", pinVerified: true } },
+        { $group: { _id: "$fromUser" } },
+        { $count: "uniqueUsers" },
+      ]),
+    ]);
 
     return {
       dueCount,
       retryCount,
+      pausedCount,
       nextDueDate: nextDue?.nextPaymentDate || null,
       lastProcessedDate: lastProcessed?.lastProcessedAt || null,
       activeUsersCount: activeUsers[0]?.uniqueUsers || 0,
@@ -492,11 +821,50 @@ export class BatchPaymentProcessor {
       { _id: payment._id },
       {
         nextPaymentDate: new Date(),
-        $unset: { "metadata.retryAt": "", "metadata.retryAttempts": "" },
+        $unset: {
+          "metadata.retryAt": "",
+          "metadata.retryAttempts": "",
+          "metadata.lastError": "",
+        },
       }
     );
 
     return await this.processPayment(payment);
+  }
+
+  async pausePayment(scheduleId: string, reason?: string): Promise<boolean> {
+    const result = await RecurringPayment.updateOne(
+      { scheduleId, status: "active" },
+      {
+        status: "paused",
+        $set: {
+          "metadata.pauseEnabled": true,
+          "metadata.pauseReason": reason || "Manually paused by system",
+          "metadata.pauseStartDate": new Date(),
+        },
+      }
+    );
+
+    return result.modifiedCount > 0;
+  }
+
+  async resumePayment(scheduleId: string): Promise<boolean> {
+    const result = await RecurringPayment.updateOne(
+      { scheduleId, status: "paused" },
+      {
+        status: "active",
+        $set: {
+          "metadata.pauseEnabled": false,
+          "metadata.pauseEndDate": new Date(),
+        },
+        $unset: {
+          "metadata.pauseStartDate": "",
+          "metadata.pauseReason": "",
+        },
+      }
+    );
+
+    return result.modifiedCount > 0;
   }
 }
 
