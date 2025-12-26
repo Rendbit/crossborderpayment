@@ -35,6 +35,41 @@ const getTransactionHistory = async (
   }
 };
 
+
+const getPaymentRequestHistory = async (
+  token: string,
+  limit: number = 10,
+  cursor?: string | null
+) => {
+  try {
+    let url = `${
+      import.meta.env.VITE_BASE_URL
+    }/paymentRequest/list?limit=${limit}`;
+
+    if (cursor) {
+      url += `&cursor=${cursor}`;
+    }
+
+    const res = await fetch(url, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "x-api-key": `${API_KEY}`,
+      },
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || "Failed to fetch transaction history");
+    }
+
+    return data;
+  } catch (error: any) {
+    console.log("Error handling get transaction history: ", error);
+    throw new Error(error.message || "Error handling get transaction history");
+  }
+};
+
 const getFiatTransactionHistory = async (
   token: string,
   limit: number,
@@ -422,6 +457,7 @@ const strictReceivePreview = async (
 export {
   getTransactionHistory,
   getFiatTransactionHistory,
+  getPaymentRequestHistory,
   makeWithdrawal,
   swapAssets,
   swapAssetsPreview,
