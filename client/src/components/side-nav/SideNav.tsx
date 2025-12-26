@@ -1,7 +1,7 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Cookies from "js-cookie";
-import { X, ArrowRightIcon, LogOutIcon, User2Icon } from "lucide-react";
+import { X, ArrowRightIcon, LogOutIcon, User2Icon, Link } from "lucide-react";
 import { GrDashboard } from "react-icons/gr";
 import {
   RiMoneyDollarCircleFill,
@@ -73,6 +73,14 @@ const SideNav: React.FC = () => {
       icon: <RiFileListFill />,
       onClick: () => {
         navigate("/history");
+      },
+    },
+    {
+      label: "Request Payment",
+      path: "/request-payment",
+      icon: <Link size={16} />,
+      onClick: () => {
+        navigate("/request-payment");
       },
     },
   ];

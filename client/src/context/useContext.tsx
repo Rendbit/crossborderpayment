@@ -20,6 +20,8 @@ interface AppContextProps {
   isAddMoneyModalOpen: boolean;
   setIsAddMoneyModalOpen: (open: boolean) => void;
   isPrivateKeyModalOpen: boolean;
+  setIsRequestPaymentModalOpen: (open: boolean) => void;
+  isRequestPaymentModalOpen: boolean;
   setIsPrivateKeyModalOpen: (open: boolean) => void;
   isSendMoneyModalOpen: boolean;
   setIsSendMoneyModalOpen: (open: boolean) => void;
@@ -52,6 +54,7 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
     useState(false);
   const [isAddCurrencyModalOpen, setIsAddCurrencyModalOpen] = useState(false);
   const [isSendMoneyModalOpen, setIsSendMoneyModalOpen] = useState(false);
+  const [isRequestPaymentModalOpen, setIsRequestPaymentModalOpen] = useState(false);
   const [selectedCountryForTransfer, setSelectedCountryForTransfer] =
     useState<any>(() => {
       const saved = localStorage.getItem("selectedCountryForTransfer");
@@ -144,6 +147,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         isPrivateKeyModalOpen,
         isSendMoneyModalOpen,
         setIsSendMoneyModalOpen,
+        isRequestPaymentModalOpen,
+        setIsRequestPaymentModalOpen,
         selectedCountryForTransfer,
         setSelectedCountryForTransfer,
         isAddCurrencyModalOpen,

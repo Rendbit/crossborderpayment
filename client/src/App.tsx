@@ -2,6 +2,9 @@ import React, { Suspense, lazy } from "react";
 import { HashRouter, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { useAppContext } from "./context/useContext";
 import Profile from "./pages/Profile";
+import PaymentLinks from "./pages/RequestPayment";
+import RequestPayment from "./pages/RequestPayment";
+import RecurringPayment from "./pages/RecurringOneTimePayment";
 
 // Lazy-loaded pages
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -31,6 +34,7 @@ const SendCrypto = lazy(() => import("./pages/SendCrypto"));
 const SideNav = lazy(() => import("./components/side-nav/SideNav"));
 const SendMoneyModal = lazy(() => import("./components/modals/send-money"));
 const AddMoneyModal = lazy(() => import("./components/modals/add-money"));
+const RequestPaymentModal = lazy(() => import("./components/modals/request-payment"));
 
 // Layout for pages that need sidebar
 const SideNavLayout: React.FC = () => {
@@ -38,6 +42,7 @@ const SideNavLayout: React.FC = () => {
     sidebarOpen,
     isAddMoneyModalOpen,
     isSendMoneyModalOpen,
+    isRequestPaymentModalOpen
   } = useAppContext();
 
   return (
@@ -47,6 +52,7 @@ const SideNavLayout: React.FC = () => {
       </div>
       {isAddMoneyModalOpen && <AddMoneyModal />}
       {isSendMoneyModalOpen && <SendMoneyModal />}
+      {isRequestPaymentModalOpen && <RequestPaymentModal />}
 
       <div className="flex-1 lg:ml-[240px] ml-0">
         <Outlet />
@@ -57,12 +63,13 @@ const SideNavLayout: React.FC = () => {
 
 // Layout for pages without sidebar
 const NonSideNavLayout: React.FC = () => {
-  const { isAddMoneyModalOpen, isSendMoneyModalOpen, isAddCurrencyModalOpen } =
+  const { isAddMoneyModalOpen, isSendMoneyModalOpen, isRequestPaymentModalOpen } =
     useAppContext();
   return (
     <div className="min-h-screen bg-white dark:bg-gray-800">
       {isAddMoneyModalOpen && <AddMoneyModal />}
       {isSendMoneyModalOpen && <SendMoneyModal />}
+      {isRequestPaymentModalOpen && <RequestPaymentModal />}
 
       <Outlet />
     </div>
@@ -80,6 +87,8 @@ const App: React.FC = () => {
           {/* Dashboard pages (with SideNav) */}
           <Route element={<SideNavLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/request-payment" element={<RequestPayment />} />
+            <Route path="/recurring-one-time-payment" element={<RecurringPayment />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/history" element={<History />} />
             <Route path="/profile" element={<Profile />} />
