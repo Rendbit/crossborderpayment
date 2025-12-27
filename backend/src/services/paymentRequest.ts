@@ -527,6 +527,8 @@ export class PaymentRequestService implements IPaymentRequestService {
       const shortUrl = await this.generateShortUrl(paymentLink);
       const qrCodeUrl = await this.generateQRCode(paymentLink);
 
+      console.log("Sanitized Metadata ======= ", sanitizedMetadata)
+
       // Create payment request
       const paymentRequest: any = new PaymentRequest({
         requestId,
@@ -545,6 +547,7 @@ export class PaymentRequestService implements IPaymentRequestService {
         linkId,
         pinVerified: false,
       });
+  
 
       await paymentRequest.save();
 
