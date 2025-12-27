@@ -76,8 +76,7 @@ export const CreatePaymentRequestSchema = z
     paymentMethod: z
       .enum(["crypto", "fiat", "both"])
       .optional()
-      .default("both"),
-    metadata: PaymentRequestMetadataSchema,
+      .default("both")
   })
   .strict();
 
