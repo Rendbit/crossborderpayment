@@ -16,9 +16,9 @@ export const CurrencyTypeSchema = z
   .max(5, "Currency type must be at most 5 characters")
   .transform((val) => val.toUpperCase())
   .refine(
-    (val) => ["NGN", "GHS", "KES", "NATIVE"].includes(val),
+    (val) => ["NGNC", "GHSC", "KESC", "NATIVE"].includes(val),
     {
-      message: "Currency type must be NGN, GHS, KES, or NATIVE",
+      message: "Currency type must be NGNC, GHSC, KESC, or NATIVE",
     }
   );
 
