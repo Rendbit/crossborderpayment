@@ -25,19 +25,14 @@ const RecurringPayment = () => {
 
     const [formData, setFormData] = useState({
         amount: '',
-        currency: 'USD',
+        currency: '',
         toUser: '',
-        paymentMethod: selectedPaymentMethod,
+        paymentMethod: 'crypto',
+        // paymentMethod: selectedPaymentMethod,
         expiresIn: '',
         description: '',
-        invoiceNumber: '',
-        invoiceDateAndTime: '',
 
         frequency: 'weekly',
-        collectUserInfo: false,
-        // name: '',
-        // banner: null,
-        // datedue: '',
     });
 
     useEffect(() => {
@@ -84,10 +79,6 @@ const RecurringPayment = () => {
                 paymentMethod: selectedPaymentMethod, // 'crypto' or 'fiat'
                 expiresIn: formData.expiresIn,
                 description: formData.description,
-                metadata: {
-                    invoiceNumber: formData.invoiceNumber,
-                    invoiceDateAndTime: formData.invoiceDateAndTime,
-                }
             };
     
             console.log('Payload:', payload);
@@ -131,7 +122,7 @@ const RecurringPayment = () => {
         <TopNav page="Request Payment" />
         <div className="flex items-center justify-center min-h-screen p-4 sm:p-6 lg:p-8">
             <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
-                <div className='flex items-center justify-center gap-6 mb-5'>
+                {/* <div className='flex items-center justify-center gap-6 mb-5'>
                     <button 
                         onClick={() => setSelectedPaymentMethod('crypto')} 
                         className={selectedPaymentMethod === "crypto" 
@@ -148,7 +139,7 @@ const RecurringPayment = () => {
                     >
                         Fiat
                     </button>
-                </div>
+                </div> */}
                 
                 {/* Icon */}
                 <div className="flex justify-center items-center py-4">
@@ -197,31 +188,6 @@ const RecurringPayment = () => {
                         />
                     </div>
 
-                    {/* Invoice Number */}
-                    <div>
-                        <label className="block text-sm font-medium mb-2">Invoice Number</label>
-                        <input
-                            type="text"
-                            name="invoiceNumber"
-                            placeholder="Enter invoice number"
-                            value={formData.invoiceNumber}
-                            onChange={handleInputChange}
-                            className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#0E7BB2]"
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-2">Invoice Date and Time</label>
-                        <input
-                            type="datetime-local"
-                            name="invoiceDateAndTime"
-                            placeholder="Enter invoice date and time"
-                            value={formData.invoiceDateAndTime}
-                            onChange={handleInputChange}
-                            className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#0E7BB2]"
-                        />
-                    </div>
-
                     {/* Description */}
                     <div>
                         <label className="block text-sm font-medium mb-2">Description</label>
@@ -235,33 +201,6 @@ const RecurringPayment = () => {
                         />
                     </div>
 
-                    {/* Banner Upload */}
-                    {/* <div>
-                        <label className="block text-sm font-medium mb-2">Banner</label>
-                        <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center bg-gray-50 dark:bg-gray-700/50">
-                            <MdUpload className="mx-auto text-[#0E7BB2] w-8 h-8 mb-3" />
-                            {formData.banner && (
-                                <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                                    {formData.banner.name}
-                                </p>
-                            )}
-                            <input
-                                type="file"
-                                id="banner-upload"
-                                accept="image/*"
-                                onChange={handleBannerUpload}
-                                className="hidden"
-                            />
-                        </div>
-                        <button
-                            type="button"
-                            onClick={() => document.getElementById('banner-upload').click()}
-                            className="w-full mt-3 px-4 py-2.5 rounded-lg border border-[#0E7BB2] text-[#0E7BB2] hover:bg-blue-50 dark:hover:bg-gray-700 transition-colors"
-                        >
-                            Upload
-                        </button>
-                    </div> */}
-
                     {/* Currency Selection */}
                     <div>
                         <label className="block text-sm font-medium mb-2">Currency</label>
@@ -271,18 +210,17 @@ const RecurringPayment = () => {
                             onChange={handleInputChange}
                             className="w-full px-4 py-2.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-[#0E7BB2]"
                         >
+                            <option value="">Select a currency</option>
                             <option value="NGNC">NGN - Nigerian Naira</option>
                             <option value="GHSC">GHSC - Ghanaian Cedi</option>
-                            <option value="KSEC">KSE - Kenyan Shilling</option>
+                            <option value="KESC">KES - Kenyan Shilling</option>
                             <option value="NATIVE">XLM - Stellar Token</option>
                         </select>
                     </div>
-
                     
-
                     {/* Expires In */}
                     <div>
-                        <label className="block text-sm font-medium mb-2">Expirees in</label>
+                        <label className="block text-sm font-medium mb-2">Expires in</label>
                         <div className="relative">
                             <input
                                 type="number"
@@ -320,20 +258,6 @@ const RecurringPayment = () => {
                     }
 
                     {/* Collect User Info Checkbox */}
-                    <div>
-                        <label className="flex items-start cursor-pointer">
-                            <input
-                                type="checkbox"
-                                name="collectUserInfo"
-                                checked={formData.collectUserInfo}
-                                onChange={handleInputChange}
-                                className="w-4 h-4 mt-1 text-[#0E7BB2] border-gray-300 dark:border-gray-600 rounded focus:ring-[#0E7BB2]"
-                            />
-                            <span className="ml-3 text-sm text-gray-600 dark:text-gray-400">
-                                Collect user info allow for rendbit to gain the user info in order to include them in the details
-                            </span>
-                        </label>
-                    </div>
 
                     {/* Proceed Button */}
                     <button

@@ -705,23 +705,6 @@ export class PaymentRequestService implements IPaymentRequestService {
           )
         : undefined;
 
-      // Sanitize metadata
-      let sanitizedMetadata: any = {};
-      if (validatedBody.metadata) {
-        try {
-          sanitizedMetadata = sanitizeMetadata(validatedBody.metadata);
-        } catch (error: any) {
-          await session.abortTransaction();
-          session.endSession();
-          return {
-            status: httpStatus.BAD_REQUEST,
-            data: {} as PaymentRequestData,
-            success: false,
-            message: error.message,
-          };
-        }
-      }
-
       // Find payment request
       const paymentRequest: any = await PaymentRequest.findOne({
         requestId: sanitizedRequestId,
@@ -811,14 +794,6 @@ export class PaymentRequestService implements IPaymentRequestService {
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + sanitizedExpiresIn);
         paymentRequest.expiresAt = expiresAt;
-      }
-
-      // Update metadata
-      if (Object.keys(sanitizedMetadata).length > 0) {
-        paymentRequest.metadata = {
-          ...paymentRequest.metadata,
-          ...sanitizedMetadata,
-        };
       }
 
       await paymentRequest.save({ session });
