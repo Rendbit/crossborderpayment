@@ -527,7 +527,7 @@ export class PaymentRequestService implements IPaymentRequestService {
       const shortUrl = await this.generateShortUrl(paymentLink);
       const qrCodeUrl = await this.generateQRCode(paymentLink);
 
-      console.log("Sanitized Metadata ======= ", sanitizedMetadata)
+      console.log("Req Body ==================== ", req.body)
 
       // Create payment request
       const paymentRequest: any = new PaymentRequest({
