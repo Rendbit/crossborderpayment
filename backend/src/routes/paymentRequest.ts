@@ -84,6 +84,9 @@ router.post("/create", authenticate, createPaymentRequest);
  *               requestId:
  *                 type: string
  *                 description: Payment request ID
+ *               toUser:
+ *                 type: string
+ *                 description: Recipient's email, username, or Stellar public key
  *               amount:
  *                 type: string
  *                 description: New payment amount (optional)
@@ -96,16 +99,6 @@ router.post("/create", authenticate, createPaymentRequest);
  *               expiresIn:
  *                 type: number
  *                 description: New days until request expires (1-30) (optional)
- *               metadata:
- *                 type: object
- *                 properties:
- *                   invoiceNumber:
- *                     type: string
- *                     description: New invoice number (optional)
- *                   invoiceDateAndTime:
- *                     type: string
- *                     format: date-time
- *                     description: New invoice date and time (optional)
  *     responses:
  *       200:
  *         description: Payment request updated successfully

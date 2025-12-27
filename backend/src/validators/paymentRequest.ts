@@ -98,7 +98,7 @@ export const EditPaymentRequestSchema = z
         "Expires in must be between 1 and 30 days"
       )
       .optional(),
-    metadata: PaymentRequestMetadataSchema.partial().optional(),
+      toUser: z.union([StellarAddressSchema, EmailSchema, UsernameSchema]).optional(),
   })
   .strict()
   .refine(

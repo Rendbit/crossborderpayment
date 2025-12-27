@@ -478,8 +478,8 @@ const RequestPaymentTable: React.FC<TransactionTableProps> = ({
               className="px-2 py-2 border cursor-pointer focus:outline-0 focus:border-[#0E7BB2] border-[#E2E4E9] dark:border-gray-700 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             >
               <option value="all">All</option>
-              <option value="crypto">Crypto</option>
-              <option value="fiat">Fiat</option>
+              <option value="sent">Sent</option>
+              <option value="received">Received</option>
             </select>
 
             <button
@@ -515,6 +515,14 @@ const RequestPaymentTable: React.FC<TransactionTableProps> = ({
                 </th>
                 <th
                   className="pb-2 cursor-pointer"
+                  onClick={() => handleSort("currency")}
+                >
+                  <div className="flex items-center">
+                    <span>Currency</span> {renderSortArrow("currency")}
+                  </div>
+                </th>
+                <th
+                  className="pb-2 cursor-pointer"
                   onClick={() => handleSort("amountSent")}
                 >
                   <div className="flex items-center">
@@ -542,7 +550,7 @@ const RequestPaymentTable: React.FC<TransactionTableProps> = ({
                   onClick={() => handleSort("date")}
                 >
                   <div className="flex items-center">
-                    <span>Date & Time</span> {renderSortArrow("date")}
+                    <span>Expiry Date & Time</span> {renderSortArrow("date")}
                   </div>
                 </th>
                 <th
@@ -550,15 +558,7 @@ const RequestPaymentTable: React.FC<TransactionTableProps> = ({
                   onClick={() => handleSort("type")}
                 >
                   <div className="flex items-center">
-                    <span>Type</span> {renderSortArrow("type")}
-                  </div>
-                </th>
-                <th
-                  className="pb-2 cursor-pointer"
-                  onClick={() => handleSort("currency")}
-                >
-                  <div className="flex items-center">
-                    <span>Currency</span> {renderSortArrow("currency")}
+                    <span>Status</span> {renderSortArrow("type")}
                   </div>
                 </th>
               </tr>
@@ -598,43 +598,40 @@ const RequestPaymentTable: React.FC<TransactionTableProps> = ({
                 displayTransactions.map((tx: any, idx: number) => (
                   <tr
                     key={`${tx.hash}-${idx}`}
+                    onClick={() => navigate(`/edit-request-payment/${tx.requestId}`)}
                     className="hover:bg-gray-50 cursor-pointer dark:hover:bg-gray-700 transition"
                   >
                     {/* From/To */}
                     <td className="py-3 font-medium break-all">
                       {tx?.type === "receive" ? (
                         <>
-                          From: {tx?.from?.slice(0, 6)}...
-                          {tx?.from?.slice(-6)}
+                          From: {tx?.fromUser?.username?.slice(0, 6)}...
+                          {tx?.fromUser?.username?.slice(-6)}
                         </>
                       ) : (
                         <>
-                          To: {tx?.to?.slice(0, 6)}...
-                          {tx?.to?.slice(-6)}
+                          To: {tx?.toUser?.username?.slice(0, 6)}...
+                          {tx?.toUser?.username?.slice(-6)}
                         </>
                       )}
                     </td>
 
+                    {/* Currency */}
+                    <td>{tx?.currency}</td>
+
                     {/* Amount */}
-                    <td>{tx?.amountReceived || tx?.amountSent || tx?.fee}</td>
+                    <td>{tx?.amount || tx?.amount || tx?.fee}</td>
 
                     {/* Token */}
                     {/* <td>{tx?.tokenReceived || tx?.tokenSent}</td> */}
 
                     {/* Hash */}
-                    <td>
-                      <a
-                        href={`https://stellar.expert/explorer/public/tx/${tx?.hash}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[#0E7BB2] hover:underline"
-                      >
-                        View on Stellar Expert
-                      </a>
-                    </td>
+                    <td>{formatDate(tx?.expiresAt)}</td>
 
-                    {/* Date */}
-                    <td>{formatDate(tx?.date)}</td>
+                    {/* Status */}
+                    <td className="capitalize">{tx?.status}</td>
+
+
 
                     {/* Type */}
                     {/* <td className="flex items-center py-2 gap-1 capitalize">
