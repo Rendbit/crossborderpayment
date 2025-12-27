@@ -332,12 +332,9 @@ export class HorizonService implements IHorizonService {
     const selectedCurrency = param.currencyType?.toUpperCase() || "USD";
 
     const conversionCurrency = [
-      "USD",
       "NGN",
       "GHS",
       "KES",
-      "EUR",
-      "GBP",
       "NATIVE",
     ].includes(selectedCurrency)
       ? selectedCurrency

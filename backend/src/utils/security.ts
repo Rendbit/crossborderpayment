@@ -229,9 +229,6 @@ export const validatePaymentAmount = (
   // Maximum amount limits (adjust based on your business requirements)
   const maxAmounts: { [key: string]: number } = {
     XLM: 1000000,
-    USD: 1000000,
-    EUR: 1000000,
-    GBP: 1000000,
     NGN: 50000000,
   };
 
