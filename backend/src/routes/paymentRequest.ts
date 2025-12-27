@@ -58,19 +58,6 @@ router.use(moderateLimiter);
  *               description:
  *                 type: string
  *                 description: Optional payment description
- *               metadata:
- *                 type: object
- *                 required: true
- *                 properties:
- *                   invoiceNumber:
- *                     type: string
- *                     required: true
- *                     description: Invoice number for the payment request
- *                   invoiceDateAndTime:
- *                     type: string
- *                     format: date-time
- *                     required: true
- *                     description: Date and time when invoice was created
  *     responses:
  *       201:
  *         description: Payment request created successfully

@@ -30,6 +30,7 @@ import {
 import { PinHelper } from "../helpers/pin.helper";
 import { Request as ExpressRequest } from "express";
 import mongoose, { Document, Types } from "mongoose";
+import { randomUUID } from "crypto";
 
 export interface IPaymentRequestService {
   createPaymentRequest(
@@ -419,19 +420,12 @@ export class PaymentRequestService implements IPaymentRequestService {
       const sanitizedPaymentMethod = sanitizeInput(validatedBody.paymentMethod);
 
       // Sanitize metadata
-      let sanitizedMetadata = {};
-      if (validatedBody.metadata) {
-        try {
-          sanitizedMetadata = sanitizeMetadata(validatedBody.metadata);
-        } catch (error: any) {
-          return {
-            status: httpStatus.BAD_REQUEST,
-            data: {} as PaymentRequestData,
-            success: false,
-            message: error.message,
-          };
-        }
-      }
+      let sanitizedMetadata = sanitizeMetadata({
+            invoiceNumber: nanoid(5),
+            invoiceDateAndTime: new Date().toISOString(),
+          });
+
+      
 
       // Validate amount
       const amountValidation = validatePaymentAmount(
