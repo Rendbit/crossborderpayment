@@ -6,6 +6,7 @@ import PaymentLinks from "./pages/RequestPayment";
 import RequestPayment from "./pages/RequestPayment";
 import RecurringPayment from "./pages/RecurringOneTimePayment";
 import EditRequestPayment from "./pages/EditRequestPayment";
+import ProcessPaymentRequest from "./pages/ProcessPaymentRequest";
 
 // Lazy-loaded pages
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -90,6 +91,7 @@ const App: React.FC = () => {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/request-payment" element={<RequestPayment />} />
             <Route path="/edit-request-payment/:requestId" element={<EditRequestPayment />} />
+            <Route path="/pay/:requestId" element={<ProcessPaymentRequest />} />
             <Route path="/recurring-one-time-payment" element={<RecurringPayment />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/history" element={<History />} />
