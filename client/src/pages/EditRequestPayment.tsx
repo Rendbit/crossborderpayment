@@ -191,6 +191,35 @@ const EditRequestPayment = () => {
         }
     }, [requestId]);
 
+    const handleCancelPaymentRequest = async () => {
+        setIsLoading(true);
+        try {
+            const response = await fetch(`${BASE_URL}/paymentRequest/cancel`, {
+                method: 'POST',
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "x-api-key": `${API_KEY}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ requestId }),
+            });
+            const data = await response.json();
+            if (data.success) {
+                setMsg(data.message || "Payment request canceled successfully");
+                setAlertType("success");
+            } else {
+                setMsg(data.message || "Failed to cancel payment request");
+                setAlertType("error");
+            }
+        } catch (error) {
+            console.error('Error canceling payment request:', error);
+            setMsg("An error occurred while canceling the payment request");
+            setAlertType("error");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
   return (
     <main className="flex-1 p-4 sm:p-6 lg:p-8 text-gray-900 dark:text-gray-100">
         {msg && <Alert msg={msg} setMsg={setMsg} alertType={alertType} />}
@@ -313,13 +342,22 @@ const EditRequestPayment = () => {
                     {/* Proceed Button */}
                     {
                         user?.primaryEmail === fromUserInfo?.primaryEmail &&
-                        <button
-                            onClick={handleProceed}
-                            disabled={isLoading || !formData.amount || !formData.toUserInput || !formData.currency}
-                            className="w-full bg-[#0E7BB2] hover:bg-[#0B5E8C] text-white font-medium py-3 rounded-lg transition-colors mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {isLoading ? 'Processing...' : 'Update'}
-                        </button>
+                        <div className='flex gap-4'>
+                            <button
+                                onClick={handleCancelPaymentRequest}
+                                disabled={isLoading || loading}
+                                className="w-full bg-red-500 hover:bg-red-600 text-white font-medium py-3 rounded-lg transition-colors mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isLoading ? 'Processing...' : 'Cancel Payment'}
+                            </button>
+                            <button
+                                onClick={handleProceed}
+                                disabled={isLoading || loading}
+                                className="w-full bg-[#0E7BB2] hover:bg-[#0B5E8C] text-white font-medium py-3 rounded-lg transition-colors mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isLoading ? 'Processing...' : 'Accept Payment'}
+                            </button>
+                        </div>
                     }
 
                     {
