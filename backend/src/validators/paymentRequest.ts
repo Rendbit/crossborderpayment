@@ -130,8 +130,7 @@ export const ProcessPaymentRequestSchema = z
     paymentMethod: z.enum(["crypto", "fiat"]),
     pinCode: PinCodeSchema,
     transactionDetails: z
-      .string()
-      .max(500, "Transaction details too long")
+      .record(z.any())
       .optional(),
   })
   .strict();

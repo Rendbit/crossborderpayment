@@ -193,8 +193,19 @@ router.get("/list", authenticate, listPaymentRequests);
  *                 enum: [crypto, fiat]
  *                 description: Payment method to use
  *               pinCode:
- *                 type: string
- *                 description: User's PIN code for verification
+ *                 type: object
+ *                 description: User's PIN object for verification
+ *                 required: [code]
+ *                 properties:
+ *                   code:
+ *                     type: string
+ *                     description: PIN code value (e.g., "1234")
+ *                   type:
+ *                     type: string
+ *                     description: Optional PIN type or source (e.g., "local", "hardware")
+ *                   nonce:
+ *                     type: string
+ *                     description: Optional nonce or metadata for verification
  *               transactionDetails:
  *                 type: string
  *                 description: Optional transaction details

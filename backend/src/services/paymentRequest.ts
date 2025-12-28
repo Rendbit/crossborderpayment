@@ -1264,8 +1264,7 @@ export class PaymentRequestService implements IPaymentRequestService {
       // NEW: Validate required metadata is present
       if (
         !paymentRequest.metadata?.invoiceNumber ||
-        !paymentRequest.metadata?.invoiceDateAndTime ||
-        !paymentRequest.metadata?.serviceType
+        !paymentRequest.metadata?.invoiceDateAndTime
       ) {
         await session.abortTransaction();
         session.endSession();
