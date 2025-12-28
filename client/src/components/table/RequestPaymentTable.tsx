@@ -8,6 +8,8 @@ import {
   Plus,
   UserPlus,
   UserMinus,
+  CopyIcon,
+  EyeIcon,
 } from "lucide-react";
 import ArrayTableLoader from "../loader/ArrayTableLoader";
 import Cookies from "js-cookie";
@@ -418,6 +420,14 @@ const RequestPaymentTable: React.FC<TransactionTableProps> = ({
 
   const { startItem, endItem } = getShowingRange();
 
+  const handleCopyLink = (requestId) => {
+    const link = `${window.location.origin}/#/pay/${requestId}`;
+    navigator.clipboard.writeText(link).then(() => {
+      setMsg("Link copied to clipboard!");
+      setAlertType("success");
+    });
+  };
+
   return (
     <>
       <section className="mt-6 bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg border border-[#E2E4E9] dark:border-gray-700">
@@ -561,6 +571,22 @@ const RequestPaymentTable: React.FC<TransactionTableProps> = ({
                     <span>Status</span> {renderSortArrow("type")}
                   </div>
                 </th>
+                <th
+                  className="pb-2 cursor-pointer"
+                  onClick={() => handleSort("type")}
+                >
+                  <div className="flex items-center">
+                    <span>View</span> {renderSortArrow("type")}
+                  </div>
+                </th>
+                <th
+                  className="pb-2 cursor-pointer"
+                  onClick={() => handleSort("type")}
+                >
+                  <div className="flex items-center">
+                    <span>Copy Link</span> {renderSortArrow("type")}
+                  </div>
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700 items-center">
@@ -598,7 +624,6 @@ const RequestPaymentTable: React.FC<TransactionTableProps> = ({
                 displayTransactions.map((tx: any, idx: number) => (
                   <tr
                     key={`${tx.hash}-${idx}`}
-                    onClick={() => navigate(`/edit-request-payment/${tx.requestId}`)}
                     className="hover:bg-gray-50 cursor-pointer dark:hover:bg-gray-700 transition"
                   >
                     {/* From/To */}
@@ -630,6 +655,15 @@ const RequestPaymentTable: React.FC<TransactionTableProps> = ({
 
                     {/* Status */}
                     <td className="capitalize">{tx?.status}</td>
+
+                    {/* Link */}
+                    <td className="capitalize">
+                      <EyeIcon onClick={() => navigate(`/edit-request-payment/${tx.requestId}`)} className="w-4 h-4 text-gray-500 dark:text-gray-400 cursor-pointer" />
+                    </td>
+
+                    <td className="capitalize">
+                      <CopyIcon onClick={() => handleCopyLink(tx?.requestId)} className="w-4 h-4 text-gray-500 dark:text-gray-400 cursor-pointer" />
+                    </td>
 
 
 

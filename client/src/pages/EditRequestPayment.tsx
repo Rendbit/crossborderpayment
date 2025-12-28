@@ -38,6 +38,8 @@ const EditRequestPayment = () => {
         primaryEmail: '',
     });
 
+    const [expirationDate, setExpirationDate] = useState<string>('');
+
     const [formData, setFormData] = useState({
         amount: '',
         currency: '',
@@ -81,9 +83,10 @@ const EditRequestPayment = () => {
     
             // Prepare the payload with the actual user object, not the input
             const payload = {
-                amount: formData.amount,
+                requestId,
+                amount: formData.amount.toString(),
                 currency: formData.currency,
-                // toUser: formData.toUserInput, // Send the input value
+                toUser: formData.toUserInput, // Send the input value
                 // paymentMethod: selectedPaymentMethod,
                 expiresIn: formData.expiresIn,
                 description: formData.description,
@@ -100,7 +103,9 @@ const EditRequestPayment = () => {
                 },
                 body: JSON.stringify(payload)
             });
-    
+            if(response.ok){
+                fetchData()
+            }
             const data = await response.json();
             setMsg(data.message);
             setAlertType(data.success ? "success" : "error");
@@ -117,57 +122,69 @@ const EditRequestPayment = () => {
         setIsPrivateKeyModalOpen(true);
     };
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                setLoading(true);
-                const response = await fetch(`${BASE_URL}/paymentRequest/get?requestId=${requestId}`, {
-                    headers: {
-                        Authorization: `Bearer ${token}`,
-                        "x-api-key": `${API_KEY}`,
-                    },
-                });
-                const data = await response.json();
+    const fetchData = async () => {
+        try {
+            setLoading(true);
+            const response = await fetch(`${BASE_URL}/paymentRequest/get?requestId=${requestId}`, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "x-api-key": `${API_KEY}`,
+                },
+            });
+            const data = await response.json();
+            
+            if (data.success && data.data.paymentRequest) {
+                const paymentRequest = data.data.paymentRequest;
                 
-                if (data.success && data.data.paymentRequest) {
-                    const paymentRequest = data.data.paymentRequest;
-                    
-                    // Set the read-only user info
-                    if (paymentRequest.toUser) {
-                        setToUserInfo({
-                            username: paymentRequest.toUser.username || '',
-                            stellarPublicKey: paymentRequest.toUser.stellarPublicKey || '',
-                            primaryEmail: paymentRequest.toUser.primaryEmail || '',
-                        });
-                    }
-
-                    if (paymentRequest.fromUser) {
-                        setFromUserInfo({
-                            username: paymentRequest.fromUser.username || '',
-                            stellarPublicKey: paymentRequest.fromUser.stellarPublicKey || '',
-                            primaryEmail: paymentRequest.fromUser.primaryEmail || '',
-                        });
-                    }
-                    
-                    // Set the form data
-                    setFormData({
-                        amount: paymentRequest.amount || '',
-                        currency: paymentRequest.currency || '',
-                        toUserInput: paymentRequest.toUser?.username || '', // Initialize with username
-                        paymentMethod: paymentRequest.paymentMethod || selectedPaymentMethod,
-                        expiresIn: paymentRequest.expiresAt || '',
-                        description: paymentRequest.description || '',
-                        frequency: 'weekly',
+                // Set the read-only user info
+                if (paymentRequest.toUser) {
+                    setToUserInfo({
+                        username: paymentRequest.toUser.username || '',
+                        stellarPublicKey: paymentRequest.toUser.stellarPublicKey || '',
+                        primaryEmail: paymentRequest.toUser.primaryEmail || '',
                     });
                 }
-            } catch (error) {
-                console.error('Error fetching payment request:', error);
-                setMsg("Failed to load payment request data");
-                setAlertType("error");
-            } finally {
-                setLoading(false);
+
+                if (paymentRequest.fromUser) {
+                    setFromUserInfo({
+                        username: paymentRequest.fromUser.username || '',
+                        stellarPublicKey: paymentRequest.fromUser.stellarPublicKey || '',
+                        primaryEmail: paymentRequest.fromUser.primaryEmail || '',
+                    });
+                }
+                
+                // Calculate days until expiration
+                let expiresInDays = '';
+                if (paymentRequest.expiresAt) {
+                    setExpirationDate(paymentRequest.expiresAt);
+                    const expirationDate = new Date(paymentRequest.expiresAt);
+                    const today = new Date();
+                    const diffTime = expirationDate.getTime() - today.getTime();
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    expiresInDays = diffDays > 0 ? diffDays.toString() : '0';
+                }
+                
+                // Set the form data
+                setFormData({
+                    amount: paymentRequest.amount || '',
+                    currency: paymentRequest.currency || '',
+                    toUserInput: paymentRequest.toUser?.username || '', // Initialize with username
+                    paymentMethod: paymentRequest.paymentMethod || selectedPaymentMethod,
+                    expiresIn: expiresInDays,
+                    description: paymentRequest.description || '',
+                    frequency: 'weekly',
+                });
             }
-        };
+        } catch (error) {
+            console.error('Error fetching payment request:', error);
+            setMsg("Failed to load payment request data");
+            setAlertType("error");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
         
         if (requestId) {
             fetchData();
@@ -274,10 +291,10 @@ const EditRequestPayment = () => {
                     {/* Expires In */}
                     <div>
                         <div className='flex items-center justify-between mb-2'>
-                            <label className="block text-sm font-medium">Expires in</label>
-                            {formData.expiresIn && (
+                            <label className="block text-sm font-medium">Expires in (days)</label>
+                            {expirationDate && (
                                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                                    {new Date(formData.expiresIn).toLocaleDateString()}
+                                    {new Date(expirationDate).toLocaleDateString()}
                                 </p>
                             )}
                         </div>
