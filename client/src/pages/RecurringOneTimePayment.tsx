@@ -284,13 +284,10 @@ const RecurringPayment = () => {
 
                     {/* Modal Header */}
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                        Note:
+                        Confirm Payment
                     </h2>
                     <p className="text-gray-600 dark:text-gray-300 mb-6 border-b border-gray-200 dark:border-gray-700 pb-4 md:text-[16px] text-[14px]">
-                        Exporting your private key will reveal sensitive information about
-                        your wallet. Ensure you store it securely and never share it with
-                        anyone. Losing your private key may result in the permanent loss of
-                        your assets.
+                        Please enter your transaction PIN to confirm this payment of
                     </p>
 
                     <OTPInput

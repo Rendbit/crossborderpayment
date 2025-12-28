@@ -36,6 +36,11 @@ const ProcessPaymentRequest = () => {
         primaryEmail: '',
     });
 
+    const [metadata, setMetadata] = useState({
+        invoiceNumber: '',
+        invoiceDateAndTime: '',
+    });
+
     const [expirationDate, setExpirationDate] = useState<string>('');
     const [paymentMethod, setPaymentMethod] = useState<string>('crypto');
 
@@ -72,7 +77,7 @@ const ProcessPaymentRequest = () => {
                 requestId: requestId,
                 paymentMethod: paymentMethod,
                 pinCode: transactionPin,
-                transactionDetails: transactionDetails || "Payment processed"
+                transactionDetails: metadata
             };
     
             console.log('Payload:', payload);
@@ -150,6 +155,13 @@ const ProcessPaymentRequest = () => {
                 // Set payment method
                 if (paymentRequest.paymentMethod) {
                     setPaymentMethod(paymentRequest.paymentMethod);
+                }
+
+                if (paymentRequest.metadata) {
+                    setMetadata({
+                        invoiceNumber: paymentRequest.metadata.invoiceNumber || '',
+                        invoiceDateAndTime: paymentRequest.metadata.invoiceDateAndTime || '',
+                    });
                 }
 
                 // Calculate days until expiration
