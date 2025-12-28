@@ -82,12 +82,9 @@ const RecurringPayment = () => {
             };
     
             console.log('Payload:', payload);
-            const requestUrl = localStorage.getItem("paymentMethod") === "one-time"
-                ? `${BASE_URL}/paymentRequest/create`
-                : `${BASE_URL}/recurringPayment/create`;
     
             // Make your API call here
-            const response = await fetch(requestUrl, {
+            const response = await fetch(`${BASE_URL}/paymentRequest/create`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -101,6 +98,7 @@ const RecurringPayment = () => {
             const data = await response.json();
             setMsg(data.message);
             setAlertType(data.success ? "success" : "error");
+            setIsPrivateKeyModalOpen(false);
             console.log('Response:', data);
             // Handle success
     
@@ -301,7 +299,7 @@ const RecurringPayment = () => {
                             <input
                             {...props}
                             placeholder="0"
-                            className="text-center text-gray-700 darktext-gray-300 focus:border-[#0E7BB2] bg-white/8 border-gray-300 dark:border-[white]/50  otp-input text-[26px] font-[600] outline-none h-[68px] rounded-md border placeholder:text-[#96969659] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            className="text-center text-gray-100 darktext-gray-300 focus:border-[#0E7BB2] bg-white/8 border-gray-300 dark:border-[white]/50  otp-input text-[26px] font-[600] outline-none h-[68px] rounded-md border placeholder:text-[#96969659] [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                             />
                         )}
                     />

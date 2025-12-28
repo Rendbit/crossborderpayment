@@ -192,6 +192,10 @@ const ProcessPaymentRequest = () => {
         }
     };
 
+    const handleRejectPayment = async () => {
+        setIsLoading(true);
+    };
+
     useEffect(() => {
         if (requestId) {
             fetchData();
@@ -305,13 +309,22 @@ const ProcessPaymentRequest = () => {
                     {/* Process Payment Button - Only show to the recipient (toUser) */}
                     {
                         user?.primaryEmail === toUserInfo?.primaryEmail &&
-                        <button
-                            onClick={handleProceed}
-                            disabled={isLoading || loading}
-                            className="w-full bg-[#0E7BB2] hover:bg-[#0B5E8C] text-white font-medium py-3 rounded-lg transition-colors mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {isLoading ? 'Processing...' : 'Process Payment'}
-                        </button>
+                        <div className='flex gap-4'>
+                            <button
+                                onClick={handleRejectPayment}
+                                disabled={isLoading || loading}
+                                className="w-full bg-red-500 hover:bg-red-600 text-white font-medium py-3 rounded-lg transition-colors mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isLoading ? 'Processing...' : 'Reject Payment'}
+                            </button>
+                            <button
+                                onClick={handleProceed}
+                                disabled={isLoading || loading}
+                                className="w-full bg-[#0E7BB2] hover:bg-[#0B5E8C] text-white font-medium py-3 rounded-lg transition-colors mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isLoading ? 'Processing...' : 'Accept Payment'}
+                            </button>
+                        </div>
                     }
 
                     {/* Show message if user is not the recipient */}
