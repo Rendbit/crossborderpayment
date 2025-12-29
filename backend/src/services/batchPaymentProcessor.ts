@@ -52,15 +52,13 @@ export class BatchPaymentProcessor {
       console.log("Current time:", new Date().toISOString());
 
       const duePayments = await this.getDuePayments();
-      console.log({ duePayments });
 
       if (duePayments.length === 0) {
-        console.log("No payments due for processing");
         stats.totalTime = Date.now() - startTime;
         return stats;
       }
 
-      console.log(`Found ${duePayments.length} due payments`);
+      // console.log(`Found ${duePayments.length} due payments`);
 
       for (const payment of duePayments) {
         try {

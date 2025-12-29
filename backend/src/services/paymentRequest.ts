@@ -238,7 +238,7 @@ export enum RecurringFrequency {
   MONTHLY = "monthly",
   QUARTERLY = "quarterly",
   YEARLY = "yearly",
-  CUSTOM = "custom" // For custom schedules
+  CUSTOM = "custom", // For custom schedules
 }
 
 export interface RecurringPaymentData {
@@ -421,11 +421,9 @@ export class PaymentRequestService implements IPaymentRequestService {
 
       // Sanitize metadata
       let sanitizedMetadata = sanitizeMetadata({
-            invoiceNumber: nanoid(5),
-            invoiceDateAndTime: new Date().toISOString(),
-          });
-
-      
+        invoiceNumber: nanoid(5),
+        invoiceDateAndTime: new Date().toISOString(),
+      });
 
       // Validate amount
       const amountValidation = validatePaymentAmount(
@@ -521,7 +519,7 @@ export class PaymentRequestService implements IPaymentRequestService {
       const shortUrl = await this.generateShortUrl(paymentLink);
       const qrCodeUrl = await this.generateQRCode(paymentLink);
 
-      console.log("Req Body ==================== ", req.body)
+      console.log("Req Body ==================== ", req.body);
 
       // Create payment request
       const paymentRequest: any = new PaymentRequest({
@@ -541,7 +539,6 @@ export class PaymentRequestService implements IPaymentRequestService {
         linkId,
         pinVerified: false,
       });
-  
 
       await paymentRequest.save();
 
@@ -1321,7 +1318,6 @@ export class PaymentRequestService implements IPaymentRequestService {
       if (sanitizedPaymentMethod === "crypto") {
         // Process crypto payment
         const blockchain = BlockchainFactory.getTransactionProvider("stellar");
-
         const paymentParams: any = {
           user: {
             ...userWithSensitiveData.toObject(),
@@ -1336,6 +1332,7 @@ export class PaymentRequestService implements IPaymentRequestService {
           transactionDetails:
             sanitizedTransactionDetails ||
             `Payment request: ${paymentRequest.requestId}, Invoice: ${paymentRequest.metadata?.invoiceNumber}`,
+          pinCode: sanitizedPinCode,
         };
 
         const paymentResult = await blockchain.payment(paymentParams);
@@ -1349,9 +1346,6 @@ export class PaymentRequestService implements IPaymentRequestService {
         paymentRequest.fiatPaymentRef = fiatPaymentRef;
 
         // TODO: Integrate with your actual fiat payment provider
-        console.log(
-          `Fiat payment would be processed for ${paymentRequest.amount} ${paymentRequest.currency}`
-        );
       }
 
       // Update payment request status to completed

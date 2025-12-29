@@ -15,12 +15,12 @@ export const CurrencyTypeSchema = z
   .min(1, "Currency type is required")
   .max(5, "Currency type must be at most 5 characters")
   .transform((val) => val.toUpperCase())
-  .refine(
-    (val) => ["NGNC", "GHSC", "KESC", "NATIVE"].includes(val),
-    {
-      message: "Currency type must be NGNC, GHSC, KESC, or NATIVE",
-    }
-  );
+  // .refine(
+  //   (val) => ["NGNC", "GHSC", "KESC", "NATIVE"].includes(val),
+  //   {
+  //     message: "Currency type must be NGNC, GHSC, KESC, or NATIVE",
+  //   }
+  // );
 
 // Amount validator
 const AmountSchema = z
@@ -58,7 +58,7 @@ const PaginationSchema = z
 // Get all wallet assets validator
 export const GetAllWalletAssetsSchema = z
   .object({
-    currencyType: CurrencyTypeSchema.optional().default("USD"),
+    currencyType: CurrencyTypeSchema.optional().default("NGN"),
   })
   .strict();
 

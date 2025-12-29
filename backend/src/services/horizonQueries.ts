@@ -55,6 +55,7 @@ export class HorizonService implements IHorizonService {
       }
 
       // SECURITY: Validate query parameters
+      console.log("REQ QUERY", req.query)
       const validatedQuery = GetAllWalletAssetsSchema.parse(req.query);
 
       // SECURITY: Sanitize currency type
