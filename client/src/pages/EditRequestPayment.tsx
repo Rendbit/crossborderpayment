@@ -43,6 +43,7 @@ const EditRequestPayment = () => {
     const [formData, setFormData] = useState({
         amount: '',
         currency: '',
+        status: '',
         toUserInput: '', // Separate input field value
         paymentMethod: 'crypto',
         expiresIn: '',
@@ -64,7 +65,7 @@ const EditRequestPayment = () => {
         }));
     };
 
-    const proceedAndMakePaymentRequest = async () => {
+    const proceedAndUpdatePaymentRequest = async () => {
         console.log("Called ======= ");
         
         if(!transactionPin){
@@ -86,7 +87,7 @@ const EditRequestPayment = () => {
                 requestId,
                 amount: formData.amount.toString(),
                 currency: formData.currency,
-                toUser: formData.toUserInput, // Send the input value
+                // toUser: formData.toUserInput, // Send the input value
                 // paymentMethod: selectedPaymentMethod,
                 expiresIn: formData.expiresIn,
                 description: formData.description,
@@ -115,6 +116,7 @@ const EditRequestPayment = () => {
             console.error('Error:', error);
         } finally {
             setIsLoading(false);
+            setIsPrivateKeyModalOpen(false);
         }
     };
 
@@ -168,6 +170,7 @@ const EditRequestPayment = () => {
                 setFormData({
                     amount: paymentRequest.amount || '',
                     currency: paymentRequest.currency || '',
+                    status: paymentRequest.status || '',
                     toUserInput: paymentRequest.toUser?.username || '', // Initialize with username
                     paymentMethod: paymentRequest.paymentMethod || selectedPaymentMethod,
                     expiresIn: expiresInDays,
@@ -235,17 +238,10 @@ const EditRequestPayment = () => {
                 </div>
 
                 {/* Heading */}
-                {
-                    localStorage.getItem("paymentMethod") === "one-time" ?
-                    <h2 className="text-center text-xl font-semibold mb-6">
-                        One time payment
-                    </h2>
-                    :
-                    <h2 className="text-center text-xl font-semibold mb-6">
-                        Recurring payment
-                    </h2>
-                }
 
+                <h2 className="text-center text-xl font-semibold mb-6">
+                    Update Payment Request
+                </h2>
                 {/* Form */}
                 <div className="space-y-5">
                     {/* Amount */}
@@ -340,24 +336,39 @@ const EditRequestPayment = () => {
                     </div>
 
                     {/* Proceed Button */}
+                    {/* Status Messages */}
+                    {formData.status === 'cancelled' && (
+                        <p className="text-sm text-red-600 dark:text-red-400">
+                            This payment request has been cancelled.
+                        </p>
+                    )}
+
+                    {formData.status === 'rejected' && (
+                        <p className="text-sm text-red-600 dark:text-red-400">
+                            This payment request has been rejected.
+                        </p>
+                    )}
+
+                    {formData.status === 'completed' && (
+                        <p className="text-sm text-green-600 dark:text-green-400">
+                            This payment request has been completed.
+                        </p>
+                    )}
+
+                    {/* Update Button - Only show if status is pending and user is the sender */}
                     {
-                        user?.primaryEmail === fromUserInfo?.primaryEmail &&
-                        <div className='flex gap-4'>
-                            <button
-                                onClick={handleCancelPaymentRequest}
-                                disabled={isLoading || loading}
-                                className="w-full bg-red-500 hover:bg-red-600 text-white font-medium py-3 rounded-lg transition-colors mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {isLoading ? 'Processing...' : 'Cancel Payment'}
-                            </button>
-                            <button
-                                onClick={handleProceed}
-                                disabled={isLoading || loading}
-                                className="w-full bg-[#0E7BB2] hover:bg-[#0B5E8C] text-white font-medium py-3 rounded-lg transition-colors mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {isLoading ? 'Processing...' : 'Accept Payment'}
-                            </button>
-                        </div>
+                        formData.status === 'pending' && 
+                        user?.primaryEmail === fromUserInfo?.primaryEmail && (
+                            <div className='flex gap-4'>
+                                <button
+                                    onClick={handleProceed}
+                                    disabled={isLoading || loading}
+                                    className="w-full bg-[#0E7BB2] hover:bg-[#0B5E8C] text-white font-medium py-3 rounded-lg transition-colors mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isLoading ? 'Processing...' : 'Update Payment Request'}
+                                </button>
+                            </div>
+                        )
                     }
 
                     {
@@ -377,10 +388,7 @@ const EditRequestPayment = () => {
                                 Note:
                             </h2>
                             <p className="text-gray-600 dark:text-gray-300 mb-6 border-b border-gray-200 dark:border-gray-700 pb-4 md:text-[16px] text-[14px]">
-                                Exporting your private key will reveal sensitive information about
-                                your wallet. Ensure you store it securely and never share it with
-                                anyone. Losing your private key may result in the permanent loss of
-                                your assets.
+                                Please enter your transaction PIN to confirm this action
                             </p>
 
                             <OTPInput
@@ -400,7 +408,7 @@ const EditRequestPayment = () => {
                             />
 
                             <button
-                                onClick={proceedAndMakePaymentRequest}
+                                onClick={proceedAndUpdatePaymentRequest}
                                 disabled={loading || !transactionPin || transactionPin.length < 4}
                                 className="hover:bg-[#0c5e89] bg-[#0E7BB2] mt-3 flex justify-center items-center rounded-[10px] py-2 w-full text-white"
                             >

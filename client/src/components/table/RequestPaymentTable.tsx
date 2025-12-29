@@ -1,23 +1,16 @@
 import React, { useEffect, useState } from "react";
 import {
   Search,
-  Globe,
-  ArrowUpRight,
-  ArrowRightLeft,
-  Minus,
-  Plus,
-  UserPlus,
-  UserMinus,
   CopyIcon,
   EyeIcon,
 } from "lucide-react";
-import ArrayTableLoader from "../loader/ArrayTableLoader";
 import Cookies from "js-cookie";
 import { getPaymentRequestHistory } from "../../function/transaction";
 import { useNavigate } from "react-router-dom";
 import Alert from "../alert/Alert";
 import { ArrowUp, ArrowDown } from "lucide-react";
 import { useAppContext } from "../../context/useContext";
+import { LiaTelegramPlane } from "react-icons/lia";
 
 interface TransactionTableProps {
   NumberOfTx?: number;
@@ -50,6 +43,7 @@ const RequestPaymentTable: React.FC<TransactionTableProps> = ({
     cursor: null,
   });
   const user = Cookies.get("token");
+  const loggedInUser =  JSON.parse(localStorage.getItem("userData") || "{}");
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -313,21 +307,35 @@ const RequestPaymentTable: React.FC<TransactionTableProps> = ({
 
     const matchesSearch =
       (transaction?.hash || "").toLowerCase()?.includes(search) ||
-      (transaction?.from || "").toLowerCase()?.includes(search) ||
-      (transaction?.to || "").toLowerCase()?.includes(search) ||
+      (transaction?.fromUser?.primaryEmail || "").toLowerCase()?.includes(search) ||
+      (transaction?.toUser?.primaryEmail || "").toLowerCase()?.includes(search) ||
+      (transaction?.fromUser?.username || "").toLowerCase()?.includes(search) ||
+      (transaction?.toUser?.username || "").toLowerCase()?.includes(search) ||
       (transaction?.tokenReceived || "").toLowerCase()?.includes(search) ||
       (transaction?.tokenSent || "")?.toLowerCase()?.includes(search) ||
-      (transaction?.type || "")?.toLowerCase()?.includes(search) ||
-      (transaction?.hash || "")?.toLowerCase()?.includes(search) ||
-      String(transaction?.amountReceived || transaction?.amountSent || "")
+      (transaction?.currency || "")?.toLowerCase()?.includes(search) ||
+      (transaction?.status || "")?.toLowerCase()?.includes(search) ||
+      String(transaction?.amount || "")
         .toLowerCase()
         .includes(search);
 
-    const matchesType =
-      filterType === "all" ? true : transaction?.type === filterType;
+    // Filter by type based on logged-in user's email
+    let matchesType = true;
+    if (filterType !== "all") {
+      const userEmail = loggedInUser?.primaryEmail?.toLowerCase();
+      const fromEmail = transaction?.fromUser?.primaryEmail?.toLowerCase();
+      
+      if (filterType === "sent") {
+        // Show transactions where user is the sender
+        matchesType = fromEmail === userEmail;
+      } else if (filterType === "received") {
+        // Show transactions where user is NOT the sender (i.e., received from others)
+        matchesType = fromEmail !== userEmail;
+      }
+    }
 
     const matchesDate = filterDate
-      ? new Date(transaction?.date)?.toLocaleDateString() ===
+      ? new Date(transaction?.createdAt)?.toLocaleDateString() ===
         new Date(filterDate)?.toLocaleDateString()
       : true;
 
@@ -539,22 +547,6 @@ const RequestPaymentTable: React.FC<TransactionTableProps> = ({
                     <span>Amount </span> {renderSortArrow("amountSent")}
                   </div>
                 </th>
-                {/* <th
-                  className="pb-2 cursor-pointer"
-                  onClick={() => handleSort("tokenSent")}
-                >
-                  <div className="flex items-center">
-                    <span>Token </span> {renderSortArrow("tokenSent")}
-                  </div>
-                </th> */}
-                {/* <th
-                  className="pb-2 cursor-pointer"
-                  onClick={() => handleSort("hash")}
-                >
-                  <div className="flex items-center">
-                    <span>View Tx </span> {renderSortArrow("hash")}
-                  </div>
-                </th> */}
                 <th
                   className="pb-2 cursor-pointer"
                   onClick={() => handleSort("date")}
@@ -585,6 +577,14 @@ const RequestPaymentTable: React.FC<TransactionTableProps> = ({
                 >
                   <div className="flex items-center">
                     <span>Copy Link</span> {renderSortArrow("type")}
+                  </div>
+                </th>
+                <th
+                  className="pb-2 cursor-pointer"
+                  onClick={() => handleSort("type")}
+                >
+                  <div className="flex items-center">
+                    <span>Prcess Payment</span> {renderSortArrow("type")}
                   </div>
                 </th>
               </tr>
@@ -665,68 +665,9 @@ const RequestPaymentTable: React.FC<TransactionTableProps> = ({
                       <CopyIcon onClick={() => handleCopyLink(tx?.requestId)} className="w-4 h-4 text-gray-500 dark:text-gray-400 cursor-pointer" />
                     </td>
 
-
-
-                    {/* Type */}
-                    {/* <td className="flex items-center py-2 gap-1 capitalize">
-                      {tx?.type?.includes("swap") ? (
-                        <div className="flex items-center gap-2">
-                          <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
-                            <ArrowRightLeft size={14} />
-                          </span>
-                          <span>Swap</span>
-                        </div>
-                      ) : tx?.type === "receive" ? (
-                        <div className="flex items-center gap-2">
-                          <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
-                            <Globe size={14} />
-                          </span>
-                          <span>Receive</span>
-                        </div>
-                      ) : tx?.type === "send" ? (
-                        <div className="flex items-center gap-2">
-                          <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
-                            <ArrowUpRight size={14} />
-                          </span>
-                          <span>Send</span>
-                        </div>
-                      ) : tx?.type === "add currency" ? (
-                        <div className="flex items-center gap-2">
-                          <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
-                            <Plus size={14} />
-                          </span>
-                          <span>Add Currency</span>
-                        </div>
-                      ) : tx?.type === "remove currency" ? (
-                        <div className="flex items-center gap-2">
-                          <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
-                            <Minus size={14} />
-                          </span>
-                          <span>Remove Currency</span>
-                        </div>
-                      ) : tx?.type === "create account" ? (
-                        <div className="flex items-center gap-2">
-                          <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
-                            <UserPlus size={14} />
-                          </span>
-                          <span>Create Account</span>
-                        </div>
-                      ) : tx?.type === "account merge" ? (
-                        <div className="flex items-center gap-2">
-                          <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
-                            <UserMinus size={14} />
-                          </span>
-                          <span>Account Merge</span>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <span className="bg-[#E7F1F7] dark:bg-gray-700 p-3 rounded-full">
-                            <Globe size={14} />
-                          </span>
-                          <span>{tx?.type}</span>
-                        </div>
-                      )}
-                    </td> */}
+                    <td className="capitalize">
+                      <LiaTelegramPlane onClick={() => navigate(`/pay/${tx.requestId}`)} className="w-4 h-4 text-gray-500 dark:text-gray-400 cursor-pointer" />
+                    </td>
                   </tr>
                 ))
               )}

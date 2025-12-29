@@ -47,6 +47,7 @@ const ProcessPaymentRequest = () => {
     const [paymentRequestData, setPaymentRequestData] = useState({
         amount: '',
         currency: '',
+        status: '',
         description: '',
         expiresIn: '',
     });
@@ -179,6 +180,7 @@ const ProcessPaymentRequest = () => {
                 setPaymentRequestData({
                     amount: paymentRequest.amount || '',
                     currency: paymentRequest.currency || '',
+                    status: paymentRequest.status || '',
                     description: paymentRequest.description || '',
                     expiresIn: expiresInDays,
                 });
@@ -218,7 +220,7 @@ const ProcessPaymentRequest = () => {
 
                 {/* Heading */}
                 <h2 className="text-center text-xl font-semibold mb-6">
-                    Payment Request Details
+                    Process Payment Request
                 </h2>
 
                 {/* Payment Request Information (Read-only) */}
@@ -307,29 +309,51 @@ const ProcessPaymentRequest = () => {
                     </div>
 
                     {/* Process Payment Button - Only show to the recipient (toUser) */}
+                    {/* Status Messages - Show for everyone */}
+                    {paymentRequestData.status === 'cancelled' && (
+                        <p className="text-sm text-red-600 dark:text-red-400 mt-4">
+                            This payment request has been cancelled.
+                        </p>
+                    )}
+
+                    {paymentRequestData.status === 'rejected' && (
+                        <p className="text-sm text-red-600 dark:text-red-400 mt-4">
+                            This payment request has been rejected.
+                        </p>
+                    )}
+
+                    {paymentRequestData.status === 'completed' && (
+                        <p className="text-sm text-green-600 dark:text-green-400 mt-4">
+                            This payment request has been completed.
+                        </p>
+                    )}
+
+                    {/* Action Buttons - Only for recipient when pending */}
                     {
                         user?.primaryEmail === toUserInfo?.primaryEmail &&
-                        <div className='flex gap-4'>
-                            <button
-                                onClick={handleRejectPayment}
-                                disabled={isLoading || loading}
-                                className="w-full bg-red-500 hover:bg-red-600 text-white font-medium py-3 rounded-lg transition-colors mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {isLoading ? 'Processing...' : 'Reject Payment'}
-                            </button>
-                            <button
-                                onClick={handleProceed}
-                                disabled={isLoading || loading}
-                                className="w-full bg-[#0E7BB2] hover:bg-[#0B5E8C] text-white font-medium py-3 rounded-lg transition-colors mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {isLoading ? 'Processing...' : 'Accept Payment'}
-                            </button>
-                        </div>
+                        paymentRequestData.status === 'pending' && (
+                            <div className='flex gap-4'>
+                                <button
+                                    onClick={handleRejectPayment}
+                                    disabled={isLoading || loading}
+                                    className="w-full bg-red-500 hover:bg-red-600 text-white font-medium py-3 rounded-lg transition-colors mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isLoading ? 'Processing...' : 'Reject Payment'}
+                                </button>
+                                <button
+                                    onClick={handleProceed}
+                                    disabled={isLoading || loading}
+                                    className="w-full bg-[#0E7BB2] hover:bg-[#0B5E8C] text-white font-medium py-3 rounded-lg transition-colors mt-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isLoading ? 'Processing...' : 'Accept Payment'}
+                                </button>
+                            </div>
+                        )
                     }
 
                     {/* Show message if user is not the recipient */}
                     {
-                        user?.primaryEmail !== toUserInfo?.primaryEmail && toUserInfo?.primaryEmail &&
+                        user?.primaryEmail !== toUserInfo?.primaryEmail && toUserInfo?.primaryEmail && paymentRequestData.status === 'pending' &&
                         <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mt-4">
                             <p className="text-sm text-yellow-800 dark:text-yellow-200">
                                 Only the recipient can process this payment request.
