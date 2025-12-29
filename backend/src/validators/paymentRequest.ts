@@ -149,6 +149,20 @@ export const CancelPaymentRequestSchema = z
   })
   .strict();
 
+export const RejectPaymentRequestSchema = z
+  .object({
+    requestId: z
+      .string()
+      .min(1, "Request ID is required")
+      .max(100, "Request ID must be at most 100 characters"),
+    reason: z
+      .string()
+      .min(1, "Reason is required")
+      .max(200, "Reason must be at most 200 characters")
+      .optional(),
+  })
+  .strict();
+
 // QR code and link validators
 export const GenerateQRCodeSchema = z
   .object({

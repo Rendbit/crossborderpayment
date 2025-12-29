@@ -8,6 +8,7 @@ import {
   editPaymentRequest,
   generatePaymentQRCode,
   validatePaymentLink,
+  rejectPaymentRequest,
 } from "../controllers/paymentRequest";
 import { authenticate } from "../middlewares/authMiddleWare";
 import { moderateLimiter } from "../middlewares/rateLimiter";
@@ -243,6 +244,35 @@ router.post("/process", authenticate, processPaymentRequest);
  *         description: Payment request cancelled successfully
  */
 router.post("/cancel", authenticate, cancelPaymentRequest);
+
+/**
+ * @swagger
+ * /api/paymentRequest/reject:
+ *   post:
+ *     summary: Reject a payment request
+ *     tags: [PaymentRequest]
+ *     security:
+ *       - bearerAuth: []
+ *       - apiKey: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [requestId]
+ *             properties:
+ *               requestId:
+ *                 type: string
+ *                 description: Payment request ID
+ *               reason:
+ *                 type: string
+ *                 description: Optional rejection reason
+ *     responses:
+ *       200:
+ *         description: Payment request rejected successfully
+ */
+router.post("/reject", authenticate, rejectPaymentRequest);
 
 /**
  * @swagger

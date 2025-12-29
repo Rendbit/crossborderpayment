@@ -12,6 +12,7 @@ import {
   GetPaymentRequestSchema,
   ProcessPaymentRequestSchema,
   CancelPaymentRequestSchema,
+  RejectPaymentRequestSchema,
   GenerateQRCodeSchema,
   ValidatePaymentLinkSchema,
   ListPaymentRequestsSchema,
@@ -61,6 +62,7 @@ export enum PaymentRequestStatus {
   PENDING = "pending",
   PROCESSING = "processing",
   COMPLETED = "completed",
+  REJECTED = "rejected",
   CANCELLED = "cancelled",
   EXPIRED = "expired",
   FAILED = "failed",
@@ -160,6 +162,10 @@ export interface PaymentProcessData {
 }
 
 export interface CancelRequestData {
+  success: boolean;
+}
+
+export interface RejectRequestData {
   success: boolean;
 }
 
@@ -953,7 +959,7 @@ export class PaymentRequestService implements IPaymentRequestService {
           { _id: paymentRequest._id },
           { $set: { status: PaymentRequestStatus.EXPIRED } }
         );
-        paymentRequest.status = PaymentRequestStatus.EXPIRED;
+        paymentRequest.status = PaymentRequestStatus.EXPIRED as any;
       }
 
       return {
@@ -1558,7 +1564,7 @@ export class PaymentRequestService implements IPaymentRequestService {
       }
 
       // Update status
-      paymentRequest.status = PaymentRequestStatus.CANCELLED;
+      paymentRequest.status = PaymentRequestStatus.CANCELLED as any;
       if (sanitizedReason) {
         paymentRequest.metadata = {
           ...paymentRequest.metadata,
@@ -1613,6 +1619,167 @@ export class PaymentRequestService implements IPaymentRequestService {
         data: {} as CancelRequestData,
         success: false,
         message: "Error cancelling payment request",
+      };
+    }
+  }
+
+  async rejectPaymentRequest(
+    req: Request
+  ): Promise<ServiceResponse<RejectRequestData>> {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const user = (req as any).user;
+
+      // SECURITY: Validate user exists
+      if (!user || !user._id) {
+        await session.abortTransaction();
+        session.endSession();
+        return {
+          status: httpStatus.UNAUTHORIZED,
+          data: {} as RejectRequestData,
+          success: false,
+          message: "User authentication required",
+        };
+      }
+
+      // SECURITY: Validate ObjectId
+      if (!isValidObjectId(user._id.toString())) {
+        await session.abortTransaction();
+        session.endSession();
+        return {
+          status: httpStatus.BAD_REQUEST,
+          data: {} as RejectRequestData,
+          success: false,
+          message: "Invalid user ID format",
+        };
+      }
+
+      // SECURITY: Validate request body with Zod
+      const validatedBody = RejectPaymentRequestSchema.parse(req.body);
+
+      // SECURITY: Sanitize all inputs
+      const sanitizedRequestId = sanitizeInput(validatedBody.requestId);
+      const sanitizedReason = validatedBody.reason
+        ? sanitizeInput(validatedBody.reason)
+        : undefined;
+
+      // Get user for PIN verification (if needed for cancellation)
+      const userWithSensitiveData = await User.findById(user._id)
+        .select("+password +encryptedPrivateKey +pinCode")
+        .session(session);
+
+      if (!userWithSensitiveData) {
+        await session.abortTransaction();
+        session.endSession();
+        return {
+          status: httpStatus.NOT_FOUND,
+          data: {} as RejectRequestData,
+          success: false,
+          message: "User not found",
+        };
+      }
+
+      // Find payment request
+      const paymentRequest = await PaymentRequest.findOne({
+        requestId: sanitizedRequestId,
+      }).session(session);
+
+      if (!paymentRequest) {
+        await session.abortTransaction();
+        session.endSession();
+        return {
+          status: httpStatus.NOT_FOUND,
+          data: {} as RejectRequestData,
+          success: false,
+          message: "Payment request not found",
+        };
+      }
+
+      // SECURITY: Check if user is authorized to cancel
+      const toUserId = paymentRequest.toUser.toString();
+      const userId = user._id.toString();
+
+      if (toUserId !== userId) {
+        await session.abortTransaction();
+        session.endSession();
+        return {
+          status: httpStatus.FORBIDDEN,
+          data: {} as RejectRequestData,
+          success: false,
+          message: "Only the receipient can reject this payment request",
+        };
+      }
+
+      // Check if request can be cancelled
+      if (paymentRequest.status !== PaymentRequestStatus.PENDING) {
+        await session.abortTransaction();
+        session.endSession();
+        return {
+          status: httpStatus.BAD_REQUEST,
+          data: {} as RejectRequestData,
+          success: false,
+          message: `Cannot reject payment request with status: ${paymentRequest.status}`,
+        };
+      }
+
+      // Update status
+      paymentRequest.status = PaymentRequestStatus.REJECTED as any;
+      if (sanitizedReason) {
+        paymentRequest.metadata = {
+          ...paymentRequest.metadata,
+          cancellationReason: sanitizedReason,
+        };
+      }
+      await paymentRequest.save({ session });
+
+      // Commit transaction
+      await session.commitTransaction();
+      session.endSession();
+
+      // Emit notification event
+      await emitEvent("payment:request:rejected", {
+        requestId: paymentRequest.requestId,
+        fromUser: paymentRequest.fromUser,
+        toUser: paymentRequest.toUser,
+        amount: paymentRequest.amount,
+        currency: paymentRequest.currency,
+        reason: sanitizedReason,
+      }).catch((err) =>
+        console.error("Error emitting payment rejected event:", err)
+      );
+
+      return {
+        status: httpStatus.OK,
+        data: { success: true },
+        success: true,
+        message: "Payment request cancelled successfully",
+      };
+    } catch (error: any) {
+      await session.abortTransaction();
+      session.endSession();
+
+      console.error("Error rejecting payment request:", error);
+
+      // Handle Zod validation errors
+      if (error.name === "ZodError") {
+        const errorMessages = error.errors
+          .map((err: any) => err.message)
+          .join(", ");
+        return {
+          status: httpStatus.BAD_REQUEST,
+          data: {} as CancelRequestData,
+          success: false,
+          message: `${errorMessages}`,
+        };
+      }
+
+      return {
+        status: httpStatus.INTERNAL_SERVER_ERROR,
+        data: {} as CancelRequestData,
+        success: false,
+        message: "Error rejecting payment request",
       };
     }
   }

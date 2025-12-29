@@ -46,6 +46,7 @@ const PaymentRequestSchema: Schema = new Schema(
         "pending",
         "processing",
         "completed",
+        "rejected",
         "cancelled",
         "expired",
         "failed",

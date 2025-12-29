@@ -48,9 +48,6 @@ export class BatchPaymentProcessor {
     };
 
     try {
-      console.log("Starting batch payment processing...");
-      console.log("Current time:", new Date().toISOString());
-
       const duePayments = await this.getDuePayments();
 
       if (duePayments.length === 0) {
@@ -75,9 +72,6 @@ export class BatchPaymentProcessor {
               amount: payment.amount,
               currency: payment.currency,
             });
-            console.log(
-              `Payment ${payment.scheduleId} is paused: ${pauseCheck.reason}`
-            );
             continue;
           }
 

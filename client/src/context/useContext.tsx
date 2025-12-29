@@ -24,6 +24,8 @@ interface AppContextProps {
   isRequestPaymentModalOpen: boolean;
   setIsPrivateKeyModalOpen: (open: boolean) => void;
   isSendMoneyModalOpen: boolean;
+  setIsProcessPaymentRequestModalOpen: (open: boolean) => void;
+  isProcessPaymentRequestModalOpen: boolean;
   setIsSendMoneyModalOpen: (open: boolean) => void;
   selectedCountryForTransfer: any;
   setIsAddCurrencyModalOpen: (open: boolean) => void;
@@ -46,6 +48,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const [
     isRemoveTransactionConfirmationModalOpen,
     setIsRemoveTransactionConfirmationModalOpen,
+  ] = useState(false);
+  const [
+    isProcessPaymentRequestModalOpen,
+    setIsProcessPaymentRequestModalOpen,
   ] = useState(false);
   const [selectedAsset, setSelectedAsset] = useState({});
   const [isAddMoneyModalOpen, setIsAddMoneyModalOpen] = useState(false);
@@ -164,6 +170,8 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
         setSelectedAsset,
         isRemoveTransactionConfirmationModalOpen,
         setIsRemoveTransactionConfirmationModalOpen,
+        setIsProcessPaymentRequestModalOpen,
+        isProcessPaymentRequestModalOpen,
         token,
       }}
     >

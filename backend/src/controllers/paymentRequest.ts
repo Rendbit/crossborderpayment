@@ -30,6 +30,11 @@ export const cancelPaymentRequest = async (req: any, res: any) => {
   return res.status(response.status).json(response);
 };
 
+export const rejectPaymentRequest = async (req: any, res: any) => {
+  const response = await paymentRequestService.rejectPaymentRequest(req);
+  return res.status(response.status).json(response);
+};
+
 export const generatePaymentQRCode = async (req: any, res: any) => {
   const response = await paymentRequestService.generatePaymentQRCode(req);
   return res.status(response.status).json(response);
