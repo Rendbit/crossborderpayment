@@ -102,7 +102,7 @@ const AnchorDepositMethod: React.FC = () => {
       navigate("/login");
     }
     const storedUserData = localStorage.getItem("userData");
-    const parsedUserData = JSON.parse(storedUserData || "null");
+    const parsedUserData = JSON.parse(storedUserData || "null")?.account;
     setAddress(parsedUserData?.stellarPublicKey);
     handleGetMyAssets();
   }, []);

@@ -41,6 +41,7 @@ export class TransferService implements ITransferService {
 
       // SECURITY: Validate request parameters
       const { txType } = InitiateTransfer24ParamsSchema.parse(req.params);
+      console.log(req.body, "req.body");
 
       // SECURITY: Validate request body with Zod
       const validatedBody = InitiateTransfer24Schema.parse(req.body);

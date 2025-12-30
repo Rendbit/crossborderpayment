@@ -39,7 +39,7 @@ const RequestPaymentTable: React.FC<TransactionTableProps> = ({
     cursor: null,
   });
   const user = Cookies.get("token");
-  const loggedInUser = JSON.parse(localStorage.getItem("userData") || "{}");
+  const loggedInUser = JSON.parse(localStorage.getItem("userData") || "{}")?.account;
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);

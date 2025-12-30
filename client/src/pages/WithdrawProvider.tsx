@@ -87,7 +87,7 @@ const WithdrawProvider: React.FC = () => {
       navigate("/login");
     }
     const storedUserData = localStorage.getItem("userData");
-    const parsedUserData = JSON.parse(storedUserData || "null");
+    const parsedUserData = JSON.parse(storedUserData || "null")?.account;
     setAddress(parsedUserData?.stellarPublicKey);
     handleGetMyAssets();
     getAllCountries();
@@ -150,6 +150,7 @@ const WithdrawProvider: React.FC = () => {
         setLoading(false);
         return;
       }
+
       const response = await initiateTransfer24(
         user,
         selectedCurrency.symbol,

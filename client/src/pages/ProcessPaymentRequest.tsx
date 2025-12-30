@@ -18,7 +18,7 @@ const ProcessPaymentRequest = () => {
   const BASE_URL = import.meta.env.VITE_BASE_URL;
   const API_KEY = import.meta.env.VITE_API_KEY;
   const token = localStorage.getItem("token");
-  const user = JSON.parse(localStorage.getItem("userData") || "{}");
+  const user = JSON.parse(localStorage.getItem("userData") || "{}")?.account;
   const [transactionPin, setTransactionPin] = useState<any>("");
   const [transactionDetails, setTransactionDetails] = useState<string>("");
   const { requestId } = useParams<{ requestId: string }>();

@@ -731,7 +731,7 @@ export class StellarTransaction implements IBlockchainTransaction {
         );
         if (fundResult.status) {
           return {
-            data: { hash: fundResult.transactionResult.hash },
+            data: { hash: fundResult.transactionResult?.hash },
             message: "Destination account funded successfully",
             status: httpStatus.OK,
             success: true,
