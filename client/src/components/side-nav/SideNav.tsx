@@ -84,7 +84,7 @@ const SideNav: React.FC = () => {
       },
     },
   ];
-  
+
   const otherLinks = [
     {
       label: "Settings",
@@ -233,7 +233,7 @@ const SideNav: React.FC = () => {
             </p>
           </div>
           <div className="mt-4 flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-yellow-200"></div>
+            <img src="./image/avatar.svg" alt="" />
             <div>
               <p className="text-sm font-medium text-gray-800 dark:text-gray-200">
                 {userData?.username}

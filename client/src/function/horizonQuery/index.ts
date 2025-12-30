@@ -1,7 +1,9 @@
 const getMyAssets = async (token: string, selectedAsset = "NGNC") => {
   try {
     const res = await fetch(
-      `${import.meta.env.VITE_BASE_URL}/horizonQueries/getAllWalletAssets?currencyType=${selectedAsset}`,
+      `${
+        import.meta.env.VITE_BASE_URL
+      }/horizonQueries/getAllWalletAssets?currencyType=${selectedAsset}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -57,7 +59,17 @@ const getMyAssets = async (token: string, selectedAsset = "NGNC") => {
     return data;
   } catch (error: any) {
     console.log("Error handling get all my assets:", error);
-    throw new Error(error.message || "Error handling get all my assets.");
+    if (
+      error.message ===
+        "Fund your wallet with at least 5 XLM to activate your account." ||
+      error.message === "Horizon API error: Failed to fetch wallet assets"
+    ) {
+      throw new Error(
+        "Fund your wallet with at least 5 XLM to activate your account."
+      );
+    } else {
+      throw new Error(error.message || "Error handling get all my assets.");
+    }
   }
 };
 
@@ -89,7 +101,7 @@ const getConversionRates = async (
   token: string,
   inputAmount: number,
   inputSymbol: string,
-  outputSymbol: string,
+  outputSymbol: string
 ) => {
   try {
     const res = await fetch(

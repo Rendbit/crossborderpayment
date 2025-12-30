@@ -1,9 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  Search,
-  CopyIcon,
-  EyeIcon,
-} from "lucide-react";
+import { Search, CopyIcon, EyeIcon } from "lucide-react";
 import Cookies from "js-cookie";
 import { getPaymentRequestHistory } from "../../function/transaction";
 import { useNavigate } from "react-router-dom";
@@ -43,7 +39,7 @@ const RequestPaymentTable: React.FC<TransactionTableProps> = ({
     cursor: null,
   });
   const user = Cookies.get("token");
-  const loggedInUser =  JSON.parse(localStorage.getItem("userData") || "{}");
+  const loggedInUser = JSON.parse(localStorage.getItem("userData") || "{}");
   const [searchText, setSearchText] = useState("");
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -82,7 +78,10 @@ const RequestPaymentTable: React.FC<TransactionTableProps> = ({
     }
 
     // Try to load from localStorage first
-    const cachedPaymentRequestHistory = localStorage.getItem("uniquePaymentRequestHistory");
+    const cachedPaymentRequestHistory = localStorage.getItem(
+      "uniquePaymentRequestHistory"
+    );
+
     const cachedPagination = localStorage.getItem("transactionPagination");
 
     if (cachedPaymentRequestHistory) {
@@ -96,6 +95,7 @@ const RequestPaymentTable: React.FC<TransactionTableProps> = ({
 
         if (cachedPagination) {
           const pagination = JSON.parse(cachedPagination);
+
           setPaginationInfo(pagination);
           if (pagination.count > 0) {
             const calculatedTotalPages = Math.ceil(
@@ -115,11 +115,11 @@ const RequestPaymentTable: React.FC<TransactionTableProps> = ({
     }
 
     // Always fetch fresh data
-    handleGetpaymentRequestHistory();
+    handleGetPaymentRequestHistory();
   }, []);
 
   // Function to load transactions with pagination
-  async function handleGetpaymentRequestHistory(
+  async function handleGetPaymentRequestHistory(
     cursor?: string | null,
     direction: "next" | "prev" = "next",
     targetPage?: number
@@ -137,7 +137,11 @@ const RequestPaymentTable: React.FC<TransactionTableProps> = ({
       }
       setLoading(true);
 
-      const response = await getPaymentRequestHistory(user, itemsPerPage, cursor);
+      const response = await getPaymentRequestHistory(
+        user,
+        itemsPerPage,
+        cursor
+      );
 
       if (!response.success) {
         if (response.message === "Login has expired") {
@@ -163,6 +167,10 @@ const RequestPaymentTable: React.FC<TransactionTableProps> = ({
       const transactions = response.data.paymentRequests;
       const paging = response.data.paging;
 
+      localStorage.setItem(
+        "uniquePaymentRequestHistory",
+        JSON.stringify(transactions)
+      );
       // Update transaction history
       if (!isHistoryPage && NumberOfTx) {
         setPaymentRequestHistory(transactions.slice(0, NumberOfTx));
@@ -206,7 +214,10 @@ const RequestPaymentTable: React.FC<TransactionTableProps> = ({
       }
 
       // Store in localStorage for caching
-      localStorage.setItem("uniquePaymentRequestHistory", JSON.stringify(transactions));
+      localStorage.setItem(
+        "uniquePaymentRequestHistory",
+        JSON.stringify(transactions)
+      );
       localStorage.setItem(
         "transactionPagination",
         JSON.stringify(newPaginationInfo)
@@ -238,9 +249,9 @@ const RequestPaymentTable: React.FC<TransactionTableProps> = ({
 
   // Handle next page
   const handleNextPage = () => {
-    if (paginationInfo.next) {
-      setCurrentCursor(paginationInfo.next);
-      handleGetpaymentRequestHistory(paginationInfo.next, "next");
+    if (paginationInfo?.next) {
+      setCurrentCursor(paginationInfo?.next);
+      handleGetPaymentRequestHistory(paginationInfo?.next, "next");
       setCurrentPage((prev) => prev + 1);
     }
   };
@@ -253,7 +264,7 @@ const RequestPaymentTable: React.FC<TransactionTableProps> = ({
 
       setCursorStack(newStack);
       setCurrentCursor(prevCursor || null);
-      handleGetpaymentRequestHistory(prevCursor, "prev");
+      handleGetPaymentRequestHistory(prevCursor, "prev");
       setCurrentPage((prev) => prev - 1);
     }
   };
@@ -265,7 +276,11 @@ const RequestPaymentTable: React.FC<TransactionTableProps> = ({
     // If we already have the cursor for this page, use it
     if (pageCursors[pageNumber] !== undefined) {
       setCurrentCursor(pageCursors[pageNumber]);
-      handleGetpaymentRequestHistory(pageCursors[pageNumber], "next", pageNumber);
+      handleGetPaymentRequestHistory(
+        pageCursors[pageNumber],
+        "next",
+        pageNumber
+      );
       setCurrentPage(pageNumber);
     } else {
       console.warn(
@@ -302,45 +317,53 @@ const RequestPaymentTable: React.FC<TransactionTableProps> = ({
   };
 
   // Search and filter functions (client-side for current page)
-  const filteredTransactions = paymentRequestHistory?.filter((transaction: any) => {
-    const search = searchText.toLowerCase();
+  const filteredTransactions = paymentRequestHistory?.filter(
+    (transaction: any) => {
+      const search = searchText.toLowerCase();
 
-    const matchesSearch =
-      (transaction?.hash || "").toLowerCase()?.includes(search) ||
-      (transaction?.fromUser?.primaryEmail || "").toLowerCase()?.includes(search) ||
-      (transaction?.toUser?.primaryEmail || "").toLowerCase()?.includes(search) ||
-      (transaction?.fromUser?.username || "").toLowerCase()?.includes(search) ||
-      (transaction?.toUser?.username || "").toLowerCase()?.includes(search) ||
-      (transaction?.tokenReceived || "").toLowerCase()?.includes(search) ||
-      (transaction?.tokenSent || "")?.toLowerCase()?.includes(search) ||
-      (transaction?.currency || "")?.toLowerCase()?.includes(search) ||
-      (transaction?.status || "")?.toLowerCase()?.includes(search) ||
-      String(transaction?.amount || "")
-        .toLowerCase()
-        .includes(search);
+      const matchesSearch =
+        (transaction?.hash || "").toLowerCase()?.includes(search) ||
+        (transaction?.fromUser?.primaryEmail || "")
+          .toLowerCase()
+          ?.includes(search) ||
+        (transaction?.toUser?.primaryEmail || "")
+          .toLowerCase()
+          ?.includes(search) ||
+        (transaction?.fromUser?.username || "")
+          .toLowerCase()
+          ?.includes(search) ||
+        (transaction?.toUser?.username || "").toLowerCase()?.includes(search) ||
+        (transaction?.tokenReceived || "").toLowerCase()?.includes(search) ||
+        (transaction?.tokenSent || "")?.toLowerCase()?.includes(search) ||
+        (transaction?.currency || "")?.toLowerCase()?.includes(search) ||
+        (transaction?.status || "")?.toLowerCase()?.includes(search) ||
+        String(transaction?.amount || "")
+          .toLowerCase()
+          .includes(search);
 
-    // Filter by type based on logged-in user's email
-    let matchesType = true;
-    if (filterType !== "all") {
-      const userEmail = loggedInUser?.primaryEmail?.toLowerCase();
-      const fromEmail = transaction?.fromUser?.primaryEmail?.toLowerCase();
-      
-      if (filterType === "sent") {
-        // Show transactions where user is the sender
-        matchesType = fromEmail === userEmail;
-      } else if (filterType === "received") {
-        // Show transactions where user is NOT the sender (i.e., received from others)
-        matchesType = fromEmail !== userEmail;
+      // Filter by type based on logged-in user's email
+      let matchesType = true;
+      if (filterType !== "all") {
+        const userEmail = loggedInUser?.primaryEmail?.toLowerCase();
+        const fromEmail = transaction?.fromUser?.primaryEmail?.toLowerCase();
+
+        if (filterType === "sent") {
+          // Show transactions where user is the sender
+          matchesType = fromEmail === userEmail;
+        } else if (filterType === "received") {
+          // Show transactions where user is NOT the sender (i.e., received from others)
+          matchesType = fromEmail !== userEmail;
+        }
       }
+
+      const matchesDate = filterDate
+        ? new Date(transaction?.createdAt)?.toLocaleDateString() ===
+          new Date(filterDate)?.toLocaleDateString()
+        : true;
+
+      return matchesSearch && matchesType && matchesDate;
     }
-
-    const matchesDate = filterDate
-      ? new Date(transaction?.createdAt)?.toLocaleDateString() ===
-        new Date(filterDate)?.toLocaleDateString()
-      : true;
-
-    return matchesSearch && matchesType && matchesDate;
-  });
+  );
 
   // Sorting (client-side for current page)
   const handleSort = (key: string) => {
@@ -451,7 +474,10 @@ const RequestPaymentTable: React.FC<TransactionTableProps> = ({
                   {isHistoryPage && ` • Page ${currentPage} of ${totalPages}`}
                 </>
               ) : (
-                "No payment requests found"
+                <>
+                  {JSON.stringify(paginationInfo)}
+                  "No payment requests found"
+                </>
               )}
             </p>
           </div>
@@ -501,10 +527,10 @@ const RequestPaymentTable: React.FC<TransactionTableProps> = ({
             </select>
 
             <button
-                onClick={() => setIsRequestPaymentModalOpen(true)}
-                className="px-3 py-2 border border-[#E2E4E9] bg-[#0E7BB2] dark:border-gray-700 rounded-lg text-sm hover:bg-[#0B5E8C] text-white"
-              >
-                New Request
+              onClick={() => setIsRequestPaymentModalOpen(true)}
+              className="px-3 py-2 border border-[#E2E4E9] bg-[#0E7BB2] dark:border-gray-700 rounded-lg text-sm hover:bg-[#0B5E8C] text-white"
+            >
+              New Request
             </button>
 
             {!isHistoryPage && (
@@ -612,6 +638,12 @@ const RequestPaymentTable: React.FC<TransactionTableProps> = ({
                     <td className="py-3">
                       <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
                     </td>
+                    <td className="py-3">
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                    </td>
+                    <td className="py-3">
+                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                    </td>
                   </tr>
                 ))
               ) : displayTransactions.length === 0 ? (
@@ -628,15 +660,16 @@ const RequestPaymentTable: React.FC<TransactionTableProps> = ({
                   >
                     {/* From/To */}
                     <td className="py-3 font-medium break-all">
-                      {tx?.type === "receive" ? (
+                      {tx?.toUser?.primaryEmail !==
+                      loggedInUser?.primaryEmail ? (
                         <>
-                          From: {tx?.fromUser?.username?.slice(0, 6)}...
-                          {tx?.fromUser?.username?.slice(-6)}
+                          <span className="text-[green]">To:</span>{" "}
+                          {tx?.toUser?.primaryEmail}
                         </>
                       ) : (
                         <>
-                          To: {tx?.toUser?.username?.slice(0, 6)}...
-                          {tx?.toUser?.username?.slice(-6)}
+                          <span className="text-[red]">From:</span>{" "}
+                          {tx?.fromUser?.primaryEmail}
                         </>
                       )}
                     </td>
@@ -658,16 +691,68 @@ const RequestPaymentTable: React.FC<TransactionTableProps> = ({
 
                     {/* Link */}
                     <td className="capitalize">
-                      <EyeIcon onClick={() => navigate(`/edit-request-payment/${tx.requestId}`)} className="w-4 h-4 text-gray-500 dark:text-gray-400 cursor-pointer" />
+                      <button
+                        onClick={() =>
+                          navigate(`/pay/${tx.requestId}`)
+                        }
+                        className="flex items-center gap-1 underline"
+                      >
+                        View{" "}
+                        <EyeIcon className="w-4 h-4 underline text-gray-500 dark:text-gray-400 cursor-pointer" />
+                      </button>
                     </td>
 
-                    <td className="capitalize">
-                      <CopyIcon onClick={() => handleCopyLink(tx?.requestId)} className="w-4 h-4 text-gray-500 dark:text-gray-400 cursor-pointer" />
+                    <td>
+                      <button
+                        onClick={() => handleCopyLink(tx?.requestId)}
+                        className="capitalize border border-[#E2E4E9] text-white cursor-pointe  bg-[#0E7BB2] hover:bg-[#0B5E8C] flex justify-center items-center rounded-md px-1 py-1"
+                      >
+                        Copy{" "}
+                        <CopyIcon className="w-4 ml-2 h-4 text-white cursor-pointer" />
+                      </button>
                     </td>
 
-                    <td className="capitalize">
-                      <LiaTelegramPlane onClick={() => navigate(`/pay/${tx.requestId}`)} className="w-4 h-4 text-gray-500 dark:text-gray-400 cursor-pointer" />
-                    </td>
+                    {tx?.toUser?.primaryEmail !== loggedInUser?.primaryEmail ? (
+                      <td className="capitalize">
+                        {tx?.status === "pending" ? (
+                          <button
+                            onClick={() =>
+                              navigate(`/edit-request-payment/${tx.requestId}`)
+                            }
+                            className="capitalize border border-[#E2E4E9] text-white cursor-pointe  bg-[#8c610b] hover:bg-[#8c610b]/70 flex justify-center items-center rounded-md px-1 py-1"
+                          >
+                            Edit Payment
+                            <EyeIcon className="w-4 h-4 ml-2  text-white  cursor-pointer" />
+                          </button>
+                        ) : (
+                          <button
+                            disabled
+                            className="capitalize border border-[#E2E4E9] text-white cursor-pointe bg-[grey]  flex justify-center items-center rounded-md px-1 py-1"
+                          >
+                            {tx?.status}
+                          </button>
+                        )}
+                      </td>
+                    ) : (
+                      <td className="capitalize">
+                        {tx?.status === "pending" ? (
+                          <button
+                            onClick={() => navigate(`/pay/${tx.requestId}`)}
+                            className="capitalize border border-[#E2E4E9] text-white cursor-pointe bg-[#0E7BB2] hover:bg-[#0B5E8C] flex justify-center items-center rounded-md px-1 py-1"
+                          >
+                            Process Payment
+                            <LiaTelegramPlane className="w-4 h-4 ml-2  text-white   cursor-pointer" />
+                          </button>
+                        ) : (
+                          <button
+                            disabled
+                            className="capitalize border border-[#E2E4E9] text-white cursor-pointe bg-[grey]  flex justify-center items-center rounded-md px-1 py-1"
+                          >
+                            {tx?.status}
+                          </button>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 ))
               )}
@@ -676,7 +761,7 @@ const RequestPaymentTable: React.FC<TransactionTableProps> = ({
         </div>
 
         {/* Pagination */}
-        {(paginationInfo.next || cursorStack.length > 0 || totalPages > 1) &&
+        {(paginationInfo?.next || cursorStack?.length > 0 || totalPages > 1) &&
           isHistoryPage && (
             <div className="flex flex-col sm:flex-row justify-between items-center mt-6 gap-4">
               {/* Page Info */}
@@ -727,9 +812,9 @@ const RequestPaymentTable: React.FC<TransactionTableProps> = ({
                 {/* Next Arrow */}
                 <button
                   onClick={handleNextPage}
-                  disabled={!paginationInfo.next || pageLoading}
+                  disabled={!paginationInfo?.next || pageLoading}
                   className={`flex items-center justify-center w-8 h-8 rounded-md ${
-                    !paginationInfo.next || pageLoading
+                    !paginationInfo?.next || pageLoading
                       ? "text-gray-400 cursor-not-allowed"
                       : "text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700"
                   }`}

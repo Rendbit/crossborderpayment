@@ -79,9 +79,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   const token = Cookies.get("token") || "";
 
   useEffect(() => {
-    const localUser = localStorage.getItem("userData") || "{}";
-    setUserData(JSON.parse(localUser));
-    if (token) getProfile(token).then((res) => setUserData(res.data));
+    const localUser = localStorage.getItem("userData");
+    setUserData(localUser ? JSON.parse(localUser).account : {});
+    if (token) getProfile(token).then((res) => setUserData(res.data.account));
   }, [token]);
   // Get system theme
   const getSystemTheme = () =>

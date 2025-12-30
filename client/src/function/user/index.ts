@@ -222,9 +222,10 @@ const getTwoFaSettings = async (token: string) => {
 const toggle2FASettings = async (token: string) => {
   try {
     const res = await fetch(`${import.meta.env.VITE_BASE_URL}/mfa/toggle`, {
-      method: "GET",
+      method: "PUT",
       headers: {
         Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
         "x-api-key": `${import.meta.env.VITE_API_KEY}`,
       },
     });
@@ -247,6 +248,7 @@ const setup2FA = async (token: string, code: string) => {
     const res = await fetch(`${import.meta.env.VITE_BASE_URL}/mfa/setup`, {
       method: "POST",
       headers: {
+        "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
         "x-api-key": `${import.meta.env.VITE_API_KEY}`,
       },
@@ -271,7 +273,7 @@ const generateSecret = async (token: string) => {
     const res = await fetch(
       `${import.meta.env.VITE_BASE_URL}/mfa/generate-secret`,
       {
-        method: "POST",
+        method: "GET",
         headers: {
           Authorization: `Bearer ${token}`,
           "x-api-key": `${import.meta.env.VITE_API_KEY}`,

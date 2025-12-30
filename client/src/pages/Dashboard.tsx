@@ -122,7 +122,7 @@ const Dashboard: React.FC = () => {
       navigate("/login");
     }
     const storedUserData = localStorage.getItem("userData");
-    const parsedUserData = JSON.parse(storedUserData || "null");
+    const parsedUserData = storedUserData ? JSON.parse(storedUserData) : {};
     setAddress(parsedUserData?.stellarPublicKey || "");
     handleGetProfile();
 
@@ -393,7 +393,7 @@ const Dashboard: React.FC = () => {
     const parsedUserData = JSON.parse(storedUserData || "null");
 
     if (parsedUserData) {
-      setUserData(parsedUserData);
+      setUserData(parsedUserData.account);
     }
     if (!parsedUserData) {
       setLoadingUserData(true);
@@ -414,7 +414,7 @@ const Dashboard: React.FC = () => {
           navigate("/login");
         }
       }
-      setUserData(response.data);
+      setUserData(response.data.account);
     } catch (error: any) {
       if (error.message === "Login has expired") {
         localStorage.clear();
@@ -644,6 +644,7 @@ const Dashboard: React.FC = () => {
       }
 
       const response = await getTransactionHistory(user);
+
       if (!response.success) {
         if (
           response.message.includes(
@@ -670,6 +671,8 @@ const Dashboard: React.FC = () => {
       );
       setTransactionHistory(uniqueTransactions);
     } catch (error: any) {
+      setTransactionHistory([]);
+
       if (
         error.message.includes(
           "Fund your wallet with at least 5 XLM to activate your account."
@@ -678,8 +681,15 @@ const Dashboard: React.FC = () => {
         setActivateWalletAlert(error.message);
         setIsActivateWalletAlert(true);
       } else {
-        setMsg(error.message || "Failed to get all crypto transactions");
-        setAlertType("error");
+        if (error.message === error.message) {
+          setMsg(
+            "Fund your wallet with at least 5 XLM to activate your account."
+          );
+          setAlertType("error");
+        } else {
+          setMsg(error.message || "Failed to get all crypto transactions");
+          setAlertType("error");
+        }
       }
     } finally {
       setLoadingTx(false);

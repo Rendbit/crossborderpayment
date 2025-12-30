@@ -151,14 +151,22 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
         if (
           response.message.includes(
             "Fund your wallet with at least 5 XLM to activate your account."
+          ) ||
+          response.message.includes(
+            "Horizon API error: Failed to fetch wallet assets"
           )
         ) {
-          setActivateWalletAlert(response.message);
+          setActivateWalletAlert(
+            "Fund your wallet with at least 5 XLM to activate your account."
+          );
+          setTransactionHistory([]);
           setIsActivateWalletAlert(true);
         } else {
           setMsg(response.message);
           setAlertType("error");
+          setTransactionHistory([]);
         }
+        setTransactionHistory([]);
         return;
       }
 
@@ -223,13 +231,20 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
       if (
         error.message.includes(
           "Fund your wallet with at least 5 XLM to activate your account."
+        ) ||
+        error.message.includes(
+          "Horizon API error: Failed to fetch wallet assets"
         )
       ) {
-        setActivateWalletAlert(error.message);
+        setActivateWalletAlert(
+          "Fund your wallet with at least 5 XLM to activate your account."
+        );
         setIsActivateWalletAlert(true);
+        setTransactionHistory([]);
       } else {
         setMsg(error.message || "Failed to get all crypto transactions");
         setAlertType("error");
+        setTransactionHistory([]);
       }
     } finally {
       setLoading(false);
@@ -604,7 +619,14 @@ const TransactionTable: React.FC<TransactionTableProps> = ({
                     </td>
 
                     {/* Amount */}
-                    <td>{tx?.amountReceived || tx?.amountSent || tx?.fee}</td>
+                    <td>
+                      {parseFloat(
+                        tx?.amountReceived || tx?.amountSent || tx?.fee
+                      ).toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 8,
+                      })}
+                    </td>
 
                     {/* Token */}
                     <td>{tx?.tokenReceived || tx?.tokenSent}</td>

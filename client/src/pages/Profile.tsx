@@ -37,7 +37,6 @@ const Profile: React.FC = () => {
         setLoading(false);
         return;
       }
-      console.log({ response });
       setPrivateKey(response.data.privateKey);
       setShowPrivateKey(true);
     } catch (error: any) {

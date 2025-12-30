@@ -97,6 +97,33 @@ const signIn = async (
   }
 };
 
+const verifyUser = async (
+  email: string,
+) => {
+  try {
+    const res = await fetch(`${import.meta.env.VITE_BASE_URL}/auth/verify-user`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": `${import.meta.env.VITE_API_KEY}`,
+      },
+      body: JSON.stringify({
+        email,
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.message || "Failed to verify user");
+    }
+
+    return data;
+  } catch (error: any) {
+    console.log("Error handling verifyUser: ", error);
+    throw new Error(error.message || "Error handling verify user");
+  }
+};
+
 const createWallet = async (
   transactionPin: string,
   username: string,
@@ -266,6 +293,7 @@ const forgotPassword = async (email: string) => {
 };
 export {
   register,
+  verifyUser,
   googleLogin,
   signIn,
   createWallet,

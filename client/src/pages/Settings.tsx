@@ -19,7 +19,7 @@ const Setting: React.FC = () => {
         <section className="mt-6 bg-white dark:bg-gray-800 border-[#D9D9D9] md:pt-8 pt-4 border-t dark:border-gray-700">
           <div className="w-full bg-white dark:bg-[#1c2939] mb-10">
             <div className="flex gap-[50px] items-start mb-6 border-b border-gray-200 dark:border-gray-700">
-              {["Notifications", "Privacy and Security", "2FA Security"].map((item) => (
+              {["Notifications", "Privacy and Security"].map((item) => (
                 <div
                   key={item}
                   onClick={() => handleSettingChange(item)}
@@ -43,9 +43,9 @@ const Setting: React.FC = () => {
           <div>
             {selectedSetings === "Notifications" && <Notification />}
             {selectedSetings === "Privacy and Security" && (<PrivacyAndSecurity />)}
-            {selectedSetings === "2FA Security" && (
+            {/* {selectedSetings === "2FA Security" && (
               <TwoFASecurity />
-            )}
+            )} */}
           </div>
         </section>
       </main>

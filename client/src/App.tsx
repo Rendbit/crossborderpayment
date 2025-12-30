@@ -24,6 +24,7 @@ const Wallet = lazy(() => import("./pages/Wallet"));
 const Swap = lazy(() => import("./pages/Swap"));
 const History = lazy(() => import("./pages/History"));
 const Settings = lazy(() => import("./pages/Settings"));
+const OldSettings = lazy(() => import("./pages/OldSettings"));
 const CreateAccount = lazy(() => import("./pages/CreateAccount"));
 const ConfirmEmail = lazy(() => import("./pages/ConfirmEmail"));
 const AboutSelf = lazy(() => import("./pages/AboutSelf"));

@@ -62,10 +62,10 @@ const Wallet: React.FC = () => {
 
   async function handleGetProfile() {
     const storedUserData = localStorage.getItem("userData");
-    const parsedUserData = JSON.parse(storedUserData || "null");
+    const parsedUserData = storedUserData ? JSON.parse(storedUserData) : null;
 
     if (parsedUserData) {
-      setUserData(parsedUserData);
+      setUserData(parsedUserData.account);
     }
     if (!parsedUserData) {
       setLoadingUserData(true);
@@ -80,7 +80,7 @@ const Wallet: React.FC = () => {
         setMsg(response.message);
         setAlertType("error");
       }
-      setUserData(response.data);
+      setUserData(response.data.account);
     } catch (error: any) {
       setMsg(error.message || "Failed to fetch profile details");
       setAlertType("error");
