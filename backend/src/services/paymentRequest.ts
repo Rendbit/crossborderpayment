@@ -147,6 +147,12 @@ export interface PaymentRequestsList {
     total: number;
     totalPages: number;
   };
+  paging: {
+    next: number | null;
+    prev: number | null;
+    count: number | null;
+    cursor: any;
+  };
 }
 
 export interface PaymentProcessData {
@@ -1111,6 +1117,14 @@ export class PaymentRequestService implements IPaymentRequestService {
             createdAt: pr.createdAt,
             updatedAt: pr.updatedAt,
           })),
+          paging: {
+            next: skip + sanitizedLimit < total ? sanitizedPage + 1 : null,
+            prev: sanitizedPage > 1 ? sanitizedPage - 1 : null,
+            count: paymentRequests.length,
+            cursor: paymentRequests.length
+              ? paymentRequests[paymentRequests.length - 1]._id
+              : null,
+          },
           pagination: {
             page: sanitizedPage,
             limit: sanitizedLimit,
@@ -1754,7 +1768,7 @@ export class PaymentRequestService implements IPaymentRequestService {
         status: httpStatus.OK,
         data: { success: true },
         success: true,
-        message: "Payment request cancelled successfully",
+        message: "Payment request rejected successfully",
       };
     } catch (error: any) {
       await session.abortTransaction();

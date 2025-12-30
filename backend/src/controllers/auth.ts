@@ -23,6 +23,11 @@ export const fundAccount = async (req: any, res: any) => {
 };
 
 // Authentication Operations
+export const verifyUser = async (req: any, res: any) => {
+  const response = await authService.verifyUser(req);
+  return res.status(response.status).json(response);
+};
+
 export const login = async (req: any, res: any) => {
   const response = await authService.login(req);
   return res.status(response.status).json(response);

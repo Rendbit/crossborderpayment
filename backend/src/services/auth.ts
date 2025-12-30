@@ -30,6 +30,7 @@ import {
   ResendOTPData,
   VerifyEmailData,
   ResetPasswordData,
+  VerifyUserData,
 } from "../types/blockchain";
 import { ServiceResponse } from "../types/response";
 import {
@@ -45,9 +46,13 @@ import {
   VerifyEmailSchema,
   ResetPasswordSchema,
   ValidateUserSchema,
+  VerifyUserSchema,
 } from "../validators/auth";
 import { sanitizeInput, isValidObjectId } from "../utils/security";
-import { WalletDecryption, WalletEncryption } from "../helpers/encryption-decryption.helper";
+import {
+  WalletDecryption,
+  WalletEncryption,
+} from "../helpers/encryption-decryption.helper";
 
 export class AuthService implements IAuthService {
   async createWallet(req: Request): Promise<ServiceResponse<WalletData>> {
@@ -73,7 +78,7 @@ export class AuthService implements IAuthService {
           message: "Invalid user ID format",
         };
       }
-
+      console.log(req.body);
       // SECURITY: Validate request body with Zod
       const validatedBody = CreateWalletSchema.parse(req.body);
 
@@ -106,19 +111,6 @@ export class AuthService implements IAuthService {
           data: {} as WalletData,
           success: false,
           message: "Invalid username format",
-        };
-      }
-
-      if (
-        !sanitizedCountry ||
-        typeof sanitizedCountry !== "string" ||
-        sanitizedCountry.length !== 2
-      ) {
-        return {
-          status: httpStatus.BAD_REQUEST,
-          data: {} as WalletData,
-          success: false,
-          message: "Invalid country code format",
         };
       }
 
@@ -233,7 +225,7 @@ export class AuthService implements IAuthService {
         status: httpStatus.INTERNAL_SERVER_ERROR,
         data: {} as WalletData,
         success: false,
-        message: "Internal server error",
+        message: error.message,
       };
     }
   }
@@ -535,39 +527,38 @@ export class AuthService implements IAuthService {
 
       // MFA verification
       const mfa = await MFA.findOne({ user: account._id }).lean();
+      // if (process.env.NODE_ENV === "production") {
+      if (mfa && mfa.isSetup && mfa.isEnabled && !sanitizedCode) {
+        return {
+          status: httpStatus.UNAUTHORIZED,
+          data: {} as LoginData,
+          success: false,
+          message:
+            "Multi-factor authentication required. Please provide your MFA code.",
+        };
+      }
 
-      if (process.env.NODE_ENV === "production") {
-        if (mfa && mfa.isSetup && mfa.isEnabled && !sanitizedCode) {
+      if (mfa && mfa.isSetup && mfa.isEnabled && sanitizedCode) {
+        const validate = authenticator.verify({
+          token: sanitizedCode,
+          secret: mfa.secret,
+        });
+
+        if (!validate) {
           return {
             status: httpStatus.UNAUTHORIZED,
             data: {} as LoginData,
             success: false,
-            message:
-              "Multi-factor authentication required. Please provide your MFA code.",
+            message: "Invalid MFA code",
           };
         }
-
-        if (mfa && mfa.isSetup && mfa.isEnabled && sanitizedCode) {
-          const validate = authenticator.verify({
-            token: sanitizedCode,
-            secret: mfa.secret,
-          });
-
-          if (!validate) {
-            return {
-              status: httpStatus.UNAUTHORIZED,
-              data: {} as LoginData,
-              success: false,
-              message: "Invalid MFA code",
-            };
-          }
-        }
       }
+      // }
 
       // Get user without sensitive data
       const user = await User.findOne(
         { primaryEmail: sanitizedEmail },
-        "-encryptedPrivateKey -password"
+        "-encryptedPrivateKey -password -pinCode"
       ).lean();
 
       if (!user) {
@@ -594,6 +585,10 @@ export class AuthService implements IAuthService {
         status: httpStatus.OK,
         data: {
           user,
+          mfaSetup: {
+            isEnabled: mfa?.isEnabled,
+            isSetup: mfa?.isSetup,
+          },
           token: jwt,
           refreshToken,
         },
@@ -874,7 +869,7 @@ export class AuthService implements IAuthService {
 
       const account = await User.findOne(
         { primaryEmail: user.primaryEmail },
-        "-encryptedPrivateKey -password"
+        "-encryptedPrivateKey -password -pinCode"
       ).lean();
 
       if (!account) {
@@ -1021,17 +1016,22 @@ export class AuthService implements IAuthService {
       // Check if user exists
       const user = await User.findOne(
         { primaryEmail: sanitizedEmail },
-        "-encryptedPrivateKey -password"
+        "-encryptedPrivateKey -password -pinCode"
       ).lean();
 
       if (user) {
         const jwt = await JwtHelper.signToken(user);
         const refreshToken = await JwtHelper.refreshJWT(user);
+        const mfa = await MFA.findOne({ user: user._id }).lean();
 
         return {
           status: httpStatus.OK,
           data: {
             user,
+            mfaSetup: {
+              isEnabled: mfa?.isEnabled,
+              isSetup: mfa?.isSetup,
+            },
             token: jwt,
             refreshToken,
           },
@@ -1057,7 +1057,7 @@ export class AuthService implements IAuthService {
 
       const account = await User.findOne(
         { primaryEmail: newUser.primaryEmail },
-        "-encryptedPrivateKey -password"
+        "-encryptedPrivateKey -password -pinCode"
       ).lean();
 
       if (!account) {
@@ -1068,6 +1068,7 @@ export class AuthService implements IAuthService {
           message: "User creation failed",
         };
       }
+      const mfa = await MFA.findOne({ user: account._id }).lean();
 
       // Create user settings and cache OTP
       await Promise.all([
@@ -1113,11 +1114,92 @@ export class AuthService implements IAuthService {
         status: httpStatus.CREATED,
         data: {
           user: account,
+          mfaSetup: {
+            isEnabled: mfa?.isEnabled,
+            isSetup: mfa?.isSetup,
+          },
           token: jwt,
           refreshToken,
         },
         success: true,
         message: "User created successfully",
+      };
+    } catch (error: any) {
+      console.error("Error validating user:", error);
+
+      // Handle Zod validation errors
+      if (error.name === "ZodError") {
+        const errorMessages = error.errors
+          .map((err: any) => err.message)
+          .join(", ");
+        return {
+          status: httpStatus.BAD_REQUEST,
+          data: {} as ValidateUserData,
+          success: false,
+          message: `${errorMessages}`,
+        };
+      }
+
+      // Handle security validation errors
+      if (
+        error.message?.includes("Invalid input") ||
+        error.message?.includes("Invalid key")
+      ) {
+        return {
+          status: httpStatus.BAD_REQUEST,
+          data: {} as ValidateUserData,
+          success: false,
+          message: error.message,
+        };
+      }
+
+      return {
+        status: httpStatus.INTERNAL_SERVER_ERROR,
+        data: {} as ValidateUserData,
+        success: false,
+        message: "Error validating user",
+      };
+    }
+  }
+
+  async verifyUser(req: any): Promise<ServiceResponse<VerifyUserData>> {
+    try {
+      // SECURITY: Validate input with Zod
+      const validatedDetails = VerifyUserSchema.parse(req.body);
+
+      // SECURITY: Sanitize all inputs
+      const sanitizedEmail = EmailHelper.format(
+        sanitizeInput(validatedDetails.email)
+      );
+
+      // Check if user exists
+      const user = await User.findOne(
+        { primaryEmail: sanitizedEmail },
+        "email"
+      ).lean();
+
+      if (!user) {
+        return {
+          status: httpStatus.NOT_FOUND,
+          data: {} as ValidateUserData,
+          success: false,
+          message: "User not found",
+        };
+      }
+
+      const mfa = await MFA.findOne({ user: user._id }).lean();
+
+      return {
+        status: httpStatus.OK,
+        data: {
+          user,
+          mfaSetup: {
+            isEnabled: mfa?.isEnabled,
+            isSetup: mfa?.isSetup,
+          },
+        },
+        success: true,
+        message: "User verified successfully",
       };
     } catch (error: any) {
       console.error("Error validating user:", error);
@@ -1584,7 +1666,7 @@ export class AuthService implements IAuthService {
       }
 
       // Find user with encryptedPrivateKey (important!)
-      const user: any = await User.findById(redisObject).lean();
+      const user: any = await User.findById(redisObject);
 
       if (!user) {
         return {

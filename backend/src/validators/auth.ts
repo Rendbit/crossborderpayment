@@ -37,8 +37,6 @@ export const UsernameSchema = z
 // Country code validator (ISO 3166-1 alpha-2)
 export const CountrySchema = z
   .string()
-  .length(2, "Country code must be 2 characters")
-  .regex(/^[A-Z]{2}$/, "Country code must be uppercase letters");
 
 // OTP validator
 export const OTPSchema = z
@@ -119,6 +117,7 @@ export const RegisterSchema = z
       .max(20, "Referral code must be at most 20 characters")
       .optional()
       .or(z.literal("")),
+    captcha: z.string().optional(),
   })
   .strict();
 
@@ -162,5 +161,11 @@ export const ValidateUserSchema = z
       .optional()
       .or(z.literal("")),
     isEmailVerified: z.boolean().optional(),
+  })
+  .strict();
+
+export const VerifyUserSchema = z
+  .object({
+    email: EmailSchema,
   })
   .strict();

@@ -37,9 +37,10 @@ const UserSchema = new Schema<IUser>(
     // KYC & Compliance Fields
     kycTier: {
       type: Number,
-      enum: Object.values(KycTier),
+      enum: Object.values(KycTier).filter((v) => typeof v === "number"),
       default: KycTier.NONE,
     },
+
     kycStatus: {
       type: String,
       enum: Object.values(KycStatus),

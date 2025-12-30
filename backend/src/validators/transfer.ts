@@ -13,8 +13,8 @@ const StellarPublicKeySchema = z.string()
   .regex(/^G[A-Z0-9]{55}$/, 'Invalid Stellar public key format');
 
 // Transaction type validator
-const TransactionTypeSchema = z.enum(['deposit', 'withdrawal'], {
-  errorMap: () => ({ message: 'Transaction type must be either "deposit" or "withdrawal"' })
+const TransactionTypeSchema = z.enum(['deposit', 'withdraw'], {
+  errorMap: () => ({ message: 'Transaction type must be either "deposit" or "withdraw"' })
 });
 
 // Initiate transfer params validator

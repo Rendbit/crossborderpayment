@@ -175,7 +175,7 @@ export class TransferService implements ITransferService {
         status: httpStatus.INTERNAL_SERVER_ERROR,
         data: {} as TransferData,
         success: false,
-        message: "Internal server error",
+        message: error.message,
       };
     }
   }
@@ -329,7 +329,7 @@ export class TransferService implements ITransferService {
         status: httpStatus.INTERNAL_SERVER_ERROR,
         data: { transactions: [] },
         success: false,
-        message: "Internal server error",
+        message: error.message,
       };
     }
   }

@@ -128,7 +128,7 @@ export class TransactionService implements ITransactionService {
         status: httpStatus.INTERNAL_SERVER_ERROR,
         data: {} as TrustlineData,
         success: false,
-        message: "Internal server error",
+        message: error.message,
       };
     }
   }
@@ -225,7 +225,7 @@ export class TransactionService implements ITransactionService {
         status: httpStatus.INTERNAL_SERVER_ERROR,
         data: {} as TrustlineData,
         success: false,
-        message: "Internal server error",
+        message: error.message,
       };
     }
   }
@@ -315,7 +315,7 @@ export class TransactionService implements ITransactionService {
         status: httpStatus.INTERNAL_SERVER_ERROR,
         data: {} as PaymentPreviewData,
         success: false,
-        message: "Internal server error",
+        message: error.message,
       };
     }
   }
@@ -403,7 +403,7 @@ export class TransactionService implements ITransactionService {
         status: httpStatus.INTERNAL_SERVER_ERROR,
         data: { hash: "" },
         success: false,
-        message: "Internal server error",
+        message: error.message,
       };
     }
   }
@@ -491,7 +491,7 @@ export class TransactionService implements ITransactionService {
         status: httpStatus.INTERNAL_SERVER_ERROR,
         data: {} as SwapPreviewData,
         success: false,
-        message: "Internal server error",
+        message: error.message,
       };
     }
   }
@@ -580,7 +580,7 @@ export class TransactionService implements ITransactionService {
         status: httpStatus.INTERNAL_SERVER_ERROR,
         data: { hash: "" },
         success: false,
-        message: "Internal server error",
+        message: error.message,
       };
     }
   }
@@ -671,7 +671,7 @@ export class TransactionService implements ITransactionService {
         status: httpStatus.INTERNAL_SERVER_ERROR,
         data: {} as StrictSendPreviewData,
         success: false,
-        message: "Internal server error",
+        message: error.message,
       };
     }
   }
@@ -760,7 +760,7 @@ export class TransactionService implements ITransactionService {
         status: httpStatus.INTERNAL_SERVER_ERROR,
         data: { hash: "" },
         success: false,
-        message: "Internal server error",
+        message: error.message,
       };
     }
   }
@@ -850,7 +850,7 @@ export class TransactionService implements ITransactionService {
         status: httpStatus.INTERNAL_SERVER_ERROR,
         data: {} as StrictReceivePreviewData,
         success: false,
-        message: "Internal server error",
+        message: error.message,
       };
     }
   }
@@ -941,7 +941,7 @@ export class TransactionService implements ITransactionService {
         status: httpStatus.INTERNAL_SERVER_ERROR,
         data: { hash: "" },
         success: false,
-        message: "Internal server error",
+        message: error.message,
       };
     }
   }
@@ -1061,7 +1061,7 @@ export class TransactionService implements ITransactionService {
           transactions: [],
         },
         success: false,
-        message: "Internal server error",
+        message: error.message,
       };
     }
   }
@@ -1189,7 +1189,7 @@ export class TransactionService implements ITransactionService {
           pagination: { page: 1, limit: 10, total: 0, totalPages: 0 },
         },
         success: false,
-        message: "Internal server error",
+        message: error.message,
       };
     }
   }

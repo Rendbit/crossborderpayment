@@ -46,6 +46,7 @@ export interface FundData {
 
 export interface LoginData {
   user: any;
+  mfaSetup: any;
   token: string;
   refreshToken: string;
 }
@@ -66,8 +67,15 @@ export interface RegisterData {
   refreshToken: string;
 }
 
+export interface VerifyUserData {
+  user: any;
+  mfaSetup: any;
+
+}
+
 export interface ValidateUserData {
   user: any;
+  mfaSetup: any;
   token: string;
   refreshToken: string;
 }

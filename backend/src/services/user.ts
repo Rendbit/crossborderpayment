@@ -26,6 +26,7 @@ import {
   GetReferralsSchema,
 } from "../validators/user";
 import { sanitizeInput, isValidObjectId } from "../utils/security";
+import { MFA } from "../models/MFA";
 
 export class UserService implements IUserService {
   async getUserProfile(req: Request): Promise<ServiceResponse<any>> {
@@ -53,7 +54,7 @@ export class UserService implements IUserService {
       }
 
       const account = await User.findById(user._id)
-        .select("-password -encryptedPrivateKey")
+        .select("-password -encryptedPrivateKey -pinCode")
         .lean();
 
       if (!account) {
@@ -65,9 +66,19 @@ export class UserService implements IUserService {
         };
       }
 
+      const mfa = await MFA.findOne({
+        user: user._id,
+      }).lean();
+
       return {
         status: httpStatus.OK,
-        data: account,
+        data: {
+          account,
+          mfaSetup: {
+            isEnabled: mfa?.isEnabled,
+            isSetup: mfa?.isSetup,
+          },
+        },
         success: true,
         message: "Profile retrieved successfully",
       };
@@ -91,7 +102,7 @@ export class UserService implements IUserService {
         status: httpStatus.INTERNAL_SERVER_ERROR,
         data: {} as UserProfileData,
         success: false,
-        message: "Internal server error",
+        message: error.message,
       };
     }
   }
@@ -202,7 +213,7 @@ export class UserService implements IUserService {
         status: httpStatus.INTERNAL_SERVER_ERROR,
         data: null,
         success: false,
-        message: "Internal server error",
+        message: error.message,
       };
     }
   }
@@ -291,7 +302,7 @@ export class UserService implements IUserService {
         status: httpStatus.INTERNAL_SERVER_ERROR,
         data: { referrals: [], count: 0 },
         success: false,
-        message: "Internal server error",
+        message: error.message,
       };
     }
   }
@@ -373,7 +384,7 @@ export class UserService implements IUserService {
         status: httpStatus.INTERNAL_SERVER_ERROR,
         data: { leaderboard: [] },
         success: false,
-        message: "Internal server error",
+        message: error.message,
       };
     }
   }
@@ -502,7 +513,7 @@ export class UserService implements IUserService {
         status: httpStatus.INTERNAL_SERVER_ERROR,
         data: {} as UserProfileData,
         success: false,
-        message: "Internal server error",
+        message: error.message,
       };
     }
   }
@@ -598,7 +609,7 @@ export class UserService implements IUserService {
         status: httpStatus.INTERNAL_SERVER_ERROR,
         data: {} as UserProfileData,
         success: false,
-        message: "Internal server error",
+        message: error.message,
       };
     }
   }
@@ -651,7 +662,7 @@ export class UserService implements IUserService {
           status: httpStatus.NOT_FOUND,
           data: null,
           success: false,
-          message: "User not found",
+          message: "Invalid account",
         };
       }
 
@@ -725,7 +736,7 @@ export class UserService implements IUserService {
         status: httpStatus.INTERNAL_SERVER_ERROR,
         data: null,
         success: false,
-        message: "Internal server error",
+        message: error.message,
       };
     }
   }
@@ -851,7 +862,7 @@ export class UserService implements IUserService {
         status: httpStatus.INTERNAL_SERVER_ERROR,
         data: { privateKey: "" },
         success: false,
-        message: "Internal server error",
+        message: error.message,
       };
     }
   }

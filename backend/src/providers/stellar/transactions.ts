@@ -869,13 +869,13 @@ export class StellarTransaction implements IBlockchainTransaction {
         process.env.STELLAR_NETWORK === "public"
           ? PUBLIC_ASSETS[desAssetCode as keyof typeof PUBLIC_ASSETS].issuer
           : TESTNET_ASSETS[desAssetCode as keyof typeof TESTNET_ASSETS].issuer;
-
+      console.log({ desAmount });
       const _paths: any = await WalletHelper.receivePaymentPath({
         sourceAssetCode,
         sourceAssetIssuer,
         desAssetCode,
         desAssetIssuer,
-        amount: desAmount?.toFixed(7)?.toString(),
+        amount: desAmount?.toString(),
       });
 
       const paths = _paths?.data?.receivePaymentPath || [];
@@ -962,7 +962,7 @@ export class StellarTransaction implements IBlockchainTransaction {
         sourceAssetIssuer,
         desAssetCode,
         desAssetIssuer,
-        amount: desAmount?.toFixed(7)?.toString(),
+        amount: desAmount?.toString(),
       });
 
       const paths = _paths?.data?.receivePaymentPath || [];
@@ -1014,7 +1014,7 @@ export class StellarTransaction implements IBlockchainTransaction {
             sendMax,
             destination: desAddress,
             destAsset: desAsset,
-            destAmount: desAmount?.toFixed(7)?.toString(),
+            destAmount: desAmount?.toString(),
           })
         )
         .setTimeout(parseInt(process.env.TIMEOUT || "60", 10))
@@ -1080,7 +1080,7 @@ export class StellarTransaction implements IBlockchainTransaction {
             const operationsResponse = await this.server
               .operations()
               .forTransaction(tx.id)
-              .limit(200)
+              .limit(100)
               .call();
 
             const operations = operationsResponse.records;

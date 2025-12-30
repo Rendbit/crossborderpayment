@@ -10,6 +10,7 @@ import {
   resendForgotPasswordOTP,
   verifyEmail,
   resendEmailVerificationOTP,
+  verifyUser,
 } from "../controllers/auth";
 import { authenticate } from "../middlewares/authMiddleWare";
 import { moderateLimiter, loginLimiter } from "../middlewares/rateLimiter";
@@ -25,6 +26,39 @@ router.use(apiKeyValidator);
  *   - name: Authentication
  *     description: Routes for user authentication.
  */
+
+/**
+ * @swagger
+ * /api/auth/verify-user:
+ *   post:
+ *     summary: Verify user
+ *     description: Verifies a user by checking their email and returns a response indicating the verification status.
+ *     tags:
+ *       - Authentication 
+ *     security:
+ *       - apiKey: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 description: The email address of the user to verify.
+ *             required:
+ *               - email
+ *     responses:
+ *       200:
+ *         description: User verified successfully
+ *       401:
+ *         description: Invalid credentials
+ *       500:
+ *         description: Internal server error
+ */
+router.post("/verify-user", loginLimiter, verifyUser);
 
 /**
  * @swagger
@@ -65,7 +99,7 @@ router.use(apiKeyValidator);
  *       500:
  *         description: Internal server error
  */
-router.post("/login", loginLimiter, login);
+router.post("/login", login);
 
 /**
  * @swagger

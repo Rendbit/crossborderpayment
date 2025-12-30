@@ -10,7 +10,7 @@ export const getStats = async (req: any, res: any) => {
   } catch (error: any) {
     console.error("Error in stats controller:", error);
     return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
-      message: "Internal server error",
+      message: error.message,
       status: httpStatus.INTERNAL_SERVER_ERROR,
       success: false,
     });

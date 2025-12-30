@@ -55,7 +55,6 @@ export class HorizonService implements IHorizonService {
       }
 
       // SECURITY: Validate query parameters
-      console.log("REQ QUERY", req.query)
       const validatedQuery = GetAllWalletAssetsSchema.parse(req.query);
 
       // SECURITY: Sanitize currency type
@@ -278,7 +277,7 @@ export class HorizonService implements IHorizonService {
         status: httpStatus.INTERNAL_SERVER_ERROR,
         data: {} as WalletAssetsData,
         success: false,
-        message: "Internal server error",
+        message: error.message,
       };
     }
   }
@@ -616,7 +615,7 @@ export class HorizonService implements IHorizonService {
         status: httpStatus.INTERNAL_SERVER_ERROR,
         data: {} as PathData,
         success: false,
-        message: "Internal server error",
+        message: error.message,
       };
     }
   }
@@ -723,7 +722,7 @@ export class HorizonService implements IHorizonService {
         status: httpStatus.INTERNAL_SERVER_ERROR,
         data: {} as AssetsData,
         success: false,
-        message: "Internal server error",
+        message: error.message,
       };
     }
   }
@@ -916,7 +915,7 @@ export class HorizonService implements IHorizonService {
         status: httpStatus.INTERNAL_SERVER_ERROR,
         data: {} as TrustLinesData,
         success: false,
-        message: "Internal server error",
+        message: error.message,
       };
     }
   }
@@ -1045,7 +1044,7 @@ export class HorizonService implements IHorizonService {
         status: httpStatus.INTERNAL_SERVER_ERROR,
         data: {} as UserDetailsData,
         success: false,
-        message: "Internal server error",
+        message: error.message,
       };
     }
   }

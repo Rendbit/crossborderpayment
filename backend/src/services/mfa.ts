@@ -94,7 +94,7 @@ export class MFAService implements IMFAService {
         status: httpStatus.INTERNAL_SERVER_ERROR,
         data: { secret: "", url: "" },
         success: false,
-        message: "Internal server error",
+        message: error.message,
       };
     }
   }
@@ -228,7 +228,7 @@ export class MFAService implements IMFAService {
         status: httpStatus.INTERNAL_SERVER_ERROR,
         data: null,
         success: false,
-        message: "Internal server error",
+        message: error.message,
       };
     }
   }
@@ -286,7 +286,7 @@ export class MFAService implements IMFAService {
         };
       }
 
-      if (!mfaSetup.isSetup || !mfaSetup.isEnabled) {
+      if (!mfaSetup.isSetup) {
         return {
           status: httpStatus.BAD_REQUEST,
           data: null,
@@ -348,7 +348,7 @@ export class MFAService implements IMFAService {
         status: httpStatus.INTERNAL_SERVER_ERROR,
         data: null,
         success: false,
-        message: "Internal server error",
+        message: error.message,
       };
     }
   }
@@ -422,7 +422,7 @@ export class MFAService implements IMFAService {
         status: httpStatus.INTERNAL_SERVER_ERROR,
         data: { isEnabled: false, isSetup: false },
         success: false,
-        message: "Internal server error",
+        message: error.message,
       };
     }
   }
@@ -514,7 +514,7 @@ export class MFAService implements IMFAService {
         status: httpStatus.INTERNAL_SERVER_ERROR,
         data: { isEnabled: false, isSetup: false },
         success: false,
-        message: "Internal server error",
+        message: error.message,
       };
     }
   }
